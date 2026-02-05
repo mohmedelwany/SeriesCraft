@@ -15,5 +15,21 @@
 
 if (!defined('ABSPATH')) exit;
 
-require_once __DIR__ . '/Autoloader.php';
-\SeriesCraft\Autoloader::register();
+// Define plugin constants
+define('SCFT_PLUGIN_VERSION', '1.0.0');
+define('SCFT_PLUGIN_DIR', plugin_dir_path(__FILE__));
+define('SCFT_PLUGIN_URL', plugin_dir_url(__FILE__));
+
+// Load Composer autoloader
+if (file_exists(SCFT_PLUGIN_DIR . 'vendor/autoload.php')) {
+    require_once SCFT_PLUGIN_DIR . 'vendor/autoload.php';
+}
+
+/**
+ * Initialize the plugin
+ */
+add_action('plugins_loaded', function() {
+    if (class_exists('SeriesCraft\\Core\\Main')) {
+        (new \SeriesCraft\Core\Main())->init();
+    }
+});
