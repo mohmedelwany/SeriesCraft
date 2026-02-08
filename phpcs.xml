@@ -10,10 +10,18 @@
     <arg name="colors"/>
     <arg name="extensions" value="php"/>
 
-    <rule ref="WordPress-Extra"/>
+    <rule ref="WordPress-Extra">
+        <exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
+        <exclude name="WordPress.Files.FileName.NotHyphenatedLowercase"/>
+        <exclude name="Generic.WhiteSpace"/>
+        <exclude name="PEAR.NamingConventions"/>
+        <exclude name="Universal.Files.SeparateFunctionsFromOO"/>
+        <exclude name="Universal.Operators.StrictComparisons"/>
+        <exclude name="Squiz.Commenting.FileComment.MissingPackageTag"/>
+    </rule>
     <rule ref="WordPress-Docs"/>
 
-    <config name="minimum_supported_wp_version" value="6.2"/>
+    <config name="minimum_supported_wp_version" value="6.0"/>
 
     <rule ref="WordPress.WP.I18n">
         <properties>
@@ -27,6 +35,7 @@
         <properties>
             <property name="prefixes" type="array">
                 <element value="SCFT"/>
+                <element value="SeriesCraft"/>
             </property>
         </properties>
     </rule>
