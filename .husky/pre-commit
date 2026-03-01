@@ -1,0 +1,2 @@
+composer lint:fix || true
+composer lint
