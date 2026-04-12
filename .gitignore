@@ -2,3 +2,10 @@
 vendor
 node_modules
 .phpunit.result.cache
+
+# Local PHPUnit overrides (dist files ARE committed)
+phpunit.xml
+phpunit.integration.xml.local
+
+# Docker build context leftovers
+docker/integration/.docker-stamp
