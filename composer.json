@@ -17,12 +17,16 @@
     "scripts": {
         "lint": "phpcs src --standard=phpcs.xml",
         "lint:fix": "phpcbf src --standard=phpcs.xml",
-        "test": "phpunit",
+        "test": "phpunit -c phpunit.xml.dist",
+        "test:unit": "phpunit -c phpunit.xml.dist",
+        "test:integration": "phpunit -c phpunit.integration.xml",
+        "test:matrix": "bash bin/test-integration-matrix.sh",
         "stan": "phpstan analyze src"
     },
     "config": {
         "allow-plugins": {
             "dealerdirect/phpcodesniffer-composer-installer": true
-        }
+        },
+        "process-timeout": 0
     }
 }
