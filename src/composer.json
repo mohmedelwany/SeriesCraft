@@ -1,0 +1,12 @@
+{
+    "name": "mohmedelwany/series-craft",
+    "description": "Create ordered post series with a clean front-end table of contents and next/prev navigation.",
+    "type": "wordpress-plugin",
+    "license": "GPL-3.0-or-later",
+    "autoload": {
+        "psr-4": {
+            "SeriesCraft\\": "src/"
+        }
+    },
+    "require": {}
+}

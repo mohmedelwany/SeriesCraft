@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<ruleset name="SeriesCraft">
+    <description>WordPress Coding Standards for Series Craft</description>
+
+    <file>src</file>
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/node_modules/*</exclude-pattern>
+
+    <arg value="ps"/>
+    <arg name="colors"/>
+    <arg name="extensions" value="php"/>
+
+    <rule ref="WordPress-Extra">
+        <exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
+        <exclude name="WordPress.Files.FileName.NotHyphenatedLowercase"/>
+        <exclude name="Generic.WhiteSpace"/>
+        <exclude name="PEAR.NamingConventions"/>
+        <exclude name="Universal.Files.SeparateFunctionsFromOO"/>
+        <exclude name="Universal.Operators.StrictComparisons"/>
+        <exclude name="Squiz.Commenting.FileComment.MissingPackageTag"/>
+    </rule>
+    <rule ref="WordPress-Docs"/>
+
+    <config name="minimum_supported_wp_version" value="6.0"/>
+    <config name="testVersion" value="7.4-8.5"/>
+
+    <rule ref="PHPCompatibility"/>
+
+    <rule ref="WordPress.WP.I18n">
+        <properties>
+            <property name="text_domain" type="array">
+                <element value="series-craft"/>
+            </property>
+        </properties>
+    </rule>
+
+    <rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+        <properties>
+            <property name="prefixes" type="array">
+                <element value="SCFT"/>
+                <element value="SeriesCraft"/>
+            </property>
+        </properties>
+    </rule>
+</ruleset>
