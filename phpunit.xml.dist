@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    phpunit.xml.dist
+    =================
+    Used for the Unit test suite only (no WordPress environment needed).
+    Integration tests live in phpunit.integration.xml and are run via Docker.
+
+    Run via:
+      composer test        (unit tests only)
+      composer test:unit   (alias)
+-->
+<phpunit
+    bootstrap="tests/bootstrap.php"
+    backupGlobals="false"
+    colors="true"
+    convertErrorsToExceptions="true"
+    convertNoticesToExceptions="true"
+    convertWarningsToExceptions="true"
+>
+    <testsuites>
+        <testsuite name="Unit">
+            <directory suffix="Test.php">tests/Unit</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>

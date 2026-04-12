@@ -1,0 +1,15 @@
+{
+    "name": "mohmedelwany/series-craft-integration-tests",
+    "description": "Minimal composer manifest for running integration tests inside Docker. Contains only phpunit — linting and static-analysis tools live in the root composer.json and are only used on the host.",
+    "type": "project",
+    "require": {
+        "php": ">=7.4"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.6",
+        "yoast/phpunit-polyfills": "^2.0"
+    },
+    "config": {
+        "platform": {}
+    }
+}

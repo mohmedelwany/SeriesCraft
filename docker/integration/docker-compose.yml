@@ -1,0 +1,45 @@
+# ============================================================
+# Integration Test Stack for SeriesCraft
+#
+# Usage (via the script):
+#   PHP_VERSION=8.2 WP_VERSION=6.7 \
+#     docker compose -f docker/integration/docker-compose.yml \
+#       up --build --abort-on-container-exit
+#
+# Env vars (set by the test runner script):
+#   PHP_VERSION – e.g. 7.4, 8.1, 8.2, 8.3
+#   WP_VERSION  – e.g. 6.2, 6.4, 6.7 (or "latest")
+# ============================================================
+
+services:
+  db:
+    image: mariadb:10.11
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: wordpress_test
+      MYSQL_USER: wp_test
+      MYSQL_PASSWORD: wp_test
+    healthcheck:
+      test: [ "CMD", "healthcheck.sh", "--connect", "--innodb_initialized" ]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  wordpress-test:
+    build:
+      context: ../../          # repo root – all COPY paths are relative to this
+      dockerfile: docker/integration/Dockerfile.template
+      args:
+        PHP_VERSION: ${PHP_VERSION:-8.2}
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      WP_VERSION: ${WP_VERSION:-latest}
+      DB_HOST: db
+      DB_NAME: wordpress_test
+      DB_USER: wp_test
+      DB_PASS: wp_test
+      WP_TESTS_DIR: /tmp/wordpress-tests-lib
+      WP_CORE_DIR: /tmp/wordpress
+    command: ["/app/docker/integration/entrypoint.sh"]
