@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Bootstrap for the Integration test suite.
  *
@@ -14,36 +15,40 @@
 // 1. Composer autoloader (project classes)
 // ---------------------------------------------------------------------------
 // __DIR__ = tests/Integration  → dirname x2 = repo root
-$autoloader = dirname( __DIR__, 2 ) . '/src/vendor/autoload.php';
-if ( file_exists( $autoloader ) ) {
+$autoloader = dirname(__DIR__, 2) . '/src/vendor/autoload.php';
+if (file_exists($autoloader)) {
     require_once $autoloader;
 }
 
 // ---------------------------------------------------------------------------
 // 2. WordPress test library
 // ---------------------------------------------------------------------------
-$wp_tests_dir = getenv( 'WP_TESTS_DIR' );
+$wp_tests_dir = getenv('WP_TESTS_DIR');
 
-if ( ! $wp_tests_dir || ! is_dir( $wp_tests_dir ) ) {
+if (! $wp_tests_dir || ! is_dir($wp_tests_dir)) {
     echo "\n";
     echo "ERROR: WP_TESTS_DIR is not set or does not exist.\n";
-    echo "       Expected path: " . ( $wp_tests_dir ?: '(empty)' ) . "\n";
+    echo "       Expected path: " . ($wp_tests_dir ?: '(empty)') . "\n";
     echo "       Run the integration tests via:\n";
     echo "         ./bin/test-integration-matrix.sh\n";
     echo "       or set WP_TESTS_DIR manually if running outside Docker.\n\n";
-    exit( 1 );
+    exit(1);
 }
 
 // Give the WP test bootstrap the plugin file to load automatically.
 $GLOBALS['wp_tests_options'] = [
-    'active_plugins' => [ 'series-craft/series-craft.php' ],
+    'active_plugins' => ['series-craft/series-craft.php'],
 ];
 
 // Required since WP 6.2: tell the WP bootstrap where PHPUnit Polyfills live.
 // The library is installed in /app/vendor (from docker/integration/composer.json).
-if ( ! defined( 'WP_TESTS_PHPUNIT_POLYFILLS_PATH' ) ) {
-    define( 'WP_TESTS_PHPUNIT_POLYFILLS_PATH', dirname( __DIR__, 2 ) . '/vendor/yoast/phpunit-polyfills' );
+if (! defined('WP_TESTS_PHPUNIT_POLYFILLS_PATH')) {
+    define('WP_TESTS_PHPUNIT_POLYFILLS_PATH', dirname(__DIR__, 2) . '/vendor/yoast/phpunit-polyfills');
 }
 
 // Load the WP test bootstrap (this sets up the DB and loads WP core).
-require_once rtrim( $wp_tests_dir, '/' ) . '/includes/bootstrap.php';
+require_once rtrim($wp_tests_dir, '/') . '/includes/bootstrap.php';
+
+// Provide editor-friendly stubs for static analysis when the full WP test
+// bootstrap is not available in the IDE context.
+require_once __DIR__ . '/wordpress-test-stubs.php';
