@@ -3,20 +3,18 @@
 /**
  * Example Integration Test – smoke-test the WordPress environment.
  *
- * Every class in tests/Integration/ that extends WP_UnitTestCase has full
- * access to a real WordPress installation backed by a test database.
+ * Runs against a real, already-installed WordPress site with the plugin
+ * activated via wp-cli (see docker/integration/entrypoint.sh). Since there's
+ * no per-test DB rollback here, tests that create data should clean up
+ * after themselves.
  */
 
 namespace SeriesCraft\Tests\Integration;
 
-require_once __DIR__ . '/wordpress-test-stubs.php';
+use PHPUnit\Framework\TestCase;
 
-/**
- * WP_UnitTestCase is provided by the WordPress test library bootstrap.
- */
-class SmokeTest extends \WP_UnitTestCase
+class SmokeTest extends TestCase
 {
-
     /**
      * Verify that WordPress core is loaded correctly in the test environment.
      */
@@ -27,8 +25,7 @@ class SmokeTest extends \WP_UnitTestCase
     }
 
     /**
-     * Verify the plugin was loaded (it is registered in the bootstrap via
-     * `active_plugins`).
+     * Verify the plugin was activated (via wp-cli in entrypoint.sh).
      */
     public function test_plugin_constants_are_defined(): void
     {
@@ -41,12 +38,18 @@ class SmokeTest extends \WP_UnitTestCase
      */
     public function test_can_create_post(): void
     {
-        $post_id = $this->factory()->post->create(['post_title' => 'Test Series Post']);
+        $post_id = wp_insert_post([
+            'post_title'  => 'Test Series Post',
+            'post_status' => 'publish',
+        ]);
 
         $this->assertIsInt($post_id);
         $this->assertGreaterThan(0, $post_id);
 
         $post = get_post($post_id);
         $this->assertEquals('Test Series Post', $post->post_title);
+
+        // Clean up: no per-test DB rollback in this model.
+        wp_delete_post($post_id, true);
     }
 }
