@@ -47,3 +47,11 @@ if ( ! defined( 'WP_TESTS_PHPUNIT_POLYFILLS_PATH' ) ) {
 
 // Load the WP test bootstrap (this sets up the DB and loads WP core).
 require_once rtrim( $wp_tests_dir, '/' ) . '/includes/bootstrap.php';
+
+//provide editor-frindly stebs for static analysis when the full wp tests library is not available
+//bootstrap is not avilable in the IDE context
+require_once __DIR__ . '/wordpress-test-stubs.php';
+
+/**
+ * 
+ */
