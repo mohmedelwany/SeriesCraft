@@ -4,16 +4,14 @@
  * Example Integration Test – smoke-test the WordPress environment.
  *
  * Runs against a real, already-installed WordPress site with the plugin
- * activated via wp-cli (see docker/integration/entrypoint.sh). Since there's
- * no per-test DB rollback here, tests that create data should clean up
- * after themselves.
+ * activated via wp-cli (see docker/integration/entrypoint.sh). Extends
+ * IntegrationTestCase, which wraps each test in a transaction that's rolled
+ * back automatically — no manual cleanup needed.
  */
 
 namespace SeriesCraft\Tests\Integration;
 
-use PHPUnit\Framework\TestCase;
-
-class SmokeTest extends TestCase
+class SmokeTest extends IntegrationTestCase
 {
     /**
      * Verify that WordPress core is loaded correctly in the test environment.
@@ -49,7 +47,5 @@ class SmokeTest extends TestCase
         $post = get_post($post_id);
         $this->assertEquals('Test Series Post', $post->post_title);
 
-        // Clean up: no per-test DB rollback in this model.
-        wp_delete_post($post_id, true);
     }
 }

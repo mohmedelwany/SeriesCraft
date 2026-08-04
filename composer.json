@@ -15,6 +15,11 @@
         "automattic/vipwpcs": "^3.0"
         
     },
+    "autoload-dev": {
+        "psr-4": {
+            "SeriesCraft\\Tests\\Integration\\": "tests/Integration/"
+        }
+    },
     "scripts": {
         "lint": "phpcs src --standard=phpcs.xml",
         "lint:fix": "phpcbf src --standard=phpcs.xml",

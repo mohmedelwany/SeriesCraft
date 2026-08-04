@@ -69,5 +69,8 @@ fi
 echo "==> Activating SeriesCraft plugin..."
 wp plugin activate series-craft --path="${WP_CORE_DIR}" --allow-root
 
+# Refresh Composer autoload files so any newly-copied test classes are visible.
+composer dump-autoload --no-interaction
+
 # Run the integration suite.
 exec vendor/bin/phpunit -c phpunit.integration.xml --colors=always

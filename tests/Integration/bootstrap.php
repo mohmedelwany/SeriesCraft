@@ -13,12 +13,22 @@
  */
 
 // ---------------------------------------------------------------------------
-// 1. Composer autoloader (project classes)
+// 1. Composer autoloaders (test + plugin classes)
 // ---------------------------------------------------------------------------
 // __DIR__ = tests/Integration  → dirname x2 = repo root
-$autoloader = dirname(__DIR__, 2) . '/src/vendor/autoload.php';
+$repo_root = dirname(__DIR__, 2);
+
+// Load the integration-test autoloader first so PHPUnit can resolve
+// SeriesCraft\Tests\Integration\ classes from the test suite.
+$autoloader = $repo_root . '/vendor/autoload.php';
 if (file_exists($autoloader)) {
     require_once $autoloader;
+}
+
+// Also load the plugin's own autoloader for SeriesCraft\ classes.
+$plugin_autoloader = $repo_root . '/src/vendor/autoload.php';
+if (file_exists($plugin_autoloader)) {
+    require_once $plugin_autoloader;
 }
 
 // ---------------------------------------------------------------------------

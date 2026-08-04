@@ -39,6 +39,9 @@ RUN composer install --no-interaction --prefer-dist --no-progress
 # ── Copy remaining source code + tests ──────────────────────────────────────
 COPY . .
 
+# Regenerate Composer autoload files now that the tests directory is present.
+RUN composer dump-autoload --no-interaction
+
 # Ensure all shell scripts are executable (handles clean checkouts where
 # the execute bit may not be preserved by git on some systems).
 RUN chmod +x \
