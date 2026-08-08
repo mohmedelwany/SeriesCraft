@@ -9,3 +9,13 @@ phpunit.integration.xml.local
 
 # Docker build context leftovers
 docker/integration/.docker-stamp
+
+# Playwright output
+playwright-report/
+test-results/
+
+# wp-env runtime files
+.wp-env/
+
+# Jest coverage
+coverage/
