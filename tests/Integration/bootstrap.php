@@ -1,49 +1,53 @@
 <?php
+
 /**
  * Bootstrap for the Integration test suite.
  *
- * Requires the WordPress test library, which is installed inside the Docker
- * container by docker/integration/install-wp-tests.sh.
+ * Loads a real, already-installed WordPress site (installed and had the
+ * plugin activated via wp-cli in docker/integration/entrypoint.sh). Tests
+ * run against that live install rather than a per-run WP_UnitTestCase
+ * fixture install.
  *
  * Environment variables (set via docker-compose.yml):
- *   WP_TESTS_DIR – path to the downloaded wordpress-tests-lib
- *   WP_CORE_DIR  – path to the WordPress core source
+ *   WP_CORE_DIR – path to the installed WordPress core
  */
 
 // ---------------------------------------------------------------------------
-// 1. Composer autoloader (project classes)
+// 1. Composer autoloaders (test + plugin classes)
 // ---------------------------------------------------------------------------
 // __DIR__ = tests/Integration  → dirname x2 = repo root
-$autoloader = dirname( __DIR__, 2 ) . '/src/vendor/autoload.php';
-if ( file_exists( $autoloader ) ) {
+$repo_root = dirname(__DIR__, 2);
+
+// Load the integration-test autoloader first so PHPUnit can resolve
+// SeriesCraft\Tests\Integration\ classes from the test suite.
+$autoloader = $repo_root . '/vendor/autoload.php';
+if (file_exists($autoloader)) {
     require_once $autoloader;
 }
 
-// ---------------------------------------------------------------------------
-// 2. WordPress test library
-// ---------------------------------------------------------------------------
-$wp_tests_dir = getenv( 'WP_TESTS_DIR' );
+// Also load the plugin's own autoloader for SeriesCraft\ classes.
+$plugin_autoloader = $repo_root . '/src/vendor/autoload.php';
+if (file_exists($plugin_autoloader)) {
+    require_once $plugin_autoloader;
+}
 
-if ( ! $wp_tests_dir || ! is_dir( $wp_tests_dir ) ) {
+// ---------------------------------------------------------------------------
+// 2. Live WordPress install
+// ---------------------------------------------------------------------------
+$wp_core_dir = rtrim(getenv('WP_CORE_DIR') ?: '/tmp/wordpress', '/');
+
+if (! file_exists($wp_core_dir . '/wp-load.php')) {
     echo "\n";
-    echo "ERROR: WP_TESTS_DIR is not set or does not exist.\n";
-    echo "       Expected path: " . ( $wp_tests_dir ?: '(empty)' ) . "\n";
+    echo "ERROR: WordPress core not found at {$wp_core_dir}.\n";
+    echo "       Expected wp-load.php there.\n";
+    echo "       Did entrypoint.sh run `wp core install` and\n";
+    echo "       `wp plugin activate series-craft`?\n";
     echo "       Run the integration tests via:\n";
     echo "         ./bin/test-integration-matrix.sh\n";
-    echo "       or set WP_TESTS_DIR manually if running outside Docker.\n\n";
-    exit( 1 );
+    echo "       or set WP_CORE_DIR manually if running outside Docker.\n\n";
+    exit(1);
 }
 
-// Give the WP test bootstrap the plugin file to load automatically.
-$GLOBALS['wp_tests_options'] = [
-    'active_plugins' => [ 'series-craft/series-craft.php' ],
-];
-
-// Required since WP 6.2: tell the WP bootstrap where PHPUnit Polyfills live.
-// The library is installed in /app/vendor (from docker/integration/composer.json).
-if ( ! defined( 'WP_TESTS_PHPUNIT_POLYFILLS_PATH' ) ) {
-    define( 'WP_TESTS_PHPUNIT_POLYFILLS_PATH', dirname( __DIR__, 2 ) . '/vendor/yoast/phpunit-polyfills' );
-}
-
-// Load the WP test bootstrap (this sets up the DB and loads WP core).
-require_once rtrim( $wp_tests_dir, '/' ) . '/includes/bootstrap.php';
+// Loading wp-load.php boots WordPress fully, including any already-active
+// plugins (series-craft was activated via wp-cli before PHPUnit started).
+require_once $wp_core_dir . '/wp-load.php';

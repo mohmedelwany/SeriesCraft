@@ -2,6 +2,10 @@
 <ruleset name="SeriesCraftSecurity">
     <description>Security-specific checks for Series Craft</description>
 
+    <file>src</file>
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/node_modules/*</exclude-pattern>
+
     <rule ref="WordPress-VIP-Go"/>
     <rule ref="WordPress.Security.EscapeOutput"/>
     <rule ref="WordPress.Security.NonceVerification"/>

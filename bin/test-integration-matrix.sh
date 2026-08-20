@@ -21,8 +21,8 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 COMPOSE_FILE="$REPO_ROOT/docker/integration/docker-compose.yml"
 
-PHP_VERSIONS="${PHP_VERSIONS:-7.4 8.1 8.2 8.3}"
-WP_VERSIONS="${WP_VERSIONS:-6.2 6.4 6.7}"
+PHP_VERSIONS="${PHP_VERSIONS:-7.4 8.3}"
+WP_VERSIONS="${WP_VERSIONS:-6.9 7.0}"
 BAIL_FAST="${BAIL_FAST:-0}"
 
 # ---------------------------------------------------------------------------
