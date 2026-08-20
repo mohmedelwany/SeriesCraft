@@ -16,9 +16,15 @@
         "automattic/vipwpcs": "^3.0",
         "dealerdirect/phpcodesniffer-composer-installer": "^1.0"
     },
+    "autoload": {
+        "psr-4": {
+            "SeriesCraft\\": "src/src/"
+        }
+    },
     "autoload-dev": {
         "psr-4": {
-            "SeriesCraft\\Tests\\Integration\\": "tests/Integration/"
+            "SeriesCraft\\Tests\\Integration\\": "tests/Integration/",
+            "SeriesCraft\\Tests\\Unit\\": "tests/Unit/"
         }
     },
     "scripts": {

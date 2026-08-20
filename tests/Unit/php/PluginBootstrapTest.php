@@ -29,8 +29,12 @@ class PluginBootstrapTest extends TestCase {
      * Confirms the Composer autoloader was generated for the plugin.
      */
     public function test_composer_autoloader_exists(): void {
-        $autoloader = dirname( __DIR__, 3 ) . '/src/vendor/autoload.php';
-        self::assertFileExists( $autoloader, 'src/vendor/autoload.php must exist (run composer install inside src/)' );
+        $root_autoloader = dirname( __DIR__, 3 ) . '/vendor/autoload.php';
+        $src_autoloader  = dirname( __DIR__, 3 ) . '/src/vendor/autoload.php';
+        self::assertTrue(
+            file_exists( $root_autoloader ) || file_exists( $src_autoloader ),
+            'Composer autoloader must exist (run composer install)'
+        );
     }
 
     /**
