@@ -5,6 +5,9 @@
  * Requires a running WordPress instance served by `npx wp-env start`.
  * The base URL is configured in playwright.config.js (default: http://localhost:8888).
  *
+ * For unauthenticated / guest user tests, use `createGuestPage(browser)` from `./helpers/wordpress.js`:
+ *   const { page, context } = await createGuestPage( browser );
+ *
  * Run locally:
  *   npx wp-env start
  *   npm run test:e2e

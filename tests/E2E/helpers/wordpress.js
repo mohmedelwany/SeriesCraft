@@ -111,3 +111,17 @@ export async function deactivatePluginViaBrowser( page, pluginName = 'Series Cra
 	const activateLink = row.locator( '.activate a' );
 	await expect( activateLink ).toBeAttached();
 }
+
+/**
+ * Create an isolated browser context and page for an unauthenticated / guest user,
+ * bypassing global storage state.
+ *
+ * @param {import('@playwright/test').Browser} browser
+ * @returns {Promise<{ page: import('@playwright/test').Page, context: import('@playwright/test').BrowserContext }>}
+ */
+export async function createGuestPage( browser ) {
+	const context = await browser.newContext( { storageState: { cookies: [], origins: [] } } );
+	const page = await context.newPage();
+	return { page, context };
+}
+
