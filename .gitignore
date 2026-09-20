@@ -13,6 +13,7 @@ docker/integration/.docker-stamp
 # Playwright output
 playwright-report/
 test-results/
+playwright/.auth/
 
 # wp-env runtime files
 .wp-env/

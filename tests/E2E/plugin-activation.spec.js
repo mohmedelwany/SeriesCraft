@@ -1,7 +1,6 @@
 // @ts-check
 import { test, expect } from '@playwright/test';
 import {
-	loginToWordPress,
 	goToPluginsPage,
 	getPluginRow,
 	isPluginActive,
@@ -11,11 +10,6 @@ import {
 
 test.describe( 'SeriesCraft — Browser-based Plugin Activation E2E', () => {
 	const PLUGIN_NAME = 'Series Craft';
-
-	test.beforeEach( async ( { page } ) => {
-		// Log in to WordPress Admin panel before each test
-		await loginToWordPress( page );
-	} );
 
 	test( 'can navigate to the Plugins page', async ( { page } ) => {
 		await goToPluginsPage( page );

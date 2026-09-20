@@ -10,7 +10,6 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig( {
 	testDir: './tests/E2E',
-	testMatch: '**/*.spec.js',
 
 	// Increase test timeout to 60s for WordPress environment setup/navigation
 	timeout: 60000,
@@ -43,8 +42,17 @@ export default defineConfig( {
 
 	projects: [
 		{
+			name: 'setup',
+			testMatch: /.*\.setup\.js/,
+		},
+		{
 			name: 'chromium',
-			use: { ...devices[ 'Desktop Chrome' ] },
+			testMatch: /.*\.spec\.js/,
+			use: {
+				...devices[ 'Desktop Chrome' ],
+				storageState: 'playwright/.auth/user.json',
+			},
+			dependencies: [ 'setup' ],
 		},
 	],
 } );
