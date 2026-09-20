@@ -15,6 +15,13 @@ RUN apt-get update && apt-get install -y \
 # ── Composer binary ─────────────────────────────────────────────────────────
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
+# ── WP-CLI ──────────────────────────────────────────────────────────────────
+RUN curl -o /usr/local/bin/wp \
+    https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar \
+    && chmod +x /usr/local/bin/wp
+
+RUN wp --info --allow-root
+
 WORKDIR /app
 
 # ── Stage 1: Plugin autoloader (src/vendor) ─────────────────────────────────
@@ -31,6 +38,9 @@ RUN composer install --no-interaction --prefer-dist --no-progress
 
 # ── Copy remaining source code + tests ──────────────────────────────────────
 COPY . .
+
+# Regenerate Composer autoload files now that the tests directory is present.
+RUN composer dump-autoload --no-interaction
 
 # Ensure all shell scripts are executable (handles clean checkouts where
 # the execute bit may not be preserved by git on some systems).
