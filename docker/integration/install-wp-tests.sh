@@ -24,40 +24,16 @@ WP_VERSION=${5:-latest}
 WP_CORE_DIR=${WP_CORE_DIR:-/tmp/wordpress}
 
 # ---------------------------------------------------------------------------
-# Resolve latest WP version from the API
-# ---------------------------------------------------------------------------
-if [[ "$WP_VERSION" == "latest" ]]; then
-
-    echo "===== API ====="
-
-    curl -s https://api.wordpress.org/core/version-check/1.7/
-
-    echo
-    echo "==============="
-    WP_VERSION=$(
-        curl -s https://api.wordpress.org/core/version-check/1.7/ \
-        | grep -o '"current":"[^"]*"' \
-        | head -1 \
-        | cut -d'"' -f4
-    )
-
-    echo "Resolved latest WP version: $WP_VERSION"
-fi
-
-WP_TAG="$WP_VERSION"
-
-# ---------------------------------------------------------------------------
 # Download WordPress core (only if not already present)
 # ---------------------------------------------------------------------------
 if [[ ! -d "$WP_CORE_DIR/wp-includes" ]]; then
     echo "==> Downloading WordPress $WP_VERSION core..."
     mkdir -p "$WP_CORE_DIR"
-    svn co --quiet \
-        "https://develop.svn.wordpress.org/tags/${WP_TAG}/src/" \
-        "$WP_CORE_DIR" \
-        || svn co --quiet \
-            "https://develop.svn.wordpress.org/trunk/src/" \
-            "$WP_CORE_DIR"
+    if [[ "$WP_VERSION" == "latest" ]]; then
+        php -d memory_limit=-1 /usr/local/bin/wp core download --path="$WP_CORE_DIR" --allow-root --force
+    else
+        php -d memory_limit=-1 /usr/local/bin/wp core download --path="$WP_CORE_DIR" --version="$WP_VERSION" --allow-root --force
+    fi
 fi
 
 echo "==> WordPress core ready at ${WP_CORE_DIR}."
