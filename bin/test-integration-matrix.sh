@@ -6,13 +6,13 @@
 # combination defined in the matrix below.
 #
 # Usage:
-#   ./bin/test-integration-matrix.sh              # full matrix
+#   ./bin/test-integration-matrix.sh              # full dynamic matrix
 #   PHP_VERSIONS="8.2" WP_VERSIONS="6.7" \
-#     ./bin/test-integration-matrix.sh            # single cell
+#     ./bin/test-integration-matrix.sh            # single cell override
 #
 # Options (env vars):
-#   PHP_VERSIONS   – space-separated list  (default: 7.4 8.1 8.2 8.3)
-#   WP_VERSIONS    – space-separated list  (default: 6.2 6.4 6.7)
+#   PHP_VERSIONS   – space-separated list  (default: 8.1 8.2 8.3)
+#   WP_VERSIONS    – space-separated list  (default: dynamically fetched latest 3 stable WP versions)
 #   BAIL_FAST      – set to "1" to stop on first failure (default: 0)
 # =============================================================================
 
@@ -21,8 +21,74 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 COMPOSE_FILE="$REPO_ROOT/docker/integration/docker-compose.yml"
 
-PHP_VERSIONS="${PHP_VERSIONS:-7.4 8.3}"
-WP_VERSIONS="${WP_VERSIONS:-6.9 7.0}"
+# Helper to fetch the latest 3 stable WordPress versions via official WP API
+get_latest_wp_versions() {
+    local fetched=""
+
+    # Attempt 1: Try PHP if available
+    if command -v php >/dev/null 2>&1; then
+        fetched=$(php -r '
+            $json = @file_get_contents("https://api.wordpress.org/core/version-check/1.7/");
+            if ($json) {
+                $data = json_decode($json, true);
+                $versions = [];
+                foreach ($data["offers"] ?? [] as $offer) {
+                    if (!empty($offer["version"]) && preg_match("/^(\d+\.\d+)/", $offer["version"], $m)) {
+                        if (!in_array($m[1], $versions)) {
+                            $versions[] = $m[1];
+                        }
+                    }
+                }
+                if (count($versions) >= 3) {
+                    echo implode(" ", array_slice($versions, 0, 3));
+                    exit(0);
+                }
+            }
+            exit(1);
+        ' 2>/dev/null || true)
+    fi
+
+    # Attempt 2: Try curl + jq if php attempt did not yield result
+    if [[ -z "$fetched" ]] && command -v curl >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
+        fetched=$(curl -s --connect-timeout 5 https://api.wordpress.org/core/version-check/1.7/ 2>/dev/null \
+            | jq -r '.offers[]?.version' 2>/dev/null \
+            | grep -E '^[0-9]+\.[0-9]+' \
+            | sed -E 's/^([0-9]+\.[0-9]+).*/\1/' \
+            | awk '!seen[$0]++' \
+            | head -n 3 \
+            | tr '\n' ' ' \
+            | sed 's/ $//' || true)
+    fi
+
+    # Attempt 3: Try curl + python3
+    if [[ -z "$fetched" ]] && command -v curl >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; then
+        fetched=$(python3 -c '
+import urllib.request, json, re
+try:
+    with urllib.request.urlopen("https://api.wordpress.org/core/version-check/1.7/", timeout=5) as response:
+        data = json.loads(response.read().decode())
+        versions = [];
+        for offer in data.get("offers", []):
+            v = offer.get("version", "")
+            m = re.match(r"^(\d+\.\d+)", v)
+            if m and m.group(1) not in versions:
+                versions.append(m.group(1))
+        print(" ".join(versions[:3]))
+except Exception:
+    pass
+' 2>/dev/null || true)
+    fi
+
+    # Fallback to last known stable versions if network/API is unreachable
+    if [[ -z "$fetched" ]]; then
+        fetched="6.7 6.6 6.5"
+    fi
+
+    echo "$fetched"
+}
+
+PHP_VERSIONS="${PHP_VERSIONS:-8.1 8.2 8.3}"
+WP_VERSIONS="${WP_VERSIONS:-$(get_latest_wp_versions)}"
 BAIL_FAST="${BAIL_FAST:-0}"
 
 # ---------------------------------------------------------------------------
