@@ -1,0 +1,7 @@
+vendor/
+src/vendor/
+node_modules/
+.git/
+.phpunit.result.cache
+playwright-report/
+test-results/
