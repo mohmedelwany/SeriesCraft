@@ -27,21 +27,25 @@ WP_CORE_DIR=${WP_CORE_DIR:-/tmp/wordpress}
 # Resolve latest WP version from the API
 # ---------------------------------------------------------------------------
 if [[ "$WP_VERSION" == "latest" ]]; then
+    echo "==> Resolving latest WP version from API..."
 
-    echo "===== API ====="
+    api_res=""
+    if command -v curl >/dev/null 2>&1; then
+        api_res=$(curl -s --connect-timeout 5 https://api.wordpress.org/core/version-check/1.7/ 2>/dev/null || true)
+    fi
 
-    curl -s https://api.wordpress.org/core/version-check/1.7/
+    resolved_ver=""
+    if [[ -n "$api_res" ]]; then
+        resolved_ver=$(echo "$api_res" | grep -o '"current":"[^"]*"' | head -1 | cut -d'"' -f4 || true)
+    fi
 
-    echo
-    echo "==============="
-    WP_VERSION=$(
-        curl -s https://api.wordpress.org/core/version-check/1.7/ \
-        | grep -o '"current":"[^"]*"' \
-        | head -1 \
-        | cut -d'"' -f4
-    )
-
-    echo "Resolved latest WP version: $WP_VERSION"
+    if [[ -n "$resolved_ver" ]]; then
+        WP_VERSION="$resolved_ver"
+        echo "Resolved latest WP version: $WP_VERSION"
+    else
+        WP_VERSION="6.7.1"
+        echo "Failed to resolve version from API. Falling back to stable version: $WP_VERSION"
+    fi
 fi
 
 WP_TAG="$WP_VERSION"

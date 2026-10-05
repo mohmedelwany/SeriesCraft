@@ -21,6 +21,91 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 COMPOSE_FILE="$REPO_ROOT/docker/integration/docker-compose.yml"
 
+# Helper to fetch the 3 latest stable PHP versions
+get_latest_php_versions() {
+    local fetched=""
+
+    # Attempt 1: Try PHP if available
+    if command -v php >/dev/null 2>&1; then
+        fetched=$(php -r '
+            $urls = [
+                "https://packagist.org/php-revisions.json",
+                "https://endoflife.date/api/php.json",
+                "https://www.php.net/releases/index.php?json"
+            ];
+            foreach ($urls as $url) {
+                $json = @file_get_contents($url);
+                if (!$json) continue;
+                $data = json_decode($json, true);
+                if (!$data) continue;
+                $versions = [];
+                if (isset($data["versions"]) && is_array($data["versions"])) {
+                    foreach ($data["versions"] as $v) {
+                        if (preg_match("/^(\d+\.\d+)/", $v, $m)) {
+                            if (!in_array($m[1], $versions)) $versions[] = $m[1];
+                        }
+                    }
+                } elseif (is_array($data)) {
+                    foreach ($data as $key => $val) {
+                        $v = is_array($val) ? ($val["cycle"] ?? $key) : $key;
+                        if (preg_match("/^(\d+\.\d+)/", (string)$v, $m)) {
+                            if (!in_array($m[1], $versions)) $versions[] = $m[1];
+                        }
+                    }
+                }
+                if (count($versions) >= 3) {
+                    echo implode(" ", array_slice($versions, 0, 3));
+                    exit(0);
+                }
+            }
+            exit(1);
+        ' 2>/dev/null || true)
+    fi
+
+    # Attempt 2: Try curl + jq if php attempt did not yield result
+    if [[ -z "$fetched" ]] && command -v curl >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
+        fetched=$(curl -s --connect-timeout 5 https://endoflife.date/api/php.json 2>/dev/null \
+            | jq -r '.[].cycle' 2>/dev/null \
+            | grep -E '^[0-9]+\.[0-9]+' \
+            | head -n 3 \
+            | tr '\n' ' ' \
+            | sed 's/ $//' || true)
+    fi
+
+    # Attempt 3: Try curl + python3
+    if [[ -z "$fetched" ]] && command -v curl >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; then
+        fetched=$(python3 -c '
+import urllib.request, json, re
+for url in ["https://packagist.org/php-revisions.json", "https://endoflife.date/api/php.json"]:
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=5) as response:
+            data = json.loads(response.read().decode())
+            versions = []
+            if isinstance(data, list):
+                for item in data:
+                    c = item.get("cycle", "")
+                    if c and c not in versions: versions.append(c)
+            elif isinstance(data, dict):
+                for k in data.get("versions", []):
+                    m = re.match(r"^(\d+\.\d+)", k)
+                    if m and m.group(1) not in versions: versions.append(m.group(1))
+            if len(versions) >= 3:
+                print(" ".join(versions[:3]))
+                break
+    except Exception:
+        pass
+' 2>/dev/null || true)
+    fi
+
+    # Fallback to standard stable versions if network/API is unreachable
+    if [[ -z "$fetched" ]]; then
+        fetched="8.1 8.2 8.3"
+    fi
+
+    echo "$fetched"
+}
+
 # Helper to fetch the latest 3 stable WordPress versions via official WP API
 get_latest_wp_versions() {
     local fetched=""
@@ -32,10 +117,13 @@ get_latest_wp_versions() {
             if ($json) {
                 $data = json_decode($json, true);
                 $versions = [];
+                $seen_majors = [];
                 foreach ($data["offers"] ?? [] as $offer) {
                     if (!empty($offer["version"]) && preg_match("/^(\d+\.\d+)/", $offer["version"], $m)) {
-                        if (!in_array($m[1], $versions)) {
-                            $versions[] = $m[1];
+                        $major = $m[1];
+                        if (!in_array($major, $seen_majors)) {
+                            $seen_majors[] = $major;
+                            $versions[] = $offer["version"];
                         }
                     }
                 }
@@ -53,8 +141,13 @@ get_latest_wp_versions() {
         fetched=$(curl -s --connect-timeout 5 https://api.wordpress.org/core/version-check/1.7/ 2>/dev/null \
             | jq -r '.offers[]?.version' 2>/dev/null \
             | grep -E '^[0-9]+\.[0-9]+' \
-            | sed -E 's/^([0-9]+\.[0-9]+).*/\1/' \
-            | awk '!seen[$0]++' \
+            | awk '{
+                split($0, a, ".");
+                major = a[1] "." a[2];
+                if (!seen[major]++) {
+                    print $0;
+                }
+            }' \
             | head -n 3 \
             | tr '\n' ' ' \
             | sed 's/ $//' || true)
@@ -67,13 +160,18 @@ import urllib.request, json, re
 try:
     with urllib.request.urlopen("https://api.wordpress.org/core/version-check/1.7/", timeout=5) as response:
         data = json.loads(response.read().decode())
-        versions = [];
+        versions = []
+        seen_majors = []
         for offer in data.get("offers", []):
             v = offer.get("version", "")
             m = re.match(r"^(\d+\.\d+)", v)
-            if m and m.group(1) not in versions:
-                versions.append(m.group(1))
-        print(" ".join(versions[:3]))
+            if m:
+                major = m.group(1)
+                if major not in seen_majors:
+                    seen_majors.append(major)
+                    versions.append(v)
+        if len(versions) >= 3:
+            print(" ".join(versions[:3]))
 except Exception:
     pass
 ' 2>/dev/null || true)
@@ -81,13 +179,13 @@ except Exception:
 
     # Fallback to last known stable versions if network/API is unreachable
     if [[ -z "$fetched" ]]; then
-        fetched="6.7 6.6 6.5"
+        fetched="6.7.1 6.6.2 6.5.5"
     fi
 
     echo "$fetched"
 }
 
-PHP_VERSIONS="${PHP_VERSIONS:-8.1 8.2 8.3}"
+PHP_VERSIONS="${PHP_VERSIONS:-$(get_latest_php_versions)}"
 WP_VERSIONS="${WP_VERSIONS:-$(get_latest_wp_versions)}"
 BAIL_FAST="${BAIL_FAST:-0}"
 
