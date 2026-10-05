@@ -37,7 +37,7 @@ fi
 # Wait for MariaDB to be fully responsive
 # ---------------------------------------------------------------------------
 echo "==> Waiting for MariaDB database connection..."
-until mariadb-admin ping -h"${DB_HOST}" -u"${DB_USER}" -p"${DB_PASS}" --silent 2>/dev/null; do
+until mariadb --skip-ssl -h"${DB_HOST}" -u"${DB_USER}" -p"${DB_PASS}" -e "SELECT 1;" >/dev/null 2>&1 || mysql --skip-ssl -h"${DB_HOST}" -u"${DB_USER}" -p"${DB_PASS}" -e "SELECT 1;" >/dev/null 2>&1; do
     echo "    Database is unavailable - sleeping 1s..."
     sleep 1
 done
