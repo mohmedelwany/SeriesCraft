@@ -41,6 +41,9 @@ RUN composer install --no-interaction --prefer-dist --no-progress
 # ── Copy remaining source code + tests ──────────────────────────────────────
 COPY . .
 
+# Keep the lean docker/integration/composer.json manifest active inside container
+COPY docker/integration/composer.json ./composer.json
+
 # Regenerate Composer autoload files now that the tests directory is present.
 RUN composer dump-autoload --no-interaction
 

@@ -34,6 +34,16 @@ fi
 
 
 # ---------------------------------------------------------------------------
+# Wait for MariaDB to be fully responsive
+# ---------------------------------------------------------------------------
+echo "==> Waiting for MariaDB database connection..."
+until mariadb --skip-ssl -h"${DB_HOST}" -u"${DB_USER}" -p"${DB_PASS}" -e "SELECT 1;" >/dev/null 2>&1 || mysql --skip-ssl -h"${DB_HOST}" -u"${DB_USER}" -p"${DB_PASS}" -e "SELECT 1;" >/dev/null 2>&1; do
+    echo "    Database is unavailable - sleeping 1s..."
+    sleep 1
+done
+echo "==> MariaDB database is ready!"
+
+# ---------------------------------------------------------------------------
 # Create wp-config.php so WP-CLI can talk to WordPress.
 # ---------------------------------------------------------------------------
 echo "==> Creating wp-config.php..."

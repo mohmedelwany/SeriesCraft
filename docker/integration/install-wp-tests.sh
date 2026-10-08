@@ -56,10 +56,10 @@ WP_TAG="$WP_VERSION"
 if [[ ! -d "$WP_CORE_DIR/wp-includes" ]]; then
     echo "==> Downloading WordPress $WP_VERSION core..."
     mkdir -p "$WP_CORE_DIR"
-    svn co --quiet \
+    svn co --quiet --non-interactive --trust-server-cert \
         "https://develop.svn.wordpress.org/tags/${WP_TAG}/src/" \
         "$WP_CORE_DIR" \
-        || svn co --quiet \
+        || svn co --quiet --non-interactive --trust-server-cert \
             "https://develop.svn.wordpress.org/trunk/src/" \
             "$WP_CORE_DIR"
 fi
