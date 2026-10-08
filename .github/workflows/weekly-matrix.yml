@@ -1,0 +1,74 @@
+name: Weekly Compatibility Matrix
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Dedicated workflow for periodic and manual full matrix compatibility checks.
+# Monitors upcoming and active stable PHP (8.1, 8.2, 8.3, 8.4+) and WordPress
+# releases to proactively detect breaking changes and compatibility regressions.
+# ─────────────────────────────────────────────────────────────────────────────
+on:
+  schedule:
+    # Run every Sunday at 00:00 UTC
+    - cron: "0 0 * * 0"
+  workflow_dispatch:
+    inputs:
+      php_versions:
+        description: 'PHP versions override (e.g., "8.1 8.2 8.3 8.4", "latest-stable", or empty for full dynamic matrix)'
+        required: false
+        default: ""
+        type: string
+      wp_versions:
+        description: 'WordPress versions override (e.g., "latest", "6.7.1 6.6.2", or empty for dynamic 3 latest stable)'
+        required: false
+        default: ""
+        type: string
+      bail_fast:
+        description: 'Stop execution immediately on first matrix failure (1 = yes, 0 = no)'
+        required: false
+        default: "0"
+        type: choice
+        options:
+          - "0"
+          - "1"
+
+permissions:
+  contents: read
+
+jobs:
+  matrix-test:
+    name: "Full Integration Matrix"
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Ensure matrix runner executable permissions
+        run: |
+          chmod +x bin/test-integration-matrix.sh docker/integration/*.sh
+
+      - name: Run Full Integration Compatibility Matrix
+        run: |
+          bash bin/test-integration-matrix.sh
+        env:
+          PHP_VERSIONS: ${{ github.event.inputs.php_versions }}
+          WP_VERSIONS: ${{ github.event.inputs.wp_versions }}
+          BAIL_FAST: ${{ github.event.inputs.bail_fast || '0' }}
+
+      - name: Compatibility Status & Alert Notification
+        if: always()
+        run: |
+          echo "## 📊 Integration Matrix Compatibility Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Execution Trigger:** \`${{ github.event_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **PHP Scope:** \`${{ github.event.inputs.php_versions || 'Dynamic Full Supported Matrix (>= 8.1)' }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **WordPress Scope:** \`${{ github.event.inputs.wp_versions || 'Dynamic 3 Latest Stable Releases' }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "### ✅ Compatibility Status: ALL CELLS PASSED" >> $GITHUB_STEP_SUMMARY
+            echo "Plugin is fully compatible with all tested PHP and WordPress versions." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ❌ Compatibility Alert: REGRESSION DETECTED" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ One or more PHP / WordPress matrix combinations failed during integration testing. Check step logs above to identify failing assertions or deprecated syntax." >> $GITHUB_STEP_SUMMARY
+          fi

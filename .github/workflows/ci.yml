@@ -73,11 +73,11 @@ jobs:
   # ───────────────────────────────────────────────────────────────────────────
   # JOB 2 — Integration tests (PHPUnit + Docker WP environment)
   # Runs only on PRs targeting qa or main.
-  # Uses a single canonical PHP × WP cell (8.2 / latest) for speed.
-  # Full cross-version matrix is available locally via: composer test:matrix
+  # Uses a fast, dynamic single-cell run (latest stable PHP × latest stable WP).
+  # Full cross-version matrix is executed weekly in weekly-matrix.yml or via: composer test:matrix
   # ───────────────────────────────────────────────────────────────────────────
   integration:
-    name: "Integration Tests (PHP 8.2 / WP latest)"
+    name: "Integration Tests (PHP latest-stable / WP latest)"
     runs-on: ubuntu-latest
     if: github.base_ref == 'qa' || github.base_ref == 'main'
 
@@ -85,7 +85,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup PHP 8.2
+      - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: "8.2"
@@ -96,8 +96,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: vendor
-          key: composer-8.2-${{ hashFiles('composer.lock') }}
-          restore-keys: composer-8.2-
+          key: composer-${{ runner.os }}-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-
 
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
@@ -111,8 +111,11 @@ jobs:
       - name: Install Node dependencies
         run: npm ci
 
-      - name: Run integration tests (PHP 8.2 / WP latest)
-        run: PHP_VERSIONS="8.2" WP_VERSIONS="latest" bash bin/test-integration-matrix.sh
+      - name: Ensure runner script permissions
+        run: chmod +x bin/test-integration-matrix.sh docker/integration/*.sh
+
+      - name: Run integration tests (PHP latest-stable / WP latest)
+        run: PHP_VERSIONS="latest-stable" WP_VERSIONS="latest" bash bin/test-integration-matrix.sh
         timeout-minutes: 20
 
   # ───────────────────────────────────────────────────────────────────────────

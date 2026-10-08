@@ -2,17 +2,19 @@
 # =============================================================================
 # bin/test-integration-matrix.sh
 #
-# Runs the integration test suite against every PHP × WordPress version
-# combination defined in the matrix below.
+# Runs the integration test suite against dynamic or specified combinations of
+# PHP × WordPress versions.
 #
 # Usage:
 #   ./bin/test-integration-matrix.sh              # full dynamic matrix
-#   PHP_VERSIONS="8.2" WP_VERSIONS="6.7" \
-#     ./bin/test-integration-matrix.sh            # single cell override
+#   PHP_VERSIONS="latest-stable" WP_VERSIONS="latest" \
+#     ./bin/test-integration-matrix.sh            # fastest single-cell PR run
+#   PHP_VERSIONS="8.2 8.3 8.4" WP_VERSIONS="6.7.1" \
+#     ./bin/test-integration-matrix.sh            # custom matrix override
 #
 # Options (env vars):
-#   PHP_VERSIONS   – space-separated list  (default: 8.1 8.2 8.3)
-#   WP_VERSIONS    – space-separated list  (default: dynamically fetched latest 3 stable WP versions)
+#   PHP_VERSIONS   – space-separated list or "latest-stable" (default: dynamic discovery >= 8.1)
+#   WP_VERSIONS    – space-separated list or "latest" (default: 3 latest stable releases)
 #   BAIL_FAST      – set to "1" to stop on first failure (default: 0)
 # =============================================================================
 
@@ -21,40 +23,79 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 COMPOSE_FILE="$REPO_ROOT/docker/integration/docker-compose.yml"
 
-# Helper to fetch the 3 latest stable PHP versions
-get_latest_php_versions() {
-    local fetched=""
+# Minimum PHP version supported by the plugin
+MIN_PHP_VERSION="8.1"
+FALLBACK_PHP_VERSIONS="8.1 8.2 8.3 8.4"
+FALLBACK_WP_VERSIONS="6.7.1 6.6.2 6.5.5"
 
-    # Attempt 1: Try PHP if available
+# ---------------------------------------------------------------------------
+# Docker Image Verification
+# ---------------------------------------------------------------------------
+# Verifies if the official Docker Hub image exists for a given PHP version.
+is_php_docker_image_available() {
+    local php_ver="$1"
+    local tag="${php_ver}-cli"
+
+    # Strategy 1: Check via Docker CLI if docker daemon is reachable
+    if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+        if docker manifest inspect "php:${tag}" >/dev/null 2>&1; then
+            return 0
+        fi
+    fi
+
+    # Strategy 2: Query Docker Hub Registry API
+    if command -v curl >/dev/null 2>&1; then
+        local http_code
+        http_code=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 5 -m 8 "https://hub.docker.com/v2/repositories/library/php/tags/${tag}" 2>/dev/null || true)
+        if [[ "$http_code" == "200" ]]; then
+            return 0
+        elif [[ "$http_code" == "404" ]]; then
+            return 1
+        fi
+    fi
+
+    # If registry cannot be reached (e.g. offline/isolated environment), accept standard known versions
+    return 0
+}
+
+# ---------------------------------------------------------------------------
+# Helper: Fetch Supported PHP Versions Dynamically (>= 8.1)
+# ---------------------------------------------------------------------------
+get_supported_php_versions() {
+    local raw_versions=""
+
+    # Strategy 1: PHP runtime query
     if command -v php >/dev/null 2>&1; then
-        fetched=$(php -r '
+        raw_versions=$(php -r '
             $urls = [
-                "https://packagist.org/php-revisions.json",
                 "https://endoflife.date/api/php.json",
+                "https://packagist.org/php-revisions.json",
                 "https://www.php.net/releases/index.php?json"
             ];
             foreach ($urls as $url) {
-                $json = @file_get_contents($url);
+                $ctx = stream_context_create(["http" => ["timeout" => 5, "header" => "User-Agent: SeriesCraft-Matrix/1.0\r\n"]]);
+                $json = @file_get_contents($url, false, $ctx);
                 if (!$json) continue;
                 $data = json_decode($json, true);
                 if (!$data) continue;
-                $versions = [];
-                if (isset($data["versions"]) && is_array($data["versions"])) {
-                    foreach ($data["versions"] as $v) {
-                        if (preg_match("/^(\d+\.\d+)/", $v, $m)) {
-                            if (!in_array($m[1], $versions)) $versions[] = $m[1];
+                $found = [];
+                if (is_array($data) && isset($data[0]["cycle"])) {
+                    foreach ($data as $item) {
+                        $c = (string)($item["cycle"] ?? "");
+                        if (preg_match("/^(\d+\.\d+)$/", $c) && version_compare($c, "8.1", ">=")) {
+                            if (!in_array($c, $found, true)) $found[] = $c;
                         }
                     }
-                } elseif (is_array($data)) {
-                    foreach ($data as $key => $val) {
-                        $v = is_array($val) ? ($val["cycle"] ?? $key) : $key;
-                        if (preg_match("/^(\d+\.\d+)/", (string)$v, $m)) {
-                            if (!in_array($m[1], $versions)) $versions[] = $m[1];
+                } elseif (isset($data["versions"]) && is_array($data["versions"])) {
+                    foreach ($data["versions"] as $v) {
+                        if (preg_match("/^(\d+\.\d+)/", $v, $m) && version_compare($m[1], "8.1", ">=")) {
+                            if (!in_array($m[1], $found, true)) $found[] = $m[1];
                         }
                     }
                 }
-                if (count($versions) >= 3) {
-                    echo implode(" ", array_slice($versions, 0, 3));
+                if (!empty($found)) {
+                    usort($found, "version_compare");
+                    echo implode(" ", $found);
                     exit(0);
                 }
             }
@@ -62,83 +103,142 @@ get_latest_php_versions() {
         ' 2>/dev/null || true)
     fi
 
-    # Attempt 2: Try curl + jq if php attempt did not yield result
-    if [[ -z "$fetched" ]] && command -v curl >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
-        fetched=$(curl -s --connect-timeout 5 https://endoflife.date/api/php.json 2>/dev/null \
-            | jq -r '.[].cycle' 2>/dev/null \
-            | grep -E '^[0-9]+\.[0-9]+' \
-            | head -n 3 \
-            | tr '\n' ' ' \
-            | sed 's/ $//' || true)
-    fi
-
-    # Attempt 3: Try curl + python3
-    if [[ -z "$fetched" ]] && command -v curl >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; then
-        fetched=$(python3 -c '
+    # Strategy 2: Python 3 query
+    if [[ -z "$raw_versions" ]] && command -v python3 >/dev/null 2>&1; then
+        raw_versions=$(python3 -c '
 import urllib.request, json, re
-for url in ["https://packagist.org/php-revisions.json", "https://endoflife.date/api/php.json"]:
+
+urls = ["https://endoflife.date/api/php.json", "https://packagist.org/php-revisions.json"]
+found = []
+for url in urls:
     try:
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=5) as response:
-            data = json.loads(response.read().decode())
-            versions = []
+        req = urllib.request.Request(url, headers={"User-Agent": "SeriesCraft-Matrix/1.0"})
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            data = json.loads(resp.read().decode())
             if isinstance(data, list):
                 for item in data:
-                    c = item.get("cycle", "")
-                    if c and c not in versions: versions.append(c)
+                    c = str(item.get("cycle", ""))
+                    if re.match(r"^\d+\.\d+$", c):
+                        parts = [int(p) for p in c.split(".")]
+                        if parts >= [8, 1] and c not in found:
+                            found.append(c)
             elif isinstance(data, dict):
                 for k in data.get("versions", []):
-                    m = re.match(r"^(\d+\.\d+)", k)
-                    if m and m.group(1) not in versions: versions.append(m.group(1))
-            if len(versions) >= 3:
-                print(" ".join(versions[:3]))
+                    m = re.match(r"^(\d+\.\d+)", str(k))
+                    if m:
+                        c = m.group(1)
+                        parts = [int(p) for p in c.split(".")]
+                        if parts >= [8, 1] and c not in found:
+                            found.append(c)
+            if found:
+                found.sort(key=lambda x: [int(p) for p in x.split(".")])
+                print(" ".join(found))
                 break
     except Exception:
         pass
 ' 2>/dev/null || true)
     fi
 
-    # Fallback to standard stable versions if network/API is unreachable
-    if [[ -z "$fetched" ]]; then
-        fetched="8.1 8.2 8.3"
+    # Strategy 3: curl + jq
+    if [[ -z "$raw_versions" ]] && command -v curl >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
+        raw_versions=$(curl -s --connect-timeout 5 -m 8 -H "User-Agent: SeriesCraft-Matrix/1.0" https://endoflife.date/api/php.json 2>/dev/null \
+            | jq -r '.[].cycle' 2>/dev/null \
+            | grep -E '^[0-9]+\.[0-9]+$' \
+            | awk '$1 >= 8.1' \
+            | sort -V \
+            | tr '\n' ' ' \
+            | sed 's/ $//' || true)
     fi
 
-    echo "$fetched"
+    # Fallback to predefined stable list if external services are unreachable
+    if [[ -z "$raw_versions" ]]; then
+        raw_versions="$FALLBACK_PHP_VERSIONS"
+    fi
+
+    # Filter versions against Docker Hub official PHP image availability
+    local verified_versions=()
+    for ver in $raw_versions; do
+        if is_php_docker_image_available "$ver"; then
+            verified_versions+=("$ver")
+        fi
+    done
+
+    if [[ ${#verified_versions[@]} -gt 0 ]]; then
+        echo "${verified_versions[*]}"
+    else
+        echo "$FALLBACK_PHP_VERSIONS"
+    fi
 }
 
-# Helper to fetch the latest 3 stable WordPress versions via official WP API
+# ---------------------------------------------------------------------------
+# Helper: Fetch WordPress Versions Dynamically via Official WP API
+# ---------------------------------------------------------------------------
 get_latest_wp_versions() {
-    local fetched=""
+    local limit="${1:-3}"
+    local raw_versions=""
 
-    # Attempt 1: Try PHP if available
+    # Strategy 1: PHP runtime query
     if command -v php >/dev/null 2>&1; then
-        fetched=$(php -r '
-            $json = @file_get_contents("https://api.wordpress.org/core/version-check/1.7/");
+        raw_versions=$(php -r '
+            $limit = (int)($argv[1] ?? 3);
+            $ctx = stream_context_create(["http" => ["timeout" => 5, "header" => "User-Agent: SeriesCraft-Matrix/1.0\r\n"]]);
+            $json = @file_get_contents("https://api.wordpress.org/core/version-check/1.7/", false, $ctx);
             if ($json) {
                 $data = json_decode($json, true);
                 $versions = [];
                 $seen_majors = [];
                 foreach ($data["offers"] ?? [] as $offer) {
-                    if (!empty($offer["version"]) && preg_match("/^(\d+\.\d+)/", $offer["version"], $m)) {
+                    $v = $offer["version"] ?? "";
+                    if (preg_match("/^(\d+\.\d+)/", $v, $m)) {
                         $major = $m[1];
-                        if (!in_array($major, $seen_majors)) {
+                        if (!in_array($major, $seen_majors, true)) {
                             $seen_majors[] = $major;
-                            $versions[] = $offer["version"];
+                            $versions[] = $v;
                         }
                     }
+                    if (count($versions) >= $limit) break;
                 }
-                if (count($versions) >= 3) {
-                    echo implode(" ", array_slice($versions, 0, 3));
+                if (!empty($versions)) {
+                    echo implode(" ", array_slice($versions, 0, $limit));
                     exit(0);
                 }
             }
             exit(1);
-        ' 2>/dev/null || true)
+        ' "$limit" 2>/dev/null || true)
     fi
 
-    # Attempt 2: Try curl + jq if php attempt did not yield result
-    if [[ -z "$fetched" ]] && command -v curl >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
-        fetched=$(curl -s --connect-timeout 5 https://api.wordpress.org/core/version-check/1.7/ 2>/dev/null \
+    # Strategy 2: Python 3 query
+    if [[ -z "$raw_versions" ]] && command -v python3 >/dev/null 2>&1; then
+        raw_versions=$(python3 -c '
+import urllib.request, json, re, sys
+
+limit = int(sys.argv[1]) if len(sys.argv) > 1 else 3
+try:
+    req = urllib.request.Request("https://api.wordpress.org/core/version-check/1.7/", headers={"User-Agent": "SeriesCraft-Matrix/1.0"})
+    with urllib.request.urlopen(req, timeout=5) as resp:
+        data = json.loads(resp.read().decode())
+        versions = []
+        seen_majors = set()
+        for offer in data.get("offers", []):
+            v = offer.get("version", "")
+            m = re.match(r"^(\d+\.\d+)", v)
+            if m:
+                major = m.group(1)
+                if major not in seen_majors:
+                    seen_majors.add(major)
+                    versions.append(v)
+            if len(versions) >= limit:
+                break
+        if versions:
+            print(" ".join(versions[:limit]))
+except Exception:
+    pass
+' "$limit" 2>/dev/null || true)
+    fi
+
+    # Strategy 3: curl + jq
+    if [[ -z "$raw_versions" ]] && command -v curl >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
+        raw_versions=$(curl -s --connect-timeout 5 -m 8 https://api.wordpress.org/core/version-check/1.7/ 2>/dev/null \
             | jq -r '.offers[]?.version' 2>/dev/null \
             | grep -E '^[0-9]+\.[0-9]+' \
             | awk '{
@@ -148,45 +248,44 @@ get_latest_wp_versions() {
                     print $0;
                 }
             }' \
-            | head -n 3 \
+            | head -n "$limit" \
             | tr '\n' ' ' \
             | sed 's/ $//' || true)
     fi
 
-    # Attempt 3: Try curl + python3
-    if [[ -z "$fetched" ]] && command -v curl >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; then
-        fetched=$(python3 -c '
-import urllib.request, json, re
-try:
-    with urllib.request.urlopen("https://api.wordpress.org/core/version-check/1.7/", timeout=5) as response:
-        data = json.loads(response.read().decode())
-        versions = []
-        seen_majors = []
-        for offer in data.get("offers", []):
-            v = offer.get("version", "")
-            m = re.match(r"^(\d+\.\d+)", v)
-            if m:
-                major = m.group(1)
-                if major not in seen_majors:
-                    seen_majors.append(major)
-                    versions.append(v)
-        if len(versions) >= 3:
-            print(" ".join(versions[:3]))
-except Exception:
-    pass
-' 2>/dev/null || true)
+    # Fallback to predefined stable list if API is unreachable
+    if [[ -z "$raw_versions" ]]; then
+        if [[ "$limit" -eq 1 ]]; then
+            raw_versions="6.7.1"
+        else
+            raw_versions="$FALLBACK_WP_VERSIONS"
+        fi
     fi
 
-    # Fallback to last known stable versions if network/API is unreachable
-    if [[ -z "$fetched" ]]; then
-        fetched="6.7.1 6.6.2 6.5.5"
-    fi
-
-    echo "$fetched"
+    echo "$raw_versions"
 }
 
-PHP_VERSIONS="${PHP_VERSIONS:-$(get_latest_php_versions)}"
-WP_VERSIONS="${WP_VERSIONS:-$(get_latest_wp_versions)}"
+# ---------------------------------------------------------------------------
+# Resolve PHP & WordPress Matrices
+# ---------------------------------------------------------------------------
+RESOLVED_PHP_LIST="$(get_supported_php_versions)"
+
+if [[ "${PHP_VERSIONS:-}" == "latest-stable" ]]; then
+    # Dynamically pick ONLY the highest stable PHP version
+    PHP_VERSIONS="$(echo "$RESOLVED_PHP_LIST" | tr ' ' '\n' | sort -V | tail -n 1)"
+elif [[ -z "${PHP_VERSIONS:-}" ]]; then
+    # Default: Full dynamic matrix across all discovered supported versions
+    PHP_VERSIONS="$RESOLVED_PHP_LIST"
+fi
+
+if [[ "${WP_VERSIONS:-}" == "latest" ]]; then
+    # Dynamically pick ONLY the single newest stable WordPress release
+    WP_VERSIONS="$(get_latest_wp_versions 1)"
+elif [[ -z "${WP_VERSIONS:-}" ]]; then
+    # Default: Top 3 latest stable releases
+    WP_VERSIONS="$(get_latest_wp_versions 3)"
+fi
+
 BAIL_FAST="${BAIL_FAST:-0}"
 
 # ---------------------------------------------------------------------------
@@ -218,6 +317,12 @@ run_matrix_cell() {
 
     info "Running: $label"
     echo "────────────────────────────────────────────────────────────"
+
+    # Pre-flight check for PHP docker image availability
+    if ! is_php_docker_image_available "$php"; then
+        warn "Docker image for PHP ${php} is not available on Docker Hub. Skipping $label."
+        return 0
+    fi
 
     if PHP_VERSION="$php" WP_VERSION="$wp" \
         docker compose \
@@ -275,12 +380,13 @@ print_summary() {
 }
 
 # ---------------------------------------------------------------------------
-# Main
+# Main Execution
 # ---------------------------------------------------------------------------
 echo ""
 echo -e "${BOLD}SeriesCraft — Integration Test Matrix${RESET}"
-echo -e "PHP versions : $PHP_VERSIONS"
-echo -e "WP versions  : $WP_VERSIONS"
+echo -e "Resolved PHP versions : ${RESOLVED_PHP_LIST}"
+echo -e "Target PHP versions   : ${PHP_VERSIONS}"
+echo -e "Target WP versions    : ${WP_VERSIONS}"
 echo ""
 
 for php in $PHP_VERSIONS; do

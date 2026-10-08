@@ -1,7 +1,26 @@
+# ── Vendor & Dependency Directories ──
 vendor/
 src/vendor/
 node_modules/
+
+# ── Version Control ──
 .git/
+.gitignore
+
+# ── Test & Build Artifacts ──
 .phpunit.result.cache
-playwright-report/
 test-results/
+playwright-report/
+
+# ── IDE & Editor Configuration ──
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ── Logs & Scratch ──
+*.log
+scratch/
