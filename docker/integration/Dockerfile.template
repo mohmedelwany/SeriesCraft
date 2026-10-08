@@ -3,6 +3,7 @@ FROM php:${PHP_VERSION}-cli
 
 # ── System dependencies ─────────────────────────────────────────────────────
 RUN apt-get update && apt-get install -y \
+    ca-certificates \
     unzip \
     git \
     curl \
@@ -13,7 +14,8 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # ── Composer binary ─────────────────────────────────────────────────────────
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+RUN curl -sSL -o /usr/local/bin/composer https://getcomposer.org/download/latest-stable/composer.phar \
+    && chmod +x /usr/local/bin/composer
 
 # ── WP-CLI ──────────────────────────────────────────────────────────────────
 RUN curl -o /usr/local/bin/wp \
@@ -32,7 +34,7 @@ RUN cd src && composer install --no-dev --no-interaction --prefer-dist --no-prog
 
 # ── Stage 2: Test tooling (phpunit only) ────────────────────────────────────
 # Uses docker/integration/composer.json — intentionally lean, no linting tools,
-# so it works on every PHP version we test against (7.4 – 8.3).
+# so it works on every PHP version we test against (8.1 – 8.4+).
 COPY docker/integration/composer.json ./
 RUN composer install --no-interaction --prefer-dist --no-progress
 
