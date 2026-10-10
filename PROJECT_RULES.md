@@ -236,3 +236,23 @@ series-craft/
    - Run `composer lint` (PHPCS) to ensure WordPress Coding Standards (WPCS) compliance.
    - Run `composer stan` (PHPStan) to ensure static analysis passes cleanly.
    - Run `npm test` / `npm run build` for React & JS assets.
+
+### 6. Test Documentation & Numbering Standard
+- Every test method within both Unit and Integration test classes must include a docblock comment.
+- The docblock must explicitly start with a sequential test case number within the file, followed by a concise description of the scenario and expected outcome:
+  ```php
+  /**
+   * Test 1: Verifies that creating tables executes idempotently and applies proper schema constraints.
+   */
+  public function test_creates_table_successfully(): void
+  {
+      // ...
+  }
+
+  /**
+   * Test 2: Verifies that post deletion cascades to remove junction records.
+   */
+  public function test_post_deletion_removes_relationship(): void
+  {
+      // ...
+  }
