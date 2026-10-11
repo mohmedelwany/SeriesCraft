@@ -56,10 +56,22 @@ series-craft/
 │   │   │   └── index.js                    # Store registration module
 │   │   └── index.js                        # Primary JavaScript entry point for Gutenberg editor assets
 │   └── scss/                               # SCSS source styles and design tokens
+│       ├── abstracts/                      # Global Sass tools, variables, and mixins
+│       │   ├── _mixins.scss                # Responsive breakpoints, flex/grid, and a11y helpers
+│       │   └── _variables.scss             # Design tokens, scoped CSS variables (--sc-*), and SCSS maps
+│       ├── components/                     # Modular frontend UI component partials
+│       │   ├── _badge.scss                 # Series pill badges ("Part X of Y", "Reading Now")
+│       │   ├── _header.scss                # Series header card & metadata container
+│       │   ├── _navigation.scss            # Previous/Next post navigation buttons & disabled states
+│       │   └── _post-list.scss             # Series post list, active highlight states & grid variations
+│       ├── editor/                         # Scoped Gutenberg editor and inspector styles
+│       │   ├── _draggable.scss             # Sortable draggable cards, drag overlay & confirm modal
+│       │   ├── _layout-selector.scss       # Interactive layout selector preview cards
+│       │   └── _panel.scss                 # Gutenberg inspector sidebar panel controls
 │       ├── admin.scss                      # Admin dashboard styling
 │       ├── editor.scss                     # Gutenberg editor custom sidebar & block preview styles
 │       ├── frontend.scss                   # Frontend layouts, grid styling, and accordion CSS
-│       └── variables.scss                  # CSS custom properties and design token definitions
+│       └── variables.scss                  # Design tokens entry wrapper (@forward "abstracts/variables")
 ├── src/                                    # Main PHP plugin root directory
 │   ├── series-craft.php                    # Main plugin header file, defines constants, loads Composer autoloader, boots plugin
 │   └── src/                                # PSR-4 autoloader root mapped to 'SeriesCraft\' namespace
