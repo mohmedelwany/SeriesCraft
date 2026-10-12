@@ -129,6 +129,11 @@ series-craft/
 │   │   ├── homepage.spec.js                # Frontend end-to-end test suite
 │   │   └── plugin-activation.spec.js       # Plugin activation & admin workflow end-to-end test suite
 │   ├── Integration/                        # PHPUnit integration tests running against active WordPress database
+│   │   ├── Database/                       # Integration tests mirroring Database production namespace
+│   │   │   └── Repositories/               # Repository tests mirroring SeriesCraft\Database\Repositories
+│   │   │       └── SeriesRepositoryTest.php # Series repository & term_order integration tests
+│   │   ├── Taxonomy/                       # Integration tests for taxonomy layer
+│   │   │   └── SeriesTaxonomyAdminTest.php # Classic taxonomy fallback screen integration tests
 │   │   ├── bootstrap.php                   # Test bootstrap file configuring WP test environment
 │   │   ├── IntegrationTestCase.php         # Base integration test case class extending WP_UnitTestCase
 │   │   └── SmokeTest.php                   # Basic smoke test for plugin initialization and DB sanity
@@ -240,11 +245,36 @@ series-craft/
 
 ## 5. Development & Testing Workflow Rules
 
+### 5.1. Test-Driven Development (TDD) & Architectural Mirroring
 1. **TDD First:** Write failing tests prior to implementing logic:
    - `tests/Unit/php` for pure logic (sanitizers, formatters, calculators).
    - `tests/Integration` for WP database operations, custom SQL repositories, REST endpoints, and hooks.
    - `tests/E2E` for editor interactions and block behavior.
-2. **Strict Code Quality Standards:**
-   - Run `composer lint` (PHPCS) to ensure WordPress Coding Standards (WPCS) compliance.
+2. **Architectural Mirroring for Repositories:**
+   - Integration tests for database repositories reside at `tests/Integration/Database/Repositories/SeriesRepositoryTest.php`.
+   - Tests for database repositories must strictly mirror production code namespaces (`SeriesCraft\Tests\Integration\Database\Repositories` mirroring production `SeriesCraft\Database\Repositories`).
+   - The test directory structure strictly mirrors the production `src/src/` hierarchy to preserve PSR-4 autoloading symmetry across tests and production code.
+
+### 5.2. WordPress Coding Standards (WPCS) & Method Naming
+1. **Method & Callback Naming (`snake_case`):**
+   - All public repository methods and admin hook callbacks adhere strictly to WordPress `snake_case` naming conventions:
+     - Repository methods: `get_series_posts`, `update_series_order`, `get_post_series`.
+     - Admin callbacks: `render_order_field`, `save_order_field`, `enqueue_scripts`.
+2. **Pre-Commit Hook Enforcement (`husky` + `phpcs`):**
+   - **Yoda Conditions:** All conditional statements must strictly enforce Yoda conditions (e.g., `if ( true === $value )` or `if ( null !== $post )`).
+   - **File-Level & Class DocBlocks:** All PHP files must include comprehensive file-level DocBlocks with `@package` declarations, as well as strict class, property, and method docblocks.
+   - Pre-commit hooks via `husky` execute `composer lint` / `phpcs` using the project's WPCS ruleset (`phpcs.xml`) to prevent non-compliant commits.
+3. **Static Analysis & JS Quality:**
    - Run `composer stan` (PHPStan) to ensure static analysis passes cleanly.
    - Run `npm test` / `npm run build` for React & JS assets.
+
+---
+
+## 6. Implementation Roadmap & Phase Progress
+
+### Phase 1: Core Taxonomy, Ordering & Repository Foundation
+- [x] Custom taxonomy registration (`SeriesTaxonomy`) with REST API support.
+- [x] Explicit post ordering via `term_order` and synchronization with `sm_series_order` (`SeriesRepository`).
+- [x] Architectural test mirroring under `tests/Integration/Database/Repositories/`.
+- [x] Classic taxonomy fallback UI with jQuery UI Sortable (`SeriesTaxonomyAdmin`).
+
