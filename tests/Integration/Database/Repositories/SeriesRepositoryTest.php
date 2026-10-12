@@ -1,4 +1,9 @@
 <?php
+/**
+ * SeriesRepositoryTest file.
+ *
+ * @package SeriesCraft\Tests\Integration\Database\Repositories
+ */
 
 declare(strict_types=1);
 
@@ -18,136 +23,141 @@ use SeriesCraft\Taxonomy\SeriesTaxonomy;
  * - Confirms custom post sequence independent of publication dates.
  * - Tests retrieval of all series assigned to a specific post.
  *
- * @package SeriesCraft\Tests\Integration\Database
+ * @package SeriesCraft\Tests\Integration\Database\Repositories
  */
-class SeriesRepositoryTest extends IntegrationTestCase
-{
-    /**
-     * Repository instance under test.
-     */
-    private SeriesRepository $repository;
+class SeriesRepositoryTest extends IntegrationTestCase {
 
-    /**
-     * Term ID of the test series.
-     */
-    private int $termId;
+	/**
+	 * Repository instance under test.
+	 *
+	 * @var SeriesRepository
+	 */
+	private SeriesRepository $repository;
 
-    /**
-     * Post IDs generated for testing.
-     *
-     * @var array<int>
-     */
-    private array $postIds = [];
+	/**
+	 * Term ID of the test series.
+	 *
+	 * @var int
+	 */
+	private int $term_id;
 
-    /**
-     * Set up fixture before each test.
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
+	/**
+	 * Post IDs generated for testing.
+	 *
+	 * @var array<int>
+	 */
+	private array $post_ids = array();
 
-        (new SeriesTaxonomy())->register();
-        $this->repository = new SeriesRepository();
+	/**
+	 * Set up fixture before each test.
+	 */
+	protected function setUp(): void {
+		parent::setUp();
 
-        $term = wp_insert_term('Test Architecture Series', SeriesTaxonomy::TAXONOMY);
-        $this->assertIsArray($term);
-        $this->termId = (int) $term['term_id'];
+		( new SeriesTaxonomy() )->register();
+		$this->repository = new SeriesRepository();
 
-        // Create three published posts with distinct timestamps using core WordPress functions.
-        $postA = (int) wp_insert_post([
-            'post_title'  => 'Post A',
-            'post_status' => 'publish',
-            'post_date'   => '2026-01-01 10:00:00',
-        ]);
+		$term = wp_insert_term( 'Test Architecture Series', SeriesTaxonomy::TAXONOMY );
+		$this->assertIsArray( $term );
+		$this->term_id = (int) $term['term_id'];
 
-        $postB = (int) wp_insert_post([
-            'post_title'  => 'Post B',
-            'post_status' => 'publish',
-            'post_date'   => '2026-01-02 10:00:00',
-        ]);
+		// Create three published posts with distinct timestamps using core WordPress functions.
+		$post_a = (int) wp_insert_post(
+			array(
+				'post_title'  => 'Post A',
+				'post_status' => 'publish',
+				'post_date'   => '2026-01-01 10:00:00',
+			)
+		);
 
-        $postC = (int) wp_insert_post([
-            'post_title'  => 'Post C',
-            'post_status' => 'publish',
-            'post_date'   => '2026-01-03 10:00:00',
-        ]);
+		$post_b = (int) wp_insert_post(
+			array(
+				'post_title'  => 'Post B',
+				'post_status' => 'publish',
+				'post_date'   => '2026-01-02 10:00:00',
+			)
+		);
 
-        $this->postIds = [$postA, $postB, $postC];
+		$post_c = (int) wp_insert_post(
+			array(
+				'post_title'  => 'Post C',
+				'post_status' => 'publish',
+				'post_date'   => '2026-01-03 10:00:00',
+			)
+		);
 
-        foreach ($this->postIds as $postId) {
-            wp_set_object_terms($postId, [$this->termId], SeriesTaxonomy::TAXONOMY, true);
-        }
-    }
+		$this->post_ids = array( $post_a, $post_b, $post_c );
 
-    /**
-     * Clean up test posts after each run.
-     */
-    protected function tearDown(): void
-    {
-        foreach ($this->postIds as $postId) {
-            wp_delete_post($postId, true);
-        }
+		foreach ( $this->post_ids as $post_id ) {
+			wp_set_object_terms( $post_id, array( $this->term_id ), SeriesTaxonomy::TAXONOMY, true );
+		}
+	}
 
-        wp_delete_term($this->termId, SeriesTaxonomy::TAXONOMY);
+	/**
+	 * Clean up test posts after each run.
+	 */
+	protected function tearDown(): void {
+		foreach ( $this->post_ids as $post_id ) {
+			wp_delete_post( $post_id, true );
+		}
 
-        parent::tearDown();
-    }
+		wp_delete_term( $this->term_id, SeriesTaxonomy::TAXONOMY );
 
-    /**
-     * Test 01: Verify updating and persisting an explicit custom post order (Post A -> Post C -> Post B).
-     */
-    public function test_01_it_updates_and_persists_explicit_post_order(): void
-    {
-        $customOrder = [
-            $this->postIds[0], // Post A (Position 1)
-            $this->postIds[2], // Post C (Position 2)
-            $this->postIds[1], // Post B (Position 3)
-        ];
+		parent::tearDown();
+	}
 
-        $updated = $this->repository->updateSeriesOrder($this->termId, $customOrder);
-        $this->assertTrue($updated, 'Failed: updateSeriesOrder returned false.');
+	/**
+	 * Test 1: Verify updating and persisting an explicit custom post order (Post A -> Post C -> Post B).
+	 */
+	public function test_01_it_updates_and_persists_explicit_post_order(): void {
+		$custom_order = array(
+			$this->post_ids[0], // Post A (Position 1).
+			$this->post_ids[2], // Post C (Position 2).
+			$this->post_ids[1], // Post B (Position 3).
+		);
 
-        $orderedPosts = $this->repository->getSeriesPosts($this->termId);
-        $retrievedIds = array_map('intval', wp_list_pluck($orderedPosts, 'ID'));
+		$updated = $this->repository->update_series_order( $this->term_id, $custom_order );
+		$this->assertTrue( $updated, 'Failed: update_series_order returned false.' );
 
-        $this->assertSame($customOrder, $retrievedIds, 'Failed: Posts were not retrieved in the explicit numerical order.');
-    }
+		$ordered_posts = $this->repository->get_series_posts( $this->term_id );
+		$retrieved_ids = array_map( 'intval', wp_list_pluck( $ordered_posts, 'ID' ) );
 
-    /**
-     * Test 02: Verify synchronization of sm_series_order post meta on order update.
-     */
-    public function test_02_it_synchronizes_sm_series_order_meta(): void
-    {
-        $customOrder = [
-            $this->postIds[2], // Post C -> position 1
-            $this->postIds[0], // Post A -> position 2
-            $this->postIds[1], // Post B -> position 3
-        ];
+		$this->assertSame( $custom_order, $retrieved_ids, 'Failed: Posts were not retrieved in the explicit numerical order.' );
+	}
 
-        $this->repository->updateSeriesOrder($this->termId, $customOrder);
+	/**
+	 * Test 2: Verify synchronization of sm_series_order post meta on order update.
+	 */
+	public function test_02_it_synchronizes_sm_series_order_meta(): void {
+		$custom_order = array(
+			$this->post_ids[2], // Post C -> position 1.
+			$this->post_ids[0], // Post A -> position 2.
+			$this->post_ids[1], // Post B -> position 3.
+		);
 
-        $this->assertSame(1, (int) get_post_meta($this->postIds[2], 'sm_series_order', true));
-        $this->assertSame(2, (int) get_post_meta($this->postIds[0], 'sm_series_order', true));
-        $this->assertSame(3, (int) get_post_meta($this->postIds[1], 'sm_series_order', true));
-    }
+		$this->repository->update_series_order( $this->term_id, $custom_order );
 
-    /**
-     * Test 03: Verify retrieval of all series assigned to a single post.
-     */
-    public function test_03_it_retrieves_series_assigned_to_post(): void
-    {
-        $secondTerm = wp_insert_term('Second Series', SeriesTaxonomy::TAXONOMY);
-        $this->assertIsArray($secondTerm);
-        $secondTermId = (int) $secondTerm['term_id'];
+		$this->assertSame( 1, (int) get_post_meta( $this->post_ids[2], 'sm_series_order', true ) );
+		$this->assertSame( 2, (int) get_post_meta( $this->post_ids[0], 'sm_series_order', true ) );
+		$this->assertSame( 3, (int) get_post_meta( $this->post_ids[1], 'sm_series_order', true ) );
+	}
 
-        wp_set_object_terms($this->postIds[0], [$secondTermId], SeriesTaxonomy::TAXONOMY, true);
+	/**
+	 * Test 3: Verify retrieval of all series assigned to a single post.
+	 */
+	public function test_03_it_retrieves_series_assigned_to_post(): void {
+		$second_term = wp_insert_term( 'Second Series', SeriesTaxonomy::TAXONOMY );
+		$this->assertIsArray( $second_term );
+		$second_term_id = (int) $second_term['term_id'];
 
-        $assignedSeries = $this->repository->getPostSeries($this->postIds[0]);
-        $seriesIds = wp_list_pluck($assignedSeries, 'term_id');
+		wp_set_object_terms( $this->post_ids[0], array( $second_term_id ), SeriesTaxonomy::TAXONOMY, true );
 
-        $this->assertContains($this->termId, $seriesIds);
-        $this->assertContains($secondTermId, $seriesIds);
+		$assigned_series = $this->repository->get_post_series( $this->post_ids[0] );
+		$series_ids      = wp_list_pluck( $assigned_series, 'term_id' );
 
-        wp_delete_term($secondTermId, SeriesTaxonomy::TAXONOMY);
-    }
+		$this->assertContains( $this->term_id, $series_ids );
+		$this->assertContains( $second_term_id, $series_ids );
+
+		wp_delete_term( $second_term_id, SeriesTaxonomy::TAXONOMY );
+	}
 }

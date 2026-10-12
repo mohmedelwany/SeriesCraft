@@ -1,4 +1,9 @@
 <?php
+/**
+ * SeriesTaxonomyTest file.
+ *
+ * @package SeriesCraft\Tests\Integration\Taxonomy
+ */
 
 declare(strict_types=1);
 
@@ -19,81 +24,78 @@ use SeriesCraft\Taxonomy\SeriesTaxonomy;
  *
  * @package SeriesCraft\Tests\Integration\Taxonomy
  */
-class SeriesTaxonomyTest extends IntegrationTestCase
-{
-    /**
-     * Taxonomy service under test.
-     */
-    private SeriesTaxonomy $taxonomy;
+class SeriesTaxonomyTest extends IntegrationTestCase {
 
-    /**
-     * Setup test fixture before each test run.
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->taxonomy = new SeriesTaxonomy();
-    }
+	/**
+	 * Taxonomy service under test.
+	 *
+	 * @var SeriesTaxonomy
+	 */
+	private SeriesTaxonomy $taxonomy;
 
-    /**
-     * Test 01: Verify that the custom taxonomy 'series' is successfully registered in WordPress.
-     */
-    public function test_01_it_registers_series_custom_taxonomy(): void
-    {
-        $this->taxonomy->register();
+	/**
+	 * Setup test fixture before each test run.
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->taxonomy = new SeriesTaxonomy();
+	}
 
-        $this->assertTrue(
-            taxonomy_exists(SeriesTaxonomy::TAXONOMY),
-            'Failed: Taxonomy series is not registered in WordPress.'
-        );
-    }
+	/**
+	 * Test 1: Verify that the custom taxonomy 'series' is successfully registered in WordPress.
+	 */
+	public function test_01_it_registers_series_custom_taxonomy(): void {
+		$this->taxonomy->register();
 
-    /**
-     * Test 02: Verify that REST API support is enabled with the expected rest_base for Gutenberg integration.
-     */
-    public function test_02_it_registers_taxonomy_with_rest_support(): void
-    {
-        $this->taxonomy->register();
+		$this->assertTrue(
+			taxonomy_exists( SeriesTaxonomy::TAXONOMY ),
+			'Failed: Taxonomy series is not registered in WordPress.'
+		);
+	}
 
-        $taxonomyObject = get_taxonomy(SeriesTaxonomy::TAXONOMY);
+	/**
+	 * Test 2: Verify that REST API support is enabled with the expected rest_base for Gutenberg integration.
+	 */
+	public function test_02_it_registers_taxonomy_with_rest_support(): void {
+		$this->taxonomy->register();
 
-        $this->assertNotNull($taxonomyObject, 'Failed: Taxonomy object does not exist.');
-        $this->assertTrue($taxonomyObject->show_in_rest, 'Failed: show_in_rest flag is not enabled.');
-        $this->assertSame(
-            SeriesTaxonomy::REST_BASE,
-            $taxonomyObject->rest_base,
-            'Failed: REST API base does not match the expected constant.'
-        );
-    }
+		$taxonomy_object = get_taxonomy( SeriesTaxonomy::TAXONOMY );
 
-    /**
-     * Test 03: Verify that the taxonomy can be associated with dynamically configured post types.
-     */
-    public function test_03_it_supports_configured_post_types(): void
-    {
-        $configuredTypes = ['post', 'page'];
-        $this->taxonomy->register($configuredTypes);
+		$this->assertNotNull( $taxonomy_object, 'Failed: Taxonomy object does not exist.' );
+		$this->assertTrue( $taxonomy_object->show_in_rest, 'Failed: show_in_rest flag is not enabled.' );
+		$this->assertSame(
+			SeriesTaxonomy::REST_BASE,
+			$taxonomy_object->rest_base,
+			'Failed: REST API base does not match the expected constant.'
+		);
+	}
 
-        $taxonomyObject = get_taxonomy(SeriesTaxonomy::TAXONOMY);
+	/**
+	 * Test 3: Verify that the taxonomy can be associated with dynamically configured post types.
+	 */
+	public function test_03_it_supports_configured_post_types(): void {
+		$configured_types = array( 'post', 'page' );
+		$this->taxonomy->register( $configured_types );
 
-        $this->assertNotNull($taxonomyObject, 'Failed: Taxonomy object does not exist.');
-        $this->assertContains('post', $taxonomyObject->object_type, 'Failed: Taxonomy is not associated with post.');
-        $this->assertContains('page', $taxonomyObject->object_type, 'Failed: Taxonomy is not associated with page.');
-    }
+		$taxonomy_object = get_taxonomy( SeriesTaxonomy::TAXONOMY );
 
-    /**
-     * Test 04: Verify that administrative and editing capabilities are properly configured.
-     */
-    public function test_04_it_registers_with_manage_categories_capabilities(): void
-    {
-        $this->taxonomy->register();
+		$this->assertNotNull( $taxonomy_object, 'Failed: Taxonomy object does not exist.' );
+		$this->assertContains( 'post', $taxonomy_object->object_type, 'Failed: Taxonomy is not associated with post.' );
+		$this->assertContains( 'page', $taxonomy_object->object_type, 'Failed: Taxonomy is not associated with page.' );
+	}
 
-        $taxonomyObject = get_taxonomy(SeriesTaxonomy::TAXONOMY);
+	/**
+	 * Test 4: Verify that administrative and editing capabilities are properly configured.
+	 */
+	public function test_04_it_registers_with_manage_categories_capabilities(): void {
+		$this->taxonomy->register();
 
-        $this->assertNotNull($taxonomyObject, 'Failed: Taxonomy object does not exist.');
-        $this->assertSame('manage_categories', $taxonomyObject->cap->manage_terms);
-        $this->assertSame('manage_categories', $taxonomyObject->cap->edit_terms);
-        $this->assertSame('manage_categories', $taxonomyObject->cap->delete_terms);
-        $this->assertSame('edit_posts', $taxonomyObject->cap->assign_terms);
-    }
+		$taxonomy_object = get_taxonomy( SeriesTaxonomy::TAXONOMY );
+
+		$this->assertNotNull( $taxonomy_object, 'Failed: Taxonomy object does not exist.' );
+		$this->assertSame( 'manage_categories', $taxonomy_object->cap->manage_terms );
+		$this->assertSame( 'manage_categories', $taxonomy_object->cap->edit_terms );
+		$this->assertSame( 'manage_categories', $taxonomy_object->cap->delete_terms );
+		$this->assertSame( 'edit_posts', $taxonomy_object->cap->assign_terms );
+	}
 }
