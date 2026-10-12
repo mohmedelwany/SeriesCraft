@@ -1,0 +1,46 @@
+@use "../abstracts/variables" as *;
+@use "../abstracts/mixins" as *;
+
+.sc-inspector-panel {
+  padding: var(--sc-spacing-md);
+  box-sizing: border-box;
+
+  &__header {
+    margin-bottom: var(--sc-spacing-md);
+    padding-bottom: var(--sc-spacing-xs);
+    border-bottom: 1px solid var(--sc-color-border);
+  }
+
+  &__title {
+    font-family: var(--sc-font-family-display);
+    font-size: var(--sc-font-size-base);
+    font-weight: var(--sc-font-weight-semibold);
+    color: var(--sc-color-text);
+    margin: 0;
+  }
+
+  &__section {
+    margin-bottom: var(--sc-spacing-lg);
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  &__label {
+    display: block;
+    font-family: var(--sc-font-family-body);
+    font-size: var(--sc-font-size-xs);
+    font-weight: var(--sc-font-weight-semibold);
+    color: var(--sc-color-text-secondary);
+    margin-bottom: var(--sc-spacing-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  &__help {
+    font-size: var(--sc-font-size-xs);
+    color: var(--sc-color-text-muted);
+    margin-top: var(--sc-spacing-xxs);
+  }
+}

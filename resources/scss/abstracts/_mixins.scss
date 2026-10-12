@@ -1,0 +1,55 @@
+@use "sass:map";
+@use "variables" as *;
+
+@mixin respond-to($breakpoint) {
+  @if map.has-key($sc-breakpoints, $breakpoint) {
+    @media (min-width: map.get($sc-breakpoints, $breakpoint)) {
+      @content;
+    }
+  } @else {
+    @media (min-width: $breakpoint) {
+      @content;
+    }
+  }
+}
+
+@mixin mobile {
+  @media (max-width: 639px) { @content; }
+}
+
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin focus-visible {
+  outline: none;
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--sc-focus-ring);
+  }
+}
+
+@mixin interactive-lift {
+  transition: transform var(--sc-transition-base), box-shadow var(--sc-transition-base);
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--sc-shadow-md);
+  }
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+@mixin truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
