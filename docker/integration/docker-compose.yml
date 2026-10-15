@@ -42,4 +42,5 @@ services:
       DB_PASS: wp_test
       WP_TESTS_DIR: /tmp/wordpress-tests-lib
       WP_CORE_DIR: /tmp/wordpress
+      TEST_FILE: ${TEST_FILE:-}
     command: ["/app/docker/integration/entrypoint.sh"]

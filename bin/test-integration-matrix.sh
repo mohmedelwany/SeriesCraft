@@ -22,6 +22,7 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 COMPOSE_FILE="$REPO_ROOT/docker/integration/docker-compose.yml"
+TEST_TARGET="${1:-${TEST_FILE:-}}"
 
 # Minimum PHP version supported by the plugin
 MIN_PHP_VERSION="8.1"
@@ -324,7 +325,7 @@ run_matrix_cell() {
         return 0
     fi
 
-    if PHP_VERSION="$php" WP_VERSION="$wp" \
+    if PHP_VERSION="$php" WP_VERSION="$wp" TEST_FILE="$TEST_TARGET" \
         docker compose \
             -f "$COMPOSE_FILE" \
             -p "$project_name" \

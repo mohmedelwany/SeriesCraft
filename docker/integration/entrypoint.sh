@@ -83,4 +83,8 @@ wp plugin activate series-craft --path="${WP_CORE_DIR}" --allow-root
 composer dump-autoload --no-interaction
 
 # Run the integration suite.
-exec vendor/bin/phpunit -c phpunit.integration.xml --colors=always
+if [[ -n "${TEST_FILE:-}" ]]; then
+    exec vendor/bin/phpunit -c phpunit.integration.xml --colors=always "${TEST_FILE}"
+else
+    exec vendor/bin/phpunit -c phpunit.integration.xml --colors=always
+fi

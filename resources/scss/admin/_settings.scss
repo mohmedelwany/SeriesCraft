@@ -1,0 +1,47 @@
+// =============================================================================
+// SeriesCraft Admin Settings - General Layout & Wrapper Styling
+// =============================================================================
+
+@use "variables" as *;
+
+.seriescraft-admin-settings-wrap {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+
+  .nav-tab-wrapper {
+    margin-top: 15px;
+    margin-bottom: 20px;
+  }
+
+  .seriescraft-tab-content {
+    margin-top: 20px;
+  }
+}
+
+/* Nav Tab Overrides from Series-Manager */
+.nav-tab {
+  background-color: #0073aa;
+  color: #fff;
+
+  &.nav-tab-active {
+    color: #0073aa;
+    background-color: #f5f5f5;
+  }
+
+  &:hover {
+    background-color: #005a8a;
+    color: #fff;
+  }
+}
+
+.wp-core-ui .button-primary {
+  padding: 6px 16px;
+  border-radius: 24px;
+  background-color: #0062a2;
+  color: white;
+}
+
+@media print {
+  .nav-tab-wrapper {
+    display: none;
+  }
+}
