@@ -1,0 +1,10 @@
+// =============================================================================
+// SeriesCraft Admin Stylesheet Entry Point
+// =============================================================================
+
+@use "abstracts/variables" as global-vars;
+@use "abstracts/mixins" as global-mixins;
+@use "admin/variables" as *;
+@use "admin/settings";
+@use "admin/custom-post-types";
+@use "admin/layouts";
