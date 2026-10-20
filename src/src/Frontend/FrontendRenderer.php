@@ -1,4 +1,9 @@
 <?php
+/**
+ * FrontendRenderer definition.
+ *
+ * @package SeriesCraft\Frontend
+ */
 
 declare(strict_types=1);
 
@@ -14,152 +19,219 @@ use SeriesCraft\Views\Variants\MediaListView;
 use SeriesCraft\Views\Variants\MediaGridView;
 use SeriesCraft\Views\Variants\VariantViewInterface;
 
-class FrontendRenderer
-{
-    private SeriesRepositoryInterface $repository;
-    private NavigationService $navigationService;
-    private StyleSanitizer $styleSanitizer;
-    private AccordionLayout $accordionLayout;
+/**
+ * Class FrontendRenderer
+ *
+ * Injects series navigation boxes and variant layouts into single post content.
+ */
+class FrontendRenderer {
 
-    public function __construct(
-        SeriesRepositoryInterface $repository,
-        NavigationService $navigationService,
-        StyleSanitizer $styleSanitizer,
-        AccordionLayout $accordionLayout
-    ) {
-        $this->repository = $repository;
-        $this->navigationService = $navigationService;
-        $this->styleSanitizer = $styleSanitizer;
-        $this->accordionLayout = $accordionLayout;
-    }
+	/**
+	 * Series repository instance.
+	 *
+	 * @var SeriesRepositoryInterface
+	 */
+	private SeriesRepositoryInterface $repository;
 
-    /**
-     * Filters post content to inject the series navigation and layout.
-     *
-     * @param string $content The original post content.
-     * @return string Filtered content with injected series markup.
-     */
-    public function filterContent(string $content): string
-    {
-        if (!is_single()) {
-            return $content;
-        }
+	/**
+	 * Navigation service instance.
+	 *
+	 * @var NavigationService
+	 */
+	private NavigationService $navigation_service;
 
-        $currentPostId = (int) get_the_ID();
-        if ($currentPostId <= 0) {
-            return $content;
-        }
+	/**
+	 * Style sanitizer instance.
+	 *
+	 * @var StyleSanitizer
+	 */
+	private StyleSanitizer $style_sanitizer;
 
-        $seriesList = $this->repository->getSeriesForPost($currentPostId);
-        if (empty($seriesList)) {
-            return $content;
-        }
+	/**
+	 * Accordion layout instance.
+	 *
+	 * @var AccordionLayout
+	 */
+	private AccordionLayout $accordion_layout;
 
-        $renderedSeriesList = [];
-        $accumulatedStyles = '';
+	/**
+	 * Constructor.
+	 *
+	 * @param SeriesRepositoryInterface $repository         Series repository instance.
+	 * @param NavigationService         $navigation_service Navigation service instance.
+	 * @param StyleSanitizer            $style_sanitizer    Style sanitizer instance.
+	 * @param AccordionLayout           $accordion_layout   Accordion layout instance.
+	 */
+	public function __construct(
+		SeriesRepositoryInterface $repository,
+		NavigationService $navigation_service,
+		StyleSanitizer $style_sanitizer,
+		AccordionLayout $accordion_layout
+	) {
+		$this->repository         = $repository;
+		$this->navigation_service = $navigation_service;
+		$this->style_sanitizer    = $style_sanitizer;
+		$this->accordion_layout   = $accordion_layout;
+	}
 
-        foreach ($seriesList as $series) {
-            $seriesId = (int) $series['id'];
-            $seriesName = (string) $series['name'];
-            $layoutVariant = (string) ($series['layout'] ?? 'link-list');
-            $rawStyles = (array) ($series['styles'] ?? []);
-            $posts = (array) ($series['posts'] ?? []);
+	/**
+	 * Filters post content to inject the series navigation and layout.
+	 *
+	 * @param string $content The original post content.
+	 * @return string Filtered content with injected series markup.
+	 */
+	public function filter_content( string $content ): string {
+		if ( ! is_single() ) {
+			return $content;
+		}
 
-            $navContext = $this->navigationService->getNavigationContext($currentPostId, $posts);
-            $inlineCss = $this->styleSanitizer->generateInlineCss($seriesId, $rawStyles);
+		$current_post_id = (int) get_the_ID();
+		if ( $current_post_id <= 0 ) {
+			return $content;
+		}
 
-            if (!empty($inlineCss)) {
-                $accumulatedStyles .= sprintf('<style>%s</style>', $inlineCss);
-            }
+		$series_list = $this->repository->getSeriesForPost( $current_post_id );
+		if ( empty( $series_list ) ) {
+			return $content;
+		}
 
-            $seriesInnerHtml = $this->renderSeriesBox($seriesId, $seriesName, $layoutVariant, $posts, $currentPostId, $navContext);
+		$rendered_series_list = array();
+		$accumulated_styles   = '';
 
-            $renderedSeriesList[] = [
-                'id'        => $seriesId,
-                'title'     => $seriesName,
-                'html'      => $seriesInnerHtml,
-                'is_active' => true,
-            ];
-        }
+		foreach ( $series_list as $series ) {
+			$series_id      = (int) $series['id'];
+			$series_name    = (string) $series['name'];
+			$layout_variant = (string) ( $series['layout'] ?? 'link-list' );
+			$raw_styles     = (array) ( $series['styles'] ?? array() );
+			$posts          = (array) ( $series['posts'] ?? array() );
 
-        // Multiple series switch to Accordion layout
-        if (count($renderedSeriesList) > 1) {
-            $seriesOutput = $this->accordionLayout->render($renderedSeriesList);
-        } else {
-            $seriesOutput = $renderedSeriesList[0]['html'];
-        }
+			$nav_context = $this->navigation_service->get_navigation_context( $current_post_id, $posts );
+			$inline_css  = $this->style_sanitizer->generate_inline_css( $series_id, $raw_styles );
 
-        $finalMarkup = $accumulatedStyles . $seriesOutput;
+			if ( ! empty( $inline_css ) ) {
+				$accumulated_styles .= sprintf( '<style>%s</style>', $inline_css );
+			}
 
-        return $finalMarkup . $content;
-    }
+			$series_inner_html = $this->render_series_box( $series_id, $series_name, $layout_variant, $posts, $current_post_id, $nav_context );
 
-    /**
-     * Renders a single series box including header, variant layout, and navigation.
-     */
-    private function renderSeriesBox(
-        int $seriesId,
-        string $seriesName,
-        string $layoutVariant,
-        array $posts,
-        int $currentPostId,
-        array $navContext
-    ): string {
-        $view = $this->resolveVariantView($layoutVariant);
-        $variantHtml = $view->render($posts, $currentPostId);
+			$rendered_series_list[] = array(
+				'id'        => $series_id,
+				'title'     => $series_name,
+				'html'      => $series_inner_html,
+				'is_active' => true,
+			);
+		}
 
-        $wrapperClass = sprintf('seriescraft-wrapper seriescraft-series-%d', $seriesId);
+		// Multiple series switch to Accordion layout.
+		if ( count( $rendered_series_list ) > 1 ) {
+			$series_output = $this->accordion_layout->render( $rendered_series_list );
+		} else {
+			$series_output = $rendered_series_list[0]['html'];
+		}
 
-        $output = sprintf('<section class="%s">', esc_attr($wrapperClass));
+		$final_markup = $accumulated_styles . $series_output;
 
-        // Series Header
-        $output .= '<header class="seriescraft-header">';
-        $output .= sprintf('<h3 class="seriescraft-series-title">%s</h3>', esc_html($seriesName));
-        if (!empty($navContext['position_label'])) {
-            $output .= sprintf('<span class="seriescraft-position-badge">%s</span>', esc_html($navContext['position_label']));
-        }
-        $output .= '</header>';
+		return $final_markup . $content;
+	}
 
-        // Main Layout Variant
-        $output .= $variantHtml;
+	/**
+	 * Renders a single series box including header, variant layout, and navigation.
+	 *
+	 * @param int                                                        $series_id       Series ID.
+	 * @param string                                                     $series_name     Series Name.
+	 * @param string                                                     $layout_variant  Layout variant slug.
+	 * @param array<int, array{id: int, title: string, part_order: int}> $posts           List of posts in series.
+	 * @param int                                                        $current_post_id Current post ID.
+	 * @param array<string, mixed>                                       $nav_context     Navigation context data.
+	 * @return string Rendered series box HTML.
+	 */
+	private function render_series_box(
+		int $series_id,
+		string $series_name,
+		string $layout_variant,
+		array $posts,
+		int $current_post_id,
+		array $nav_context
+	): string {
+		$view         = $this->resolve_variant_view( $layout_variant );
+		$variant_html = $view->render( $posts, $current_post_id );
 
-        // Navigation Footer (Previous / Next)
-        if (!empty($navContext['previous_post']) || !empty($navContext['next_post'])) {
-            $output .= '<nav class="seriescraft-navigation" aria-label="' . esc_attr(__('Series Navigation', 'seriescraft')) . '">';
-            if (!empty($navContext['previous_post'])) {
-                $output .= sprintf(
-                    '<a href="%s" class="seriescraft-nav-prev" rel="prev">&larr; %s</a>',
-                    esc_url(get_permalink($navContext['previous_post']['id'])),
-                    esc_html($navContext['previous_post']['title'])
-                );
-            }
+		$wrapper_class = sprintf( 'seriescraft-wrapper seriescraft-series-%d', $series_id );
 
-            if (!empty($navContext['next_post'])) {
-                $output .= sprintf(
-                    '<a href="%s" class="seriescraft-nav-next" rel="next">%s &rarr;</a>',
-                    esc_url(get_permalink($navContext['next_post']['id'])),
-                    esc_html($navContext['next_post']['title'])
-                );
-            }
+		$output = sprintf( '<section class="%s">', esc_attr( $wrapper_class ) );
 
-            $output .= '</nav>';
-        }
+		// Series Header.
+		$output .= '<header class="seriescraft-header">';
+		$output .= sprintf( '<h3 class="seriescraft-series-title">%s</h3>', esc_html( $series_name ) );
+		if ( ! empty( $nav_context['position_label'] ) ) {
+			$output .= sprintf( '<span class="seriescraft-position-badge">%s</span>', esc_html( $nav_context['position_label'] ) );
+		}
+		$output .= '</header>';
 
-        $output .= '</section>';
+		// Main Layout Variant.
+		$output .= $variant_html;
 
-        return $output;
-    }
+		// Navigation Footer (Previous / Next).
+		if ( ! empty( $nav_context['previous_post'] ) || ! empty( $nav_context['next_post'] ) ) {
+			$output .= '<nav class="seriescraft-navigation" aria-label="' . esc_attr( __( 'Series Navigation', 'series-craft' ) ) . '">';
+			if ( ! empty( $nav_context['previous_post'] ) ) {
+				$output .= sprintf(
+					'<a href="%s" class="seriescraft-nav-prev" rel="prev">&larr; %s</a>',
+					esc_url( get_permalink( $nav_context['previous_post']['id'] ) ),
+					esc_html( $nav_context['previous_post']['title'] )
+				);
+			}
 
-    /**
-     * Resolves the layout view instance according to the variant key.
-     */
-    private function resolveVariantView(string $layoutVariant): VariantViewInterface
-    {
-        return match ($layoutVariant) {
-            'link-grid'  => new LinkGridView(),
-            'media-list' => new MediaListView(),
-            'media-grid' => new MediaGridView(),
-            default      => new LinkListView(),
-        };
-    }
+			if ( ! empty( $nav_context['next_post'] ) ) {
+				$output .= sprintf(
+					'<a href="%s" class="seriescraft-nav-next" rel="next">%s &rarr;</a>',
+					esc_url( get_permalink( $nav_context['next_post']['id'] ) ),
+					esc_html( $nav_context['next_post']['title'] )
+				);
+			}
+
+			$output .= '</nav>';
+		}
+
+		$output .= '</section>';
+
+		return $output;
+	}
+
+	/**
+	 * Resolves the layout view instance according to the variant key.
+	 *
+	 * @param string $layout_variant Variant slug.
+	 * @return VariantViewInterface Resolved view instance.
+	 */
+	private function resolve_variant_view( string $layout_variant ): VariantViewInterface {
+		switch ( $layout_variant ) {
+			case 'link-grid':
+				return new LinkGridView();
+			case 'media-list':
+				return new MediaListView();
+			case 'media-grid':
+				return new MediaGridView();
+			case 'link-list':
+			default:
+				return new LinkListView();
+		}
+	}
+
+	/**
+	 * Magic caller for camelCase method compatibility.
+	 *
+	 * @param string $name      Method name.
+	 * @param array  $arguments Method arguments.
+	 * @return mixed
+	 * @throws \BadMethodCallException If method does not exist.
+	 */
+	public function __call( string $name, array $arguments ) {
+		if ( 'filterContent' === $name ) {
+			return $this->filter_content( ...$arguments );
+		}
+
+		// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+		throw new \BadMethodCallException( sprintf( 'Call to undefined method %s::%s()', __CLASS__, $name ) );
+	}
 }

@@ -1,43 +1,52 @@
 <?php
+/**
+ * AccordionLayout definition.
+ *
+ * @package SeriesCraft\Views
+ */
 
 declare(strict_types=1);
 
 namespace SeriesCraft\Views;
 
-class AccordionLayout
-{
-    /**
-     * Renders multiple series enclosed within expandable details/summary tags.
-     *
-     * @param array<int, array{id: int, title: string, html: string, is_active?: bool}> $renderedSeriesList
-     * @return string
-     */
-    public function render(array $renderedSeriesList): string
-    {
-        if (empty($renderedSeriesList)) {
-            return '';
-        }
+/**
+ * Class AccordionLayout
+ *
+ * Renders multiple series enclosed in an expandable accordion layout.
+ */
+class AccordionLayout {
 
-        $output = '<div class="seriescraft-accordion">';
+	/**
+	 * Renders multiple series enclosed within expandable details/summary tags.
+	 *
+	 * @param array<int, array{id: int, title: string, html: string, is_active?: bool}> $rendered_series_list List of rendered series items.
+	 * @return string Rendered HTML output.
+	 */
+	public function render( array $rendered_series_list ): string {
+		if ( empty( $rendered_series_list ) ) {
+			return '';
+		}
 
-        foreach ($renderedSeriesList as $series) {
-            $isOpen = !empty($series['is_active']);
-            $openAttribute = $isOpen ? ' open' : '';
+		$output = '<div class="seriescraft-accordion">';
 
-            $output .= sprintf('<details class="seriescraft-accordion-item"%s>', $openAttribute);
-            $output .= sprintf(
-                '<summary class="seriescraft-accordion-summary">%s</summary>',
-                esc_html($series['title'])
-            );
-            $output .= sprintf(
-                '<div class="seriescraft-accordion-content">%s</div>',
-                $series['html']
-            );
-            $output .= '</details>';
-        }
+		foreach ( $rendered_series_list as $series ) {
+			$is_open        = ! empty( $series['is_active'] );
+			$open_attribute = $is_open ? ' open' : '';
 
-        $output .= '</div>';
+			$output .= sprintf( '<details class="seriescraft-accordion-item"%s>', $open_attribute );
+			$output .= sprintf(
+				'<summary class="seriescraft-accordion-summary">%s</summary>',
+				esc_html( $series['title'] )
+			);
+			$output .= sprintf(
+				'<div class="seriescraft-accordion-content">%s</div>',
+				$series['html']
+			);
+			$output .= '</details>';
+		}
 
-        return $output;
-    }
+		$output .= '</div>';
+
+		return $output;
+	}
 }

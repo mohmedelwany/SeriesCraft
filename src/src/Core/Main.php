@@ -99,7 +99,7 @@ class Main {
         $this->enqueue_manager->register();
 
         // Register frontend series display injection on the_content.
-        add_filter( 'the_content', array( $this->frontend_renderer, 'filterContent' ) );
+        add_filter( 'the_content', array( $this->frontend_renderer, 'filter_content' ) );
 
         // Register REST API endpoints.
         if ( function_exists( 'did_action' ) && did_action( 'rest_api_init' ) ) {

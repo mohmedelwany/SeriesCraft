@@ -44,7 +44,7 @@ class NavigationServiceTest extends TestCase
         $parts = $this->getSampleOrderedParts();
         $currentPostId = 20;
 
-        $context = $this->navigationService->getNavigationContext($currentPostId, $parts);
+        $context = $this->navigationService->get_navigation_context($currentPostId, $parts);
 
         $this->assertSame(2, $context['current_part']);
         $this->assertSame(4, $context['total_parts']);
@@ -66,7 +66,7 @@ class NavigationServiceTest extends TestCase
         $parts = $this->getSampleOrderedParts();
         $currentPostId = 10;
 
-        $context = $this->navigationService->getNavigationContext($currentPostId, $parts);
+        $context = $this->navigationService->get_navigation_context($currentPostId, $parts);
 
         $this->assertSame(1, $context['current_part']);
         $this->assertSame(4, $context['total_parts']);
@@ -84,7 +84,7 @@ class NavigationServiceTest extends TestCase
         $parts = $this->getSampleOrderedParts();
         $currentPostId = 40;
 
-        $context = $this->navigationService->getNavigationContext($currentPostId, $parts);
+        $context = $this->navigationService->get_navigation_context($currentPostId, $parts);
 
         $this->assertSame(4, $context['current_part']);
         $this->assertSame(4, $context['total_parts']);
@@ -102,7 +102,7 @@ class NavigationServiceTest extends TestCase
         $parts = $this->getSampleOrderedParts();
         $currentPostId = 999;
 
-        $context = $this->navigationService->getNavigationContext($currentPostId, $parts);
+        $context = $this->navigationService->get_navigation_context($currentPostId, $parts);
 
         $this->assertSame(0, $context['current_part']);
         $this->assertSame(4, $context['total_parts']);

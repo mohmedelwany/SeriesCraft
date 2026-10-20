@@ -104,17 +104,19 @@ class MainTest extends TestCase
     }
 
     /**
-     * Test 5: Verifies that Main::init registers SavePostSubscriber.
+     * Test 5: Verifies that Main::init registers FrontendRenderer on the_content filter.
      */
-        public function testInitRegistersFrontendRendererOnTheContentFilter(): void
-        {
-            $frontendRenderer = \Mockery::mock(\SeriesCraft\Frontend\FrontendRenderer::class);
-            $main = new \SeriesCraft\Core\Main(null, null, null, $frontendRenderer);
+    public function testInitRegistersFrontendRendererOnTheContentFilter(): void
+    {
+        $frontendRenderer = \Mockery::mock(\SeriesCraft\Frontend\FrontendRenderer::class);
+        $main = new \SeriesCraft\Core\Main(null, null, null, $frontendRenderer);
 
-            \Brain\Monkey\Filters\expectAdded('the_content')
-                ->once()
-                ->with([$frontendRenderer, 'filterContent']);
+        \Brain\Monkey\Filters\expectAdded('the_content')
+            ->once()
+            ->with([$frontendRenderer, 'filter_content']);
 
-            $main->init();
-        }
+        $main->init();
+
+        $this->addToAssertionCount(1);
+    }
 }

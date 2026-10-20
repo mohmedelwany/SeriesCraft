@@ -1,54 +1,70 @@
 <?php
+/**
+ * MediaGridView definition.
+ *
+ * @package SeriesCraft\Views\Variants
+ */
 
 declare(strict_types=1);
 
 namespace SeriesCraft\Views\Variants;
 
-class MediaGridView implements VariantViewInterface
-{
-    public function render(array $posts, int $currentPostId): string
-    {
-        $output = '<div class="seriescraft-layout seriescraft-layout-media-grid">';
+/**
+ * Class MediaGridView
+ *
+ * Renders series posts in a media grid layout with thumbnails.
+ */
+class MediaGridView implements VariantViewInterface {
 
-        foreach ($posts as $post) {
-            $isCurrent = ($post['id'] === $currentPostId);
-            $cardClasses = 'seriescraft-card seriescraft-media-card' . ($isCurrent ? ' is-current' : '');
+	/**
+	 * Renders the HTML markup for the series posts layout.
+	 *
+	 * @param array<int, array{id: int, title: string, url: string, part_order: int, thumbnail: string|null}> $posts           List of series posts.
+	 * @param int                                                                                             $current_post_id Current post ID.
+	 * @return string Rendered HTML markup.
+	 */
+	public function render( array $posts, int $current_post_id ): string {
+		$output = '<div class="seriescraft-layout seriescraft-layout-media-grid">';
 
-            $output .= sprintf('<div class="%s">', esc_attr($cardClasses));
+		foreach ( $posts as $post ) {
+			$is_current   = ( $post['id'] === $current_post_id );
+			$card_classes = 'seriescraft-card seriescraft-media-card' . ( $is_current ? ' is-current' : '' );
 
-            if (!empty($post['thumbnail'])) {
-                $output .= sprintf(
-                    '<div class="seriescraft-thumb"><img src="%s" alt="%s" /></div>',
-                    esc_url($post['thumbnail']),
-                    esc_attr($post['title'])
-                );
-            } else {
-                $output .= '<div class="seriescraft-thumb seriescraft-media-placeholder"></div>';
-            }
+			$output .= sprintf( '<div class="%s">', esc_attr( $card_classes ) );
 
-            $output .= '<div class="seriescraft-content">';
-            $output .= sprintf('<span class="seriescraft-part-num">%s</span>', esc_html((string) $post['part_order']));
+			if ( ! empty( $post['thumbnail'] ) ) {
+				$output .= sprintf(
+					'<div class="seriescraft-thumb"><img src="%s" alt="%s" /></div>',
+					esc_url( $post['thumbnail'] ),
+					esc_attr( $post['title'] )
+				);
+			} else {
+				$output .= '<div class="seriescraft-thumb seriescraft-media-placeholder"></div>';
+			}
 
-            if ($isCurrent) {
-                $output .= sprintf(
-                    '<span class="seriescraft-title">%s <span class="seriescraft-badge">%s</span></span>',
-                    esc_html($post['title']),
-                    esc_html(__('Reading Now', 'seriescraft'))
-                );
-            } else {
-                $output .= sprintf(
-                    '<a href="%s" class="seriescraft-link">%s</a>',
-                    esc_url($post['url']),
-                    esc_html($post['title'])
-                );
-            }
+			$output .= '<div class="seriescraft-content">';
+			$output .= sprintf( '<span class="seriescraft-part-num">%s</span>', esc_html( (string) $post['part_order'] ) );
 
-            $output .= '</div>';
-            $output .= '</div>';
-        }
+			if ( $is_current ) {
+				$output .= sprintf(
+					'<span class="seriescraft-title">%s <span class="seriescraft-badge">%s</span></span>',
+					esc_html( $post['title'] ),
+					esc_html( __( 'Reading Now', 'series-craft' ) )
+				);
+			} else {
+				$output .= sprintf(
+					'<a href="%s" class="seriescraft-link">%s</a>',
+					esc_url( $post['url'] ),
+					esc_html( $post['title'] )
+				);
+			}
 
-        $output .= '</div>';
+			$output .= '</div>';
+			$output .= '</div>';
+		}
 
-        return $output;
-    }
+		$output .= '</div>';
+
+		return $output;
+	}
 }

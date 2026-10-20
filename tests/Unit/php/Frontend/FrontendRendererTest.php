@@ -62,7 +62,7 @@ class FrontendRendererTest extends TestCase
         Functions\when('is_single')->justReturn(false);
 
         $content = '<p>This is standard blog archive content.</p>';
-        $result = $this->renderer->filterContent($content);
+        $result = $this->renderer->filter_content($content);
 
         $this->assertSame($content, $result);
     }
@@ -75,7 +75,7 @@ class FrontendRendererTest extends TestCase
             ->andReturn([]);
 
         $content = '<p>Standalone post content without series.</p>';
-        $result = $this->renderer->filterContent($content);
+        $result = $this->renderer->filter_content($content);
 
         $this->assertSame($content, $result);
     }
@@ -100,7 +100,7 @@ class FrontendRendererTest extends TestCase
             ->with(100)
             ->andReturn($seriesData);
 
-        $this->navigationService->shouldReceive('getNavigationContext')
+        $this->navigationService->shouldReceive('get_navigation_context')
             ->once()
             ->andReturn([
                 'current_part'   => 1,
@@ -112,13 +112,13 @@ class FrontendRendererTest extends TestCase
                 'next_post'      => ['id' => 101, 'title' => 'Part 2', 'part_order' => 2],
             ]);
 
-        $this->styleSanitizer->shouldReceive('generateInlineCss')
+        $this->styleSanitizer->shouldReceive('generate_inline_css')
             ->once()
             ->with(5, ['title_color' => '#112233'])
             ->andReturn('.seriescraft-series-5 { --sc-title-color: #112233; }');
 
         $content = '<p>Article Body Text</p>';
-        $result = $this->renderer->filterContent($content);
+        $result = $this->renderer->filter_content($content);
 
         $this->assertStringContainsString('<style>.seriescraft-series-5 { --sc-title-color: #112233; }</style>', $result);
         $this->assertStringContainsString('seriescraft-wrapper', $result);
@@ -151,7 +151,7 @@ class FrontendRendererTest extends TestCase
             ->with(100)
             ->andReturn($seriesData);
 
-        $this->navigationService->shouldReceive('getNavigationContext')
+        $this->navigationService->shouldReceive('get_navigation_context')
             ->twice()
             ->andReturn([
                 'current_part'   => 1,
@@ -163,7 +163,7 @@ class FrontendRendererTest extends TestCase
                 'next_post'      => null,
             ]);
 
-        $this->styleSanitizer->shouldReceive('generateInlineCss')
+        $this->styleSanitizer->shouldReceive('generate_inline_css')
             ->twice()
             ->andReturn('');
 
@@ -172,7 +172,7 @@ class FrontendRendererTest extends TestCase
             ->andReturn('<div class="seriescraft-accordion">Accordion Mock Content</div>');
 
         $content = '<p>Article Body Text</p>';
-        $result = $this->renderer->filterContent($content);
+        $result = $this->renderer->filter_content($content);
 
         $this->assertStringContainsString('Accordion Mock Content', $result);
         $this->assertStringContainsString('<p>Article Body Text</p>', $result);

@@ -76,7 +76,7 @@ class StyleSanitizerTest extends TestCase
             'padding_top'       => '12px',
         ];
 
-        $css = $this->sanitizer->generateInlineCss($seriesId, $sanitizedStyles);
+        $css = $this->sanitizer->generate_inline_css($seriesId, $sanitizedStyles);
 
         $expectedSelector = '.seriescraft-series-42';
         $this->assertStringContainsString($expectedSelector, $css);
@@ -91,7 +91,7 @@ class StyleSanitizerTest extends TestCase
     public function testGenerateInlineCssReturnsEmptyStringWhenNoStylesConfigured(): void
     {
         $seriesId = 42;
-        $css = $this->sanitizer->generateInlineCss($seriesId, []);
+        $css = $this->sanitizer->generate_inline_css($seriesId, []);
 
         $this->assertSame('', $css);
     }
