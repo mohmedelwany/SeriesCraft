@@ -40,10 +40,13 @@ class SeriesTaxonomy {
 	/**
 	 * Registers the custom taxonomy with WordPress.
 	 *
-	 * @param array<string> $object_types Array of post types to bind the taxonomy to.
+	 * @param array<string>|mixed $object_types Array of post types to bind the taxonomy to.
 	 * @return void
 	 */
-	public function register( array $object_types = self::DEFAULT_OBJECT_TYPES ): void {
+	public function register( $object_types = self::DEFAULT_OBJECT_TYPES ): void {
+		if ( ! is_array( $object_types ) || empty( $object_types ) ) {
+			$object_types = self::DEFAULT_OBJECT_TYPES;
+		}
 		$labels = array(
 			'name'                       => _x( 'Series', 'taxonomy general name', 'series-craft' ),
 			'singular_name'              => _x( 'Series', 'taxonomy singular name', 'series-craft' ),
@@ -75,6 +78,7 @@ class SeriesTaxonomy {
 			'hierarchical'          => false,
 			'labels'                => $labels,
 			'show_ui'               => true,
+			'show_in_menu'          => 'edit.php',
 			'show_admin_column'     => true,
 			'update_count_callback' => '_update_post_term_count',
 			'query_var'             => true,

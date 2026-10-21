@@ -102,7 +102,36 @@ class SettingsRestController extends WP_REST_Controller {
 							'type'        => 'object',
 							'required'    => false,
 						),
+						'style'         => array(
+							'description' => 'Alias for custom styles.',
+							'type'        => 'object',
+							'required'    => false,
+						),
 					),
+				),
+			)
+		);
+
+		register_rest_route(
+			'seriescraft/v1',
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/settings',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_settings' ),
+					'permission_callback' => array( $this, 'check_read_permission' ),
+					'args'                => array(
+						'id' => array(
+							'description' => 'Unique identifier for the series term.',
+							'type'        => 'integer',
+							'required'    => true,
+						),
+					),
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'update_settings' ),
+					'permission_callback' => array( $this, 'check_write_permission' ),
 				),
 			)
 		);
@@ -168,14 +197,35 @@ class SettingsRestController extends WP_REST_Controller {
 		}
 
 		$default_layout = $this->settings_repository->get_default_layout();
+		$custom_styles  = $meta_settings['custom_styles'] ?? ( $meta_settings['style'] ?? array() );
 
 		$response_data = array(
 			'term_id'       => $term_id,
 			'layout'        => $meta_settings['layout'] ?? $default_layout,
-			'custom_styles' => $meta_settings['custom_styles'] ?? array(),
+			'custom_styles' => $custom_styles,
+			'style'         => $custom_styles,
 		);
 
 		return new WP_REST_Response( $response_data, 200 );
+	}
+
+	/**
+	 * Recursively sanitizes style attributes.
+	 *
+	 * @param array $styles Input style array.
+	 * @return array Sanitized array.
+	 */
+	private function sanitize_styles_recursive( array $styles ): array {
+		$sanitized = array();
+		foreach ( $styles as $key => $value ) {
+			$clean_key = sanitize_key( (string) $key );
+			if ( is_array( $value ) ) {
+				$sanitized[ $clean_key ] = $this->sanitize_styles_recursive( $value );
+			} elseif ( is_scalar( $value ) ) {
+				$sanitized[ $clean_key ] = sanitize_text_field( (string) $value );
+			}
+		}
+		return $sanitized;
 	}
 
 	/**
@@ -218,12 +268,11 @@ class SettingsRestController extends WP_REST_Controller {
 			$existing_settings['layout'] = $layout;
 		}
 
-		if ( isset( $params['custom_styles'] ) && is_array( $params['custom_styles'] ) ) {
-			$sanitized_styles = array();
-			foreach ( $params['custom_styles'] as $key => $value ) {
-				$sanitized_styles[ sanitize_key( (string) $key ) ] = sanitize_text_field( (string) $value );
-			}
+		$raw_styles = $params['custom_styles'] ?? ( $params['style'] ?? null );
+		if ( is_array( $raw_styles ) ) {
+			$sanitized_styles                   = $this->sanitize_styles_recursive( $raw_styles );
 			$existing_settings['custom_styles'] = $sanitized_styles;
+			$existing_settings['style']         = $sanitized_styles;
 		}
 
 		update_term_meta( $term_id, self::TERM_SETTINGS_META_KEY, $existing_settings );

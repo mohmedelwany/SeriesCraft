@@ -26,24 +26,32 @@ class SeriesRepository implements SeriesRepositoryInterface {
 	/**
 	 * Retrieves all posts assigned to a series ordered explicitly by numerical position.
 	 *
-	 * @param int $term_id Series taxonomy term ID.
+	 * @param int           $term_id  Series taxonomy term ID.
+	 * @param array<string> $statuses Allowed post statuses (defaults to publish, draft, pending).
 	 * @return array<WP_Post> Ordered list of WP_Post objects.
 	 */
-	public function get_series_posts( int $term_id ): array {
+	public function get_series_posts( int $term_id, array $statuses = array( 'publish', 'draft', 'pending' ) ): array {
 		global $wpdb;
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		if ( empty( $statuses ) ) {
+			$statuses = array( 'publish', 'draft', 'pending' );
+		}
+
+		$status_placeholders = implode( ', ', array_fill( 0, count( $statuses ), '%s' ) );
+		$params              = array_merge( array( $term_id, SeriesTaxonomy::TAXONOMY ), $statuses );
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT p.* FROM {$wpdb->posts} p
 				INNER JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
 				INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
-				WHERE tt.term_id = %d AND tt.taxonomy = %s AND p.post_status = 'publish'
+				WHERE tt.term_id = %d AND tt.taxonomy = %s AND p.post_status IN ({$status_placeholders})
 				ORDER BY tr.term_order ASC, p.post_date ASC",
-				$term_id,
-				SeriesTaxonomy::TAXONOMY
+				...$params
 			)
 		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
 
 		if ( empty( $results ) ) {
 			return array();
@@ -68,6 +76,7 @@ class SeriesRepository implements SeriesRepositoryInterface {
 		}
 
 		$term_taxonomy_id = (int) $term_taxonomy->term_taxonomy_id;
+		$table_name       = $wpdb->prefix . 'series_craft_posts';
 
 		foreach ( $post_ids as $index => $post_id ) {
 			$order = $index + 1;
@@ -85,7 +94,20 @@ class SeriesRepository implements SeriesRepositoryInterface {
 				array( '%d', '%d' )
 			);
 
-			// 2. Synchronize legacy/fallback post meta.
+			// 2. Synchronize custom junction table.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->update(
+				$table_name,
+				array( 'sort_order' => $order ),
+				array(
+					'series_id' => $term_id,
+					'post_id'   => $post_id,
+				),
+				array( '%d' ),
+				array( '%d', '%d' )
+			);
+
+			// 3. Synchronize legacy/fallback post meta.
 			update_post_meta( $post_id, 'sm_series_order', $order );
 		}
 

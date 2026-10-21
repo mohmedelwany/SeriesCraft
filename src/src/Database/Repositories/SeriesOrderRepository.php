@@ -79,6 +79,19 @@ class SeriesOrderRepository {
 				array( '%d', '%d' )
 			);
 
+			// Synchronize custom junction table.
+			$table_name = $wpdb->prefix . 'series_craft_posts';
+			$wpdb->update(
+				$table_name,
+				array( 'sort_order' => $order ),
+				array(
+					'series_id' => $term_id,
+					'post_id'   => $post_id,
+				),
+				array( '%d' ),
+				array( '%d', '%d' )
+			);
+
 			// Synchronize post meta fallback.
 			update_post_meta( $post_id, self::META_KEY_PREFIX . $term_id, $order );
 

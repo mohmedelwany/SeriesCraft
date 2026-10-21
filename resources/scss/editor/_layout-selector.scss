@@ -1,46 +1,185 @@
+// =============================================================================
+// SeriesCraft Editor: Layout Variant Selector & Interactive Cards
+// =============================================================================
+
 @use "../abstracts/variables" as *;
 @use "../abstracts/mixins" as *;
 
-.sc-layout-selector {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--sc-spacing-xs);
-  margin-top: var(--sc-spacing-xs);
+.sc-layout-selector,
+.sm-layout-selector {
+  width: 100%;
+  box-sizing: border-box;
 
-  &__option {
+  &__label,
+  .sm-layout-selector__label {
+    font-family: var(--sc-font-family-body, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+    font-size: var(--sc-font-size-xs, 0.75rem);
+    font-weight: var(--sc-font-weight-medium, 500);
+    color: var(--sc-color-text-secondary, #64748b);
+    margin-bottom: var(--sc-spacing-xs, 0.5rem);
+  }
+
+  &__grid,
+  .sm-layout-selector__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sc-spacing-sm, 0.75rem);
+    margin-top: var(--sc-spacing-xs, 0.5rem);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Variant Card
+  // ---------------------------------------------------------------------------
+  .sc-layout-card,
+  .sm-layout-card {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: var(--sc-spacing-xxs);
-    padding: var(--sc-spacing-sm) var(--sc-spacing-xs);
-    background-color: var(--sc-surface-muted);
-    border: 1px solid var(--sc-color-border);
-    border-radius: var(--sc-border-radius-md);
+    gap: var(--sc-spacing-xs, 0.5rem);
+    width: 100%;
+    min-height: 90px;
+    padding: var(--sc-spacing-sm, 0.75rem);
+    border: 1.5px solid var(--sc-color-border, #e2e8f0);
+    border-radius: var(--sc-border-radius-md, 0.5rem);
+    background-color: var(--sc-surface-bg, #ffffff);
     cursor: pointer;
-    transition: all var(--sc-transition-fast);
     text-align: center;
+    transition: all var(--sc-transition-fast, 0.15s ease);
+    box-sizing: border-box;
 
     &:hover {
-      background-color: var(--sc-surface-bg);
-      border-color: var(--sc-color-border-hover);
+      border-color: var(--sc-color-primary, #0073aa);
+      background-color: var(--sc-surface-muted, #f8fafc);
     }
 
-    &.is-selected {
-      background-color: var(--sc-color-primary-light);
-      border-color: var(--sc-color-primary);
-      color: var(--sc-color-primary);
+    &.is-selected,
+    &[aria-pressed="true"] {
+      border-color: var(--sc-color-primary, #0073aa);
+      box-shadow: 0 0 0 1px var(--sc-color-primary, #0073aa);
+      background-color: var(--sc-color-primary-light, #f0f7fb);
 
-      .sc-layout-selector__label {
-        color: var(--sc-color-primary);
-        font-weight: var(--sc-font-weight-semibold);
+      .sc-layout-card__indicator,
+      .sm-layout-card__indicator {
+        border-color: var(--sc-color-primary, #0073aa);
+        background-color: var(--sc-color-primary, #0073aa);
+        box-shadow: inset 0 0 0 3px var(--sc-surface-bg, #ffffff);
+      }
+
+      .sc-layout-card__title,
+      .sm-layout-card__title {
+        color: var(--sc-color-primary, #0073aa);
+        font-weight: var(--sc-font-weight-semibold, 600);
       }
     }
   }
 
-  &__label {
-    font-family: var(--sc-font-family-body);
-    font-size: var(--sc-font-size-xs);
-    color: var(--sc-color-text-secondary);
+  // Radio-like Selection Indicator
+  .sc-layout-card__indicator,
+  .sm-layout-card__indicator {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 14px;
+    height: 14px;
+    border: 1.5px solid var(--sc-color-border-hover, #cbd5e1);
+    border-radius: var(--sc-border-radius-full, 9999px);
+    background: transparent;
+    transition: all var(--sc-transition-fast, 0.15s ease);
+  }
+
+  .sc-layout-card__content,
+  .sm-layout-card__content {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+
+  .sc-layout-card__title,
+  .sm-layout-card__title {
+    margin: 0;
+    font-size: var(--sc-font-size-xs, 0.75rem);
+    font-weight: var(--sc-font-weight-medium, 500);
+    color: var(--sc-color-text, #1e293b);
+    line-height: var(--sc-line-height-snug, 1.35);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Card Previews (Miniature CSS wireframes)
+  // ---------------------------------------------------------------------------
+  .sc-preview,
+  .sm-preview {
+    width: 100%;
+    max-width: 80px;
+    height: 48px;
+    margin: 0 auto;
+    box-sizing: border-box;
+  }
+
+  .sc-preview--grid,
+  .sm-preview--grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 3px;
+
+    .sc-preview__cell,
+    .sm-preview__cell {
+      height: 22px;
+      border-radius: var(--sc-border-radius-xs, 3px);
+      background-color: var(--sc-color-primary-light, #f0f7fb);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1px;
+
+      svg {
+        width: 10px;
+        height: 10px;
+        color: var(--sc-color-primary, #0073aa);
+        fill: currentColor;
+      }
+    }
+  }
+
+  .sc-preview--list,
+  .sm-preview--list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    .sc-preview__row,
+    .sm-preview__row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      height: 12px;
+    }
+
+    .sc-preview__media-icon,
+    .sm-preview__media-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px;
+      height: 12px;
+      border-radius: var(--sc-border-radius-xs, 2px);
+      background-color: var(--sc-color-primary-light, #f0f7fb);
+
+      svg {
+        width: 9px;
+        height: 9px;
+        color: var(--sc-color-primary, #0073aa);
+        fill: currentColor;
+      }
+    }
+
+    .sc-preview__line,
+    .sm-preview__line_1,
+    .sm-preview__line_2 {
+      height: 3px;
+      background-color: var(--sc-color-border-hover, #cbd5e1);
+      border-radius: var(--sc-border-radius-full, 9999px);
+      flex: 1;
+    }
   }
 }

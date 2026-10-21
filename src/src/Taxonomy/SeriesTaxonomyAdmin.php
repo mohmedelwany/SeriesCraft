@@ -77,21 +77,74 @@ class SeriesTaxonomyAdmin {
 
 		wp_enqueue_script( 'jquery-ui-sortable' );
 
-		$inline_js = <<<'JS'
-jQuery(function($) {
+		$css_url = defined( 'SCFT_PLUGIN_URL' )
+			? SCFT_PLUGIN_URL . 'assets/css/admin.css'
+			: content_url( 'plugins/SeriesCraft/assets/css/admin.css' );
+
+		wp_enqueue_style(
+			'seriescraft-admin-taxonomy',
+			$css_url,
+			array( 'dashicons' ),
+			defined( 'SCFT_PLUGIN_VERSION' ) ? SCFT_PLUGIN_VERSION : '1.0.0'
+		);
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$term_id  = isset( $_GET['tag_ID'] ) ? (int) $_GET['tag_ID'] : 0;
+		$rest_url = function_exists( 'rest_url' )
+			? rest_url( 'series-craft/v1/series/' . $term_id . '/order' )
+			: '/wp-json/series-craft/v1/series/' . $term_id . '/order';
+
+		$rest_nonce = function_exists( 'wp_create_nonce' ) ? wp_create_nonce( 'wp_rest' ) : '';
+
+		$inline_js = sprintf(
+			'jQuery(function($) {
     var $sortable = $("#series-order-sortable");
     var $input = $("#series_post_order");
+    var $status = $("#sc-order-status");
+    var restUrl = %s;
+    var restNonce = %s;
 
     if ($sortable.length && $sortable.sortable) {
         $sortable.sortable({
+            placeholder: "ui-sortable-placeholder",
+            cursor: "grabbing",
             update: function() {
                 var order = $sortable.sortable("toArray", { attribute: "data-post-id" });
                 $input.val(order.join(","));
+
+                if (restUrl && order.length > 0) {
+                    $status.html("<span class=\"sc-status-saving\"><span class=\"spinner is-active\"></span> Saving order...</span>").show();
+                    var numericIds = order.map(function(id) { return parseInt(id, 10); }).filter(function(id) { return !isNaN(id) && id > 0; });
+
+                    fetch(restUrl, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-WP-Nonce": restNonce
+                        },
+                        body: JSON.stringify({ post_ids: numericIds })
+                    })
+                    .then(function(res) {
+                        if (!res.ok) throw new Error("HTTP " + res.status);
+                        return res.json();
+                    })
+                    .then(function() {
+                        $status.html("<span class=\"sc-status-success\">✓ Order saved</span>");
+                        setTimeout(function() {
+                            $status.fadeOut(400, function() { $(this).empty().show(); });
+                        }, 2500);
+                    })
+                    .catch(function(err) {
+                        $status.html("<span class=\"sc-status-error\">Save error: " + err.message + "</span>");
+                    });
+                }
             }
         });
     }
-});
-JS;
+});',
+			wp_json_encode( $rest_url ),
+			wp_json_encode( $rest_nonce )
+		);
 
 		wp_add_inline_script( 'jquery-ui-sortable', $inline_js );
 	}
@@ -114,20 +167,21 @@ JS;
 			</th>
 			<td>
 				<input type="hidden" id="series_post_order" name="series_post_order" value="<?php echo esc_attr( implode( ',', $post_ids ) ); ?>" />
-				<ul id="series-order-sortable" style="max-width: 500px; margin: 0; padding: 0; list-style: none;">
+				<ul id="series-order-sortable" class="sc-sortable-post-list">
 					<?php if ( empty( $posts ) ) : ?>
-						<li style="padding: 10px; background: #f6f7f7; border: 1px solid #dcdcde;">
+						<li class="sc-sortable-empty">
 							<?php esc_html_e( 'No posts assigned to this series yet.', 'series-craft' ); ?>
 						</li>
 					<?php else : ?>
 						<?php foreach ( $posts as $post ) : ?>
-							<li data-post-id="<?php echo esc_attr( (string) $post->ID ); ?>" style="padding: 8px 12px; margin-bottom: 6px; background: #fff; border: 1px solid #ccd0d4; border-radius: 4px; cursor: move; display: flex; align-items: center; justify-content: space-between;">
-								<span><?php echo esc_html( $post->post_title ); ?></span>
-								<span class="dashicons dashicons-menu" aria-hidden="true" style="color: #8c8f94;"></span>
+							<li class="sc-sortable-post-item" data-post-id="<?php echo esc_attr( (string) $post->ID ); ?>">
+								<span class="sc-sortable-handle dashicons dashicons-menu" aria-hidden="true"></span>
+								<span class="sc-sortable-title"><?php echo esc_html( $post->post_title ); ?></span>
 							</li>
 						<?php endforeach; ?>
 					<?php endif; ?>
 				</ul>
+				<div id="sc-order-status" class="sc-order-status" aria-live="polite"></div>
 				<p class="description">
 					<?php esc_html_e( 'Drag and drop posts to define explicit sequence order, then click Update.', 'series-craft' ); ?>
 				</p>

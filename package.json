@@ -7,9 +7,14 @@
     "test": "tests"
   },
   "scripts": {
-    "build": "wp-scripts build resources/scss/frontend.scss resources/scss/editor.scss resources/scss/admin.scss --output-path=assets/css",
-    "start": "wp-scripts start resources/scss/frontend.scss resources/scss/editor.scss resources/scss/admin.scss --output-path=assets/css",
-    "test:unit:js": "jest",
+    "copy:assets": "node -e \"fs.cpSync('assets', 'src/assets', {recursive: true})\"",
+    "build:css": "wp-scripts build resources/scss/frontend.scss resources/scss/editor.scss resources/scss/admin.scss --output-path=assets/css && npm run copy:assets",
+    "build:js": "wp-scripts build resources/js/editor.js --output-path=assets/js && npm run copy:assets",
+    "build": "npm run build:css && npm run build:js",
+    "start:css": "wp-scripts start resources/scss/frontend.scss resources/scss/editor.scss resources/scss/admin.scss --output-path=assets/css",
+    "start:js": "wp-scripts start resources/js/editor.js --output-path=assets/js",
+    "start": "npm run build:css && npm run start:js",
+    "test:unit:js": "wp-scripts test-unit-js",
     "test:e2e": "playwright test",
     "wp-env": "wp-env",
     "prepare": "husky"
@@ -27,11 +32,24 @@
   "homepage": "https://github.com/mohmedelwany/SeriesCraft#readme",
   "devDependencies": {
     "@playwright/test": "^1.59.1",
+    "@testing-library/react": "^16.3.3",
+    "@wordpress/api-fetch": "^7.57.0",
+    "@wordpress/components": "^42.0.0",
+    "@wordpress/core-data": "^8.2.0",
+    "@wordpress/data": "^10.57.0",
+    "@wordpress/editor": "^15.2.0",
+    "@wordpress/element": "^9.0.0",
     "@wordpress/env": "^11.3.0",
+    "@wordpress/plugins": "^7.57.0",
     "@wordpress/scripts": "^35.0.0",
     "husky": "^9.1.7",
     "jest": "^30.3.0",
     "jest-environment-node": "^30.3.0",
     "sass": "^1.105.1"
+  },
+  "babel": {
+    "presets": [
+      "@wordpress/babel-preset-default"
+    ]
   }
 }

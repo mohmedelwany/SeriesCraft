@@ -62,6 +62,8 @@ class SeriesTaxonomyTest extends IntegrationTestCase {
 		$taxonomy_object = get_taxonomy( SeriesTaxonomy::TAXONOMY );
 
 		$this->assertNotNull( $taxonomy_object, 'Failed: Taxonomy object does not exist.' );
+		$this->assertTrue( $taxonomy_object->show_ui, 'Failed: show_ui flag is not enabled.' );
+		$this->assertSame( 'edit.php', $taxonomy_object->show_in_menu, 'Failed: show_in_menu is not edit.php.' );
 		$this->assertTrue( $taxonomy_object->show_in_rest, 'Failed: show_in_rest flag is not enabled.' );
 		$this->assertSame(
 			SeriesTaxonomy::REST_BASE,
