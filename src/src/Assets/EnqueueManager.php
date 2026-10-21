@@ -157,6 +157,7 @@ class EnqueueManager {
 			return $this->enqueue_block_assets( ...$arguments );
 		}
 
+		// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 		throw new \BadMethodCallException( sprintf( 'Call to undefined method %s::%s()', __CLASS__, $name ) );
 	}
 }
