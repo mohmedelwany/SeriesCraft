@@ -1,0 +1,115 @@
+// =============================================================================
+// SeriesCraft Editor: 'seriescraft/series-list' Block & Preview Scoped Styles
+// =============================================================================
+
+@use "../abstracts/variables" as *;
+@use "../abstracts/mixins" as *;
+
+.wp-block-seriescraft-series-list,
+.seriescraft-series-list-block {
+  width: 100%;
+  box-sizing: border-box;
+  clear: both;
+  margin: 1.5rem 0;
+
+  &.alignwide {
+    max-width: var(--wp--style--global--wide-size, 1100px);
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+.sc-series-preview,
+.sm-series-preview {
+  background: var(--sc-surface-bg, #ffffff);
+  border: 1px solid var(--sc-color-border, #e2e8f0);
+  border-radius: var(--sc-border-radius-lg, 0.5rem);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  box-sizing: border-box;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--sc-color-border, #f1f5f9);
+    background: var(--sc-surface-muted, #f8fafc);
+  }
+
+  &__label {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: var(--sc-color-primary, #0073aa);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  &__count-badge {
+    font-size: 0.6875rem;
+    padding: 0.125rem 0.5rem;
+    background-color: var(--sc-color-primary-light, #f0f7fb);
+    color: var(--sc-color-primary, #0073aa);
+    border-radius: var(--sc-border-radius-full, 9999px);
+    font-weight: 600;
+    margin: 0;
+  }
+
+  &__body {
+    padding: 0.5rem 0;
+  }
+
+  &__notice {
+    padding: 0.75rem 1rem;
+    background-color: #f8fafc;
+    color: #64748b;
+    font-size: 0.8125rem;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  &__loading,
+  &__empty {
+    padding: 1.25rem 1rem;
+    text-align: center;
+    color: #64748b;
+    font-size: 0.875rem;
+  }
+
+  &__list {
+    max-height: 18rem;
+    overflow-y: auto;
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.625rem 1rem;
+    border-bottom: 1px solid #f8fafc;
+    transition: background-color 0.15s ease;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &:hover {
+      background-color: #f8fafc;
+    }
+  }
+
+  &__item-name {
+    flex: 1 1 auto;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #1e293b;
+  }
+
+  &__item-count {
+    font-size: 0.75rem;
+    color: #64748b;
+    background-color: #f1f5f9;
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    font-weight: 500;
+  }
+}
