@@ -119,4 +119,40 @@ class MainTest extends TestCase
 
         $this->addToAssertionCount(1);
     }
+
+    /**
+     * Test 6: Verifies that Main::init registers only seriescraft/series-list and decommissions series-toc / series-manager.
+     */
+    public function testInitRegistersOnlySeriesListBlock(): void
+    {
+        $mockEnqueueManager = $this->createMock(EnqueueManager::class);
+        $frontendRenderer = \Mockery::mock(\SeriesCraft\Frontend\FrontendRenderer::class);
+
+        $registeredBlocks = [];
+        $registeredArgs = [];
+        Functions\when('register_block_type')->alias(function ($fileOrName, $args = []) use (&$registeredBlocks, &$registeredArgs) {
+            $registeredBlocks[] = $fileOrName;
+            $registeredArgs[] = $args;
+            return true;
+        });
+
+        $pluginDir = rtrim(SCFT_PLUGIN_DIR, '/\\');
+        $blockDir = $pluginDir . '/resources/js/blocks/series-list';
+        if (!is_dir($blockDir)) {
+            @mkdir($blockDir, 0777, true);
+        }
+        $blockFile = $blockDir . '/block.json';
+        file_put_contents($blockFile, '{"name":"seriescraft/series-list"}');
+
+        $main = new \SeriesCraft\Core\Main($mockEnqueueManager, null, null, $frontendRenderer);
+        $main->init();
+
+        @unlink($blockFile);
+
+        $this->assertCount(1, $registeredBlocks);
+        $this->assertStringContainsString('series-list', (string) $registeredBlocks[0]);
+        $this->assertStringNotContainsString('series-toc', (string) $registeredBlocks[0]);
+        $this->assertStringNotContainsString('series-manager', (string) $registeredBlocks[0]);
+        $this->assertSame([$frontendRenderer, 'render_series_block'], $registeredArgs[0]['render_callback']);
+    }
 }

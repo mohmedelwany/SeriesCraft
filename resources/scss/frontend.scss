@@ -1,5 +1,37 @@
+// =============================================================================
+// SeriesCraft - Frontend Entry Point (frontend.scss)
+// =============================================================================
+
 @use "abstracts/variables";
 @use "abstracts/mixins";
 @use "components/badge";
+@use "components/header";
 @use "components/post-list";
 @use "components/navigation";
+@use "frontend/base";
+@use "frontend/link-grid";
+@use "frontend/media-grid";
+@use "frontend/media-list";
+@use "frontend/accordion";
+@use "editor/legacy-preview-parity";
+
+@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200");
+
+.seriescraft-wrapper,
+.sm-series-layout {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  padding-top: var(--sc-padding-top, 1.5rem);
+  padding-right: var(--sc-padding-right, 1.5rem);
+  padding-bottom: var(--sc-padding-bottom, 1.5rem);
+  padding-left: var(--sc-padding-left, 1.5rem);
+  margin-top: var(--sc-margin-top, 2rem);
+  margin-bottom: var(--sc-margin-bottom, 2rem);
+  margin-left: var(--sc-margin-left, auto);
+  margin-right: var(--sc-margin-right, auto);
+  border-width: var(--sc-border-width, 1px);
+  border-style: var(--sc-border-style, solid);
+  border-color: var(--sc-border-color, #e2e8f0);
+  clear: both;
+}

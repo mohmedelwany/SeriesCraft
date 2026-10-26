@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace SeriesCraft\Database\Repositories;
 
+use SeriesCraft\Services\ThumbnailResolver;
 use SeriesCraft\Taxonomy\SeriesTaxonomy;
 use WP_Post;
 use WP_Term;
@@ -135,5 +136,97 @@ class SeriesRepository implements SeriesRepositoryInterface {
 		}
 
 		return $terms;
+	}
+
+	// phpcs:disable WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid
+	/**
+	 * Retrieves formatted series data with posts, layout, and styles for a specific post.
+	 *
+	 * @param int $post_id Target post ID.
+	 * @return array<int, array{id: int, name: string, layout: string, styles: array<string, mixed>, posts: array<int, array{id: int, title: string, url: string, part_order: int, thumbnail: string|null}>}> Array of series data.
+	 */
+	public function getSeriesForPost( int $post_id ): array {
+		/**
+		 * Terms assigned to the post.
+		 *
+		 * @var array<WP_Term>|WP_Error $terms
+		 */
+		$terms = wp_get_post_terms( $post_id, SeriesTaxonomy::TAXONOMY );
+
+		if ( is_wp_error( $terms ) || empty( $terms ) || ! is_array( $terms ) ) {
+			return array();
+		}
+
+		$default_layout = get_option( 'seriescraft_default_layout', '' );
+		if ( empty( $default_layout ) ) {
+			$default_layout = get_option( 'content_variant', 'link-list' );
+		}
+		if ( empty( $default_layout ) ) {
+			$default_layout = 'link-list';
+		}
+
+		$series_data = array();
+
+		foreach ( $terms as $term ) {
+			if ( ! ( $term instanceof WP_Term ) ) {
+				continue;
+			}
+
+			$term_id       = (int) $term->term_id;
+			$meta_settings = get_term_meta( $term_id, 'sm_series_settings', true );
+			if ( ! is_array( $meta_settings ) ) {
+				if ( is_string( $meta_settings ) ) {
+					$decoded       = json_decode( $meta_settings, true );
+					$meta_settings = is_array( $decoded ) ? $decoded : array();
+				} else {
+					$meta_settings = array();
+				}
+			}
+
+			$layout = ! empty( $meta_settings['layout'] )
+				? (string) $meta_settings['layout']
+				: ( ! empty( $meta_settings['content_variant'] )
+					? (string) $meta_settings['content_variant']
+					: (string) $default_layout );
+
+			$styles = (array) ( $meta_settings['custom_styles'] ?? ( $meta_settings['style'] ?? array() ) );
+
+			$ordered_posts = $this->get_series_posts( $term_id );
+			$posts_data    = array();
+
+			foreach ( $ordered_posts as $index => $post_obj ) {
+				$post_content  = isset( $post_obj->post_content ) ? (string) $post_obj->post_content : null;
+				$thumbnail_url = ThumbnailResolver::resolve_post_image( (int) $post_obj->ID, $post_content );
+
+				$posts_data[] = array(
+					'id'         => (int) $post_obj->ID,
+					'title'      => get_the_title( $post_obj->ID ),
+					'url'        => (string) get_permalink( $post_obj->ID ),
+					'part_order' => $index + 1,
+					'thumbnail'  => ! empty( $thumbnail_url ) ? $thumbnail_url : null,
+				);
+			}
+
+			$series_data[] = array(
+				'id'     => $term_id,
+				'name'   => (string) $term->name,
+				'layout' => $layout,
+				'styles' => $styles,
+				'posts'  => $posts_data,
+			);
+		}
+
+		return $series_data;
+	}
+	// phpcs:enable WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid
+
+	/**
+	 * Snake_case alias for getSeriesForPost.
+	 *
+	 * @param int $post_id Target post ID.
+	 * @return array<int, array{id: int, name: string, layout: string, styles: array<string, mixed>, posts: array<int, array{id: int, title: string, url: string, part_order: int, thumbnail: string|null}>}>
+	 */
+	public function get_series_for_post( int $post_id ): array {
+		return $this->getSeriesForPost( $post_id );
 	}
 }

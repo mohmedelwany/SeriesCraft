@@ -1,45 +1,113 @@
-import {
-	getCurrentSeriesId,
-	getSeriesSettings,
-	getSeriesSetting,
-	getOrderedPostIds,
-	isSavingSeries,
-	getSeriesError,
-} from '../../../../resources/js/store/selectors';
+/**
+ * Unit Tests for SeriesCraft Store Selectors.
+ *
+ * @package SeriesCraft\Tests\Unit\Js\Store
+ */
 
-describe('Series Store Selectors', () => {
-	const mockState = {
-		currentSeriesId: 25,
-		settings: {
-			layout: 'media-grid',
-			custom_styles: { border_color: '#0073aa' },
+import {
+	getSeries,
+	getSeriesPosts,
+	isSavingOrder,
+	getSeriesMeta,
+	getOrderNotice,
+	getSeriesById,
+	getAllNotices,
+} from '../../../../resources/js/store/selectors';
+import { DEFAULT_STATE } from '../../../../resources/js/store/reducer';
+
+describe('SeriesCraft Store Selectors', () => {
+	const sampleState = {
+		series: [
+			{ id: 10, name: 'Machine Learning', slug: 'machine-learning', count: 5 },
+			{ id: 20, name: 'Data Engineering', slug: 'data-engineering', count: 3 },
+		],
+		postsBySeries: {
+			10: [
+				{ id: 101, title: { rendered: 'Intro to ML' }, part_order: 1 },
+				{ id: 102, title: { rendered: 'Supervised Learning' }, part_order: 2 },
+			],
 		},
-		orderedPostIds: [10, 20, 30],
-		isSaving: true,
-		error: 'Save failed',
+		metaBySeries: {
+			10: {
+				layout: 'media-grid',
+				custom_styles: { border_color: '#3b82f6' },
+			},
+		},
+		isSaving: {
+			10: true,
+			20: false,
+		},
+		notices: {
+			10: { status: 'success', message: 'Saved successfully.' },
+		},
 	};
 
-	it('should return the current series ID', () => {
-		expect(getCurrentSeriesId(mockState)).toBe(25);
-	});
+	/**
+	 * Test 1: getSeries extracts list of series from state or returns empty array.
+	 */
+	it('Test 1: getSeries returns series array when present or empty array if empty', () => {
+		expect( getSeries( sampleState ) ).toEqual( sampleState.series );
+		expect( getSeries( DEFAULT_STATE ) ).toEqual( [] );
+		expect( getSeries( null ) ).toEqual( [] );
+	} );
 
-	it('should return all series settings or empty object fallback', () => {
-		expect(getSeriesSettings(mockState)).toEqual(mockState.settings);
-		expect(getSeriesSettings({})).toEqual({});
-	});
+	/**
+	 * Test 2: getSeriesPosts extracts ordered posts for specified seriesId or empty array.
+	 */
+	it('Test 2: getSeriesPosts returns post list for existing seriesId or empty array', () => {
+		expect( getSeriesPosts( sampleState, 10 ) ).toEqual( sampleState.postsBySeries[ 10 ] );
+		expect( getSeriesPosts( sampleState, 999 ) ).toEqual( [] );
+		expect( getSeriesPosts( sampleState, null ) ).toEqual( [] );
+	} );
 
-	it('should return a specific setting by key with fallback default', () => {
-		expect(getSeriesSetting(mockState, 'layout')).toBe('media-grid');
-		expect(getSeriesSetting(mockState, 'non_existent', 'default-value')).toBe('default-value');
-	});
+	/**
+	 * Test 3: isSavingOrder returns boolean saving status for specified seriesId.
+	 */
+	it('Test 3: isSavingOrder returns true when series is saving, false otherwise', () => {
+		expect( isSavingOrder( sampleState, 10 ) ).toBe( true );
+		expect( isSavingOrder( sampleState, 20 ) ).toBe( false );
+		expect( isSavingOrder( sampleState, 999 ) ).toBe( false );
+		expect( isSavingOrder( sampleState, null ) ).toBe( false );
+	} );
 
-	it('should return ordered post IDs array', () => {
-		expect(getOrderedPostIds(mockState)).toEqual([10, 20, 30]);
-		expect(getOrderedPostIds({})).toEqual([]);
-	});
+	/**
+	 * Test 4: getSeriesMeta extracts styling/layout metadata for specified seriesId.
+	 */
+	it('Test 4: getSeriesMeta returns metadata object or null if not found', () => {
+		expect( getSeriesMeta( sampleState, 10 ) ).toEqual( {
+			layout: 'media-grid',
+			custom_styles: { border_color: '#3b82f6' },
+		} );
+		expect( getSeriesMeta( sampleState, 999 ) ).toBeNull();
+		expect( getSeriesMeta( sampleState, null ) ).toBeNull();
+	} );
 
-	it('should return saving and error states', () => {
-		expect(isSavingSeries(mockState)).toBe(true);
-		expect(getSeriesError(mockState)).toBe('Save failed');
-	});
-});
+	/**
+	 * Test 5: getOrderNotice extracts notice for specified seriesId or null.
+	 */
+	it('Test 5: getOrderNotice returns notice object or null if none active', () => {
+		expect( getOrderNotice( sampleState, 10 ) ).toEqual( {
+			status: 'success',
+			message: 'Saved successfully.',
+		} );
+		expect( getOrderNotice( sampleState, 20 ) ).toBeNull();
+		expect( getOrderNotice( sampleState, null ) ).toBeNull();
+	} );
+
+	/**
+	 * Test 6: getSeriesById finds series item by numeric or string ID.
+	 */
+	it('Test 6: getSeriesById retrieves series item matching ID or null', () => {
+		expect( getSeriesById( sampleState, 10 ) ).toEqual( sampleState.series[ 0 ] );
+		expect( getSeriesById( sampleState, '20' ) ).toEqual( sampleState.series[ 1 ] );
+		expect( getSeriesById( sampleState, 999 ) ).toBeNull();
+	} );
+
+	/**
+	 * Test 7: getAllNotices retrieves all notices dictionary.
+	 */
+	it('Test 7: getAllNotices retrieves notices dictionary from state', () => {
+		expect( getAllNotices( sampleState ) ).toEqual( sampleState.notices );
+		expect( getAllNotices( DEFAULT_STATE ) ).toEqual( {} );
+	} );
+} );

@@ -218,7 +218,10 @@ class SettingsRestController extends WP_REST_Controller {
 	private function sanitize_styles_recursive( array $styles ): array {
 		$sanitized = array();
 		foreach ( $styles as $key => $value ) {
-			$clean_key = sanitize_key( (string) $key );
+			$clean_key = (string) preg_replace( '/[^a-zA-Z0-9_\-]/', '', (string) $key );
+			if ( '' === $clean_key ) {
+				continue;
+			}
 			if ( is_array( $value ) ) {
 				$sanitized[ $clean_key ] = $this->sanitize_styles_recursive( $value );
 			} elseif ( is_scalar( $value ) ) {

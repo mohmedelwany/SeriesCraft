@@ -31,9 +31,9 @@
     color: var(--sc-color-text);
     text-decoration: none;
     transition: background-color var(--sc-transition-fast),
-                color var(--sc-transition-fast),
-                transform var(--sc-transition-fast),
-                box-shadow var(--sc-transition-fast);
+      color var(--sc-transition-fast),
+      transform var(--sc-transition-fast),
+      box-shadow var(--sc-transition-fast);
     border: 1px solid transparent;
     box-sizing: border-box;
     cursor: pointer;
@@ -100,7 +100,7 @@
     font-family: var(--sc-font-family-body);
     font-size: var(--sc-font-size-base);
     font-weight: var(--sc-font-weight-semibold);
-    color: var(--sc-color-text);
+    color: var(--sc-title-color, var(--sc-color-text));
     @include truncate;
   }
 
@@ -138,5 +138,194 @@
 
       @include interactive-lift;
     }
+  }
+}
+
+// =============================================================================
+// SeriesCraft Link List Layout Variant: .sc-layout-link-list / .sc-link-list
+// =============================================================================
+.sc-layout-link-list,
+.sc-link-list,
+.sm-link-list,
+.seriescraft-layout-link-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sc-spacing-sm, 0.5rem);
+  width: 100%;
+  box-sizing: border-box;
+
+  .sc-link-list__item,
+  .sm-link-list__item,
+  .seriescraft-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: var(--sc-border-radius-lg, 0.75rem);
+    background-color: transparent;
+    color: inherit;
+    box-sizing: border-box;
+    transition: all var(--sc-transition-fast, 0.2s ease);
+    text-decoration: none;
+    cursor: pointer;
+
+    @include respond-to(tablet) {
+      gap: 1.5rem;
+      padding: 1rem;
+    }
+
+    &--current,
+    &.is-current {
+      background-color: var(--sc-header-bg, #e8f0fe);
+      border-left: 4px solid var(--sm-hover-color, var(--sc-button-color, #0066d9));
+      box-shadow: 0 4px 24px rgba(0, 102, 217, 0.12);
+
+      .sc-link-list__icon-wrap,
+      .sm-link-list__icon-wrap {
+        background-color: rgba(0, 102, 217, 0.15);
+
+        .material-symbols-outlined,
+        .sc-link-list__icon {
+          color: var(--sm-hover-color, var(--sc-button-color, #0066d9));
+        }
+      }
+
+      .sc-link-list__badge,
+      .seriescraft-badge {
+        background-color: var(--sm-hover-color, var(--sc-button-color, #0066d9));
+        color: #ffffff;
+      }
+
+      .sc-link-list__part-num,
+      .seriescraft-part-num {
+        color: var(--sm-hover-color, var(--sc-button-color, #0066d9));
+        font-weight: 600;
+      }
+
+      .sc-link-list__status,
+      .material-symbols-outlined:last-child {
+        color: var(--sm-hover-color, var(--sc-button-color, #0066d9));
+      }
+    }
+
+    &--default,
+    &:not(.is-current) {
+      &:hover {
+        background-color: #f8fafc;
+
+        .sc-link-list__title,
+        .sm-link-list__title,
+        .seriescraft-title {
+          color: var(--sm-hover-color, var(--sc-button-color, #0066d9));
+        }
+
+        .sc-link-list__icon-wrap,
+        .sm-link-list__icon-wrap {
+          background-color: #e2e8f0;
+
+          .material-symbols-outlined,
+          .sc-link-list__icon {
+            color: var(--sm-hover-color, var(--sc-button-color, #0066d9));
+          }
+        }
+
+        .sc-link-list__status,
+        .material-symbols-outlined:last-child {
+          color: var(--sm-hover-color, var(--sc-button-color, #0066d9));
+        }
+      }
+
+      .sc-link-list__icon-wrap,
+      .sm-link-list__icon-wrap {
+        background-color: #f1f5f9;
+
+        .material-symbols-outlined,
+        .sc-link-list__icon {
+          color: #94a3b8;
+        }
+      }
+
+      .sc-link-list__part-num,
+      .seriescraft-part-num {
+        color: #94a3b8;
+      }
+
+      .sc-link-list__status,
+      .material-symbols-outlined:last-child {
+        color: #cbd5e1;
+      }
+    }
+  }
+
+  .sc-link-list__icon-wrap,
+  .sm-link-list__icon-wrap {
+    width: 3rem;
+    height: 3rem;
+    border-radius: var(--sc-border-radius-lg, 0.75rem);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--sc-transition-fast, 0.2s ease);
+
+    @include respond-to(tablet) {
+      width: 3.5rem;
+      height: 3.5rem;
+    }
+
+    .material-symbols-outlined,
+    .sc-link-list__icon {
+      font-size: 1.5rem;
+    }
+  }
+
+  .sc-link-list__content {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .sc-link-list__title,
+  .sm-link-list__title,
+  .seriescraft-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.2s ease;
+
+    @include respond-to(tablet) {
+      font-size: 1.125rem;
+    }
+  }
+
+  .sc-link-list__badge,
+  .seriescraft-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--sc-border-radius-full, 9999px);
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 0.5rem;
+  }
+
+  .sc-link-list__part-num,
+  .seriescraft-part-num {
+    display: block;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
+
+    @include respond-to(tablet) {
+      font-size: 0.875rem;
+    }
+  }
+
+  .sc-link-list__status {
+    flex-shrink: 0;
   }
 }

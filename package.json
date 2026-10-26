@@ -7,10 +7,11 @@
     "test": "tests"
   },
   "scripts": {
-    "copy:assets": "node -e \"fs.cpSync('assets', 'src/assets', {recursive: true})\"",
+    "copy:images": "node -e \"if(fs.existsSync('resources/images')){fs.mkdirSync('assets/images',{recursive:true});fs.cpSync('resources/images','assets/images',{recursive:true});}\"",
+    "copy:assets": "npm run copy:images && node -e \"fs.cpSync('assets', 'src/assets', {recursive: true})\"",
     "build:css": "wp-scripts build resources/scss/frontend.scss resources/scss/editor.scss resources/scss/admin.scss --output-path=assets/css && npm run copy:assets",
     "build:js": "wp-scripts build resources/js/editor.js --output-path=assets/js && npm run copy:assets",
-    "build": "npm run build:css && npm run build:js",
+    "build": "npm run copy:images && npm run build:css && npm run build:js",
     "start:css": "wp-scripts start resources/scss/frontend.scss resources/scss/editor.scss resources/scss/admin.scss --output-path=assets/css",
     "start:js": "wp-scripts start resources/js/editor.js --output-path=assets/js",
     "start": "npm run build:css && npm run start:js",

@@ -18,13 +18,17 @@ abstract class IntegrationTestCase extends TestCase
         parent::setUp();
 
         global $wpdb;
-        $wpdb->query('START TRANSACTION');
+        if ($wpdb instanceof \wpdb || (is_object($wpdb) && method_exists($wpdb, 'query'))) {
+            $wpdb->query('START TRANSACTION');
+        }
     }
 
     protected function tearDown(): void
     {
         global $wpdb;
-        $wpdb->query('ROLLBACK');
+        if ($wpdb instanceof \wpdb || (is_object($wpdb) && method_exists($wpdb, 'query'))) {
+            $wpdb->query('ROLLBACK');
+        }
 
         parent::tearDown();
     }

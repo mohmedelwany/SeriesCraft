@@ -24,33 +24,50 @@ class LinkGridView implements VariantViewInterface {
 	 * @return string Rendered HTML markup.
 	 */
 	public function render( array $posts, int $current_post_id ): string {
-		$output = '<div class="seriescraft-layout seriescraft-layout-link-grid">';
+		$output = '<section class="sc-layout-link-grid sm-series-variant sm-link-grid seriescraft-layout seriescraft-layout-link-grid"><div class="sc-link-grid__grid sm-link-grid__grid">';
 
-		foreach ( $posts as $post ) {
-			$is_current   = ( $post['id'] === $current_post_id );
-			$card_classes = 'seriescraft-card' . ( $is_current ? ' is-current' : '' );
+		foreach ( $posts as $index => $post ) {
+			$is_current  = ( (int) $post['id'] === $current_post_id );
+			$part_number = $post['part_order'] ?? ( $index + 1 );
+			$link_url    = (string) $post['url'];
+			$title       = (string) $post['title'];
 
-			$output .= sprintf( '<div class="%s">', esc_attr( $card_classes ) );
-			$output .= sprintf( '<span class="seriescraft-part-num">%s</span>', esc_html( (string) $post['part_order'] ) );
+			$card_class = $is_current
+				? 'sc-link-grid__card sc-link-grid__card--current seriescraft-card sm-link-grid__card sm-link-grid__card--current is-current'
+				: 'sc-link-grid__card sc-link-grid__card--default seriescraft-card sm-link-grid__card sm-link-grid__card--default';
+
+			$output .= sprintf(
+				'<a href="%s" class="%s">',
+				esc_url( $link_url ),
+				esc_attr( $card_class )
+			);
 
 			if ( $is_current ) {
 				$output .= sprintf(
-					'<span class="seriescraft-title">%s <span class="seriescraft-badge">%s</span></span>',
-					esc_html( $post['title'] ),
+					'<div class="sc-link-grid__badge-wrap reading-now"><span class="sc-link-grid__badge sc-badge seriescraft-badge">%s</span></div>',
 					esc_html( __( 'Reading Now', 'series-craft' ) )
-				);
-			} else {
-				$output .= sprintf(
-					'<a href="%s" class="seriescraft-link">%s</a>',
-					esc_url( $post['url'] ),
-					esc_html( $post['title'] )
 				);
 			}
 
+			$output .= '<div class="sc-link-grid__icon sm-link-grid__icon"><span class="material-symbols-outlined">link</span></div>';
+
+			$output .= '<div class="sc-link-grid__content">';
+			$output .= sprintf(
+				'<h3 class="sc-link-grid__title seriescraft-title sm-link-grid__title">%s</h3>',
+				esc_html( $title )
+			);
+			$output .= '<div class="sc-link-grid__divider"></div>';
+			$output .= sprintf(
+				'<span class="sc-link-grid__part-num seriescraft-part-num">Part %d</span>',
+				intval( $part_number )
+			);
 			$output .= '</div>';
+
+			$output .= '<div class="sc-link-grid__bottom-bar"></div>';
+			$output .= '</a>';
 		}
 
-		$output .= '</div>';
+		$output .= '</div></section>';
 
 		return $output;
 	}

@@ -1,0 +1,194 @@
+// =============================================================================
+// SeriesCraft - LinkGrid Display Variant
+// BEM classes: .sc-layout-link-grid, .sc-link-grid__*
+// =============================================================================
+
+.sm-series-card a,
+.seriescraft-card a,
+.sc-link-grid__card {
+  color: inherit;
+  text-decoration: none;
+}
+
+.sc-layout-link-grid,
+.sm-link-grid,
+.seriescraft-layout-link-grid {
+  width: 100%;
+  box-sizing: border-box;
+
+  .sc-link-grid__grid,
+  .sm-link-grid__grid,
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    box-sizing: border-box;
+    width: 100%;
+
+    @media (min-width: 640px) {
+      gap: 1.25rem;
+    }
+
+    @media (min-width: 768px) {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+    }
+
+    @media (min-width: 1024px) {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+  }
+
+  .sc-link-grid__card,
+  .sm-link-grid__card,
+  .seriescraft-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 20px 14px 16px;
+    border-radius: 1rem;
+    border-width: var(--sc-border-width, 1px);
+    border-style: var(--sc-border-style, solid);
+    border-color: var(--sc-border-color, var(--sm-hover-color, var(--sc-button-color, #0066d9)));
+    background-color: #ffffff;
+    overflow: hidden;
+    box-sizing: border-box;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    box-shadow: 0 4px 24px rgba(0, 102, 217, 0.08);
+
+    @media (min-width: 768px) {
+      padding: 20px 16px 18px;
+    }
+
+    .sc-link-grid__icon,
+    .sm-link-grid__icon {
+      width: 3rem;
+      height: 3rem;
+      border-radius: 0.75rem;
+      background-color: #f8fafc;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 12px auto;
+      transition: all 0.2s ease;
+
+      @media (min-width: 768px) {
+        width: 3.25rem;
+        height: 3.25rem;
+      }
+
+      .material-symbols-outlined {
+        color: var(--sm-hover-color, var(--sc-button-color, #0066d9));
+        font-size: 28px;
+      }
+    }
+
+    .sc-link-grid__content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      width: 100%;
+      min-width: 0;
+      padding: 0;
+    }
+
+    .sc-link-grid__title,
+    .sm-link-grid__title,
+    .seriescraft-title {
+      margin: 0;
+      width: 100%;
+      text-align: center;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--sc-title-color, #0f172a);
+      line-height: 1.35;
+      overflow-wrap: break-word;
+      word-break: normal;
+      transition: color 0.2s ease;
+
+      @media (min-width: 768px) {
+        font-size: 1.125rem;
+      }
+    }
+
+    .sc-link-grid__divider {
+      width: 3rem;
+      height: 4px;
+      border-radius: 9999px;
+      margin: 8px auto;
+      background-color: var(--sm-hover-color, var(--sc-button-color, #0066d9));
+
+      @media (min-width: 768px) {
+        width: 3.5rem;
+        margin: 8px auto;
+      }
+    }
+
+    .sc-link-grid__part-num,
+    .seriescraft-part-num {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #64748b;
+      text-align: center;
+      width: 100%;
+    }
+
+    .sc-link-grid__bottom-bar {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      height: 4px;
+      background-color: var(--sm-hover-color, var(--sc-button-color, #0066d9));
+    }
+
+    .sc-link-grid__badge-wrap,
+    .reading-now {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      z-index: 20;
+    }
+
+    .sc-link-grid__badge,
+    .seriescraft-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.625rem;
+      border-radius: 9999px;
+      background-color: var(--sm-hover-color, var(--sc-button-color, #0066d9));
+      color: #ffffff;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    &--current,
+    &.is-current {
+      background-color: #f8fafc;
+      box-shadow: 0 6px 28px rgba(0, 102, 217, 0.16);
+    }
+
+    &--default {
+      background-color: #ffffff;
+    }
+
+    &:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 36px rgba(0, 102, 217, 0.2);
+      border-color: var(--sm-hover-color, var(--sc-button-color, #0066d9));
+
+      .sc-link-grid__title,
+      .sm-link-grid__title,
+      .seriescraft-title {
+        color: var(--sm-hover-color, var(--sc-button-color, #0066d9));
+      }
+    }
+  }
+}

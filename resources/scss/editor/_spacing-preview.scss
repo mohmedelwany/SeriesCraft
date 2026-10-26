@@ -1,0 +1,48 @@
+// =============================================================================
+// SeriesCraft Editor: Spacing Live Preview Overlays (_spacing-preview.scss)
+// Visualizes margin (amber) and padding (blue) on canvas target elements.
+// =============================================================================
+
+.sm-series-spacing-preview {
+  position: relative;
+  isolation: isolate;
+
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    z-index: 20;
+    pointer-events: none;
+  }
+}
+
+.sm-series-spacing-preview--margin::before {
+  inset: calc(-1 * var(--sm-preview-margin-top, 0px))
+    calc(-1 * var(--sm-preview-margin-right, 0px))
+    calc(-1 * var(--sm-preview-margin-bottom, 0px))
+    calc(-1 * var(--sm-preview-margin-left, 0px));
+  background:
+    linear-gradient(rgba(245, 158, 11, 0.28), rgba(245, 158, 11, 0.28)) top /
+      100% var(--sm-preview-margin-top, 0px) no-repeat,
+    linear-gradient(rgba(245, 158, 11, 0.28), rgba(245, 158, 11, 0.28)) right /
+      var(--sm-preview-margin-right, 0px) 100% no-repeat,
+    linear-gradient(rgba(245, 158, 11, 0.28), rgba(245, 158, 11, 0.28)) bottom /
+      100% var(--sm-preview-margin-bottom, 0px) no-repeat,
+    linear-gradient(rgba(245, 158, 11, 0.28), rgba(245, 158, 11, 0.28)) left /
+      var(--sm-preview-margin-left, 0px) 100% no-repeat;
+  outline: 1px solid rgba(245, 158, 11, 0.65);
+}
+
+.sm-series-spacing-preview--padding::after {
+  inset: 0;
+  background:
+    linear-gradient(rgba(59, 130, 246, 0.24), rgba(59, 130, 246, 0.24)) top /
+      100% var(--sm-preview-padding-top, 0px) no-repeat,
+    linear-gradient(rgba(59, 130, 246, 0.24), rgba(59, 130, 246, 0.24)) right /
+      var(--sm-preview-padding-right, 0px) 100% no-repeat,
+    linear-gradient(rgba(59, 130, 246, 0.24), rgba(59, 130, 246, 0.24)) bottom /
+      100% var(--sm-preview-padding-bottom, 0px) no-repeat,
+    linear-gradient(rgba(59, 130, 246, 0.24), rgba(59, 130, 246, 0.24)) left /
+      var(--sm-preview-padding-left, 0px) 100% no-repeat;
+  outline: 1px solid rgba(59, 130, 246, 0.65);
+}

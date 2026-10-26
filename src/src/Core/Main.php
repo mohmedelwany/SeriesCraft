@@ -110,13 +110,19 @@ class Main {
 
         // Register Gutenberg block metadata if available.
         if ( function_exists( 'register_block_type' ) ) {
-            $plugin_dir = defined( 'SCFT_PLUGIN_DIR' ) ? SCFT_PLUGIN_DIR : dirname( __DIR__, 2 );
+            $plugin_dir = defined( 'SCFT_PLUGIN_DIR' ) ? rtrim( (string) SCFT_PLUGIN_DIR, '/\\' ) : dirname( __DIR__, 2 );
+
             $block_json = $plugin_dir . '/resources/js/blocks/series-list/block.json';
             if ( ! file_exists( $block_json ) ) {
                 $block_json = dirname( $plugin_dir ) . '/resources/js/blocks/series-list/block.json';
             }
             if ( file_exists( $block_json ) ) {
-                register_block_type( $block_json );
+                register_block_type(
+                    $block_json,
+                    array(
+                        'render_callback' => array( $this->frontend_renderer, 'render_series_block' ),
+                    )
+                );
             }
         }
 

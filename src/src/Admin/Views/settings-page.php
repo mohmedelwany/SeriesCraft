@@ -28,12 +28,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<hr class="wp-header-end">
 
 	<?php if ( true === $is_updated ) : ?>
-		<div class="notice notice-success is-dismissible" style="margin-top: 15px;">
+		<div class="notice notice-success is-dismissible">
 			<p><strong><?php esc_html_e( 'Settings updated successfully.', 'series-craft' ); ?></strong></p>
 		</div>
 	<?php endif; ?>
 
-	<nav class="nav-tab-wrapper wp-clearfix" aria-label="<?php esc_attr_e( 'Settings Tabs', 'series-craft' ); ?>" style="margin-top: 15px;">
+	<nav class="nav-tab-wrapper wp-clearfix" aria-label="<?php esc_attr_e( 'Settings Tabs', 'series-craft' ); ?>">
 		<?php foreach ( $tabs as $scft_tab_key => $scft_tab_title ) : ?>
 			<?php
 			$scft_tab_url      = add_query_arg(

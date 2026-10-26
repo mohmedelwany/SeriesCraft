@@ -160,4 +160,29 @@ class SeriesRepositoryTest extends IntegrationTestCase {
 
 		wp_delete_term( $second_term_id, SeriesTaxonomy::TAXONOMY );
 	}
+
+	/**
+	 * Test 4: Verify retrieval of formatted series data for a post including posts and layout settings.
+	 */
+	public function test_04_it_retrieves_formatted_series_for_post(): void {
+		update_term_meta(
+			$this->term_id,
+			'sm_series_settings',
+			array(
+				'layout'        => 'media-grid',
+				'custom_styles' => array( 'primary_color' => '#3b82f6' ),
+			)
+		);
+
+		$series_for_post = $this->repository->getSeriesForPost( $this->post_ids[0] );
+
+		$this->assertCount( 1, $series_for_post );
+		$this->assertSame( $this->term_id, $series_for_post[0]['id'] );
+		$this->assertSame( 'Test Architecture Series', $series_for_post[0]['name'] );
+		$this->assertSame( 'media-grid', $series_for_post[0]['layout'] );
+		$this->assertSame( array( 'primary_color' => '#3b82f6' ), $series_for_post[0]['styles'] );
+		$this->assertCount( 3, $series_for_post[0]['posts'] );
+		$this->assertSame( $this->post_ids[0], $series_for_post[0]['posts'][0]['id'] );
+	}
 }
+

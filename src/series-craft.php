@@ -22,6 +22,10 @@ define( 'SCFT_PLUGIN_VERSION', '1.0.0' );
 define( 'SCFT_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SCFT_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
+if ( ! defined( 'SERIESCRAFT_URL' ) ) {
+	define( 'SERIESCRAFT_URL', plugin_dir_url( __FILE__ ) );
+}
+
 // Load Composer autoloader.
 if ( file_exists( SCFT_PLUGIN_DIR . 'vendor/autoload.php' ) ) {
 	require_once SCFT_PLUGIN_DIR . 'vendor/autoload.php';

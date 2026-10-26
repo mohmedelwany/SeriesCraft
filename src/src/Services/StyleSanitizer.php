@@ -82,29 +82,114 @@ class StyleSanitizer {
 	}
 
 	/**
+	 * Normalizes style array by flattening nested keys and camelCase aliases.
+	 *
+	 * @param array<string, mixed> $styles Input styles.
+	 * @return array<string, mixed> Normalized flat key-value pairs.
+	 */
+	public function normalize_styles( array $styles ): array {
+		$normalized = $styles;
+
+		// CamelCase and lowercase aliases.
+		if ( isset( $styles['titleColor'] ) && ! isset( $normalized['title_color'] ) ) {
+			$normalized['title_color'] = $styles['titleColor'];
+		} elseif ( isset( $styles['titlecolor'] ) && ! isset( $normalized['title_color'] ) ) {
+			$normalized['title_color'] = $styles['titlecolor'];
+		}
+
+		if ( isset( $styles['headerBackgroundColor'] ) && ! isset( $normalized['header_background'] ) ) {
+			$normalized['header_background'] = $styles['headerBackgroundColor'];
+		} elseif ( isset( $styles['headerbackgroundcolor'] ) && ! isset( $normalized['header_background'] ) ) {
+			$normalized['header_background'] = $styles['headerbackgroundcolor'];
+		} elseif ( isset( $styles['header_bg_color'] ) && ! isset( $normalized['header_background'] ) ) {
+			$normalized['header_background'] = $styles['header_bg_color'];
+		}
+
+		if ( isset( $styles['buttonColor'] ) && ! isset( $normalized['button_color'] ) ) {
+			$normalized['button_color'] = $styles['buttonColor'];
+		} elseif ( isset( $styles['buttoncolor'] ) && ! isset( $normalized['button_color'] ) ) {
+			$normalized['button_color'] = $styles['buttoncolor'];
+		}
+
+		// Direct border properties.
+		if ( isset( $styles['borderColor'] ) && ! isset( $normalized['border_color'] ) ) {
+			$normalized['border_color'] = $styles['borderColor'];
+		} elseif ( isset( $styles['bordercolor'] ) && ! isset( $normalized['border_color'] ) ) {
+			$normalized['border_color'] = $styles['bordercolor'];
+		}
+		if ( isset( $styles['borderWidth'] ) && ! isset( $normalized['border_width'] ) ) {
+			$normalized['border_width'] = $styles['borderWidth'];
+		} elseif ( isset( $styles['borderwidth'] ) && ! isset( $normalized['border_width'] ) ) {
+			$normalized['border_width'] = $styles['borderwidth'];
+		}
+		if ( isset( $styles['borderStyle'] ) && ! isset( $normalized['border_style'] ) ) {
+			$normalized['border_style'] = $styles['borderStyle'];
+		} elseif ( isset( $styles['borderstyle'] ) && ! isset( $normalized['border_style'] ) ) {
+			$normalized['border_style'] = $styles['borderstyle'];
+		}
+
+		// Nested border object.
+		if ( isset( $styles['border'] ) && is_array( $styles['border'] ) ) {
+			if ( ! empty( $styles['border']['width'] ) && ! isset( $normalized['border_width'] ) ) {
+				$normalized['border_width'] = $styles['border']['width'];
+			}
+			if ( ! empty( $styles['border']['style'] ) && ! isset( $normalized['border_style'] ) ) {
+				$normalized['border_style'] = $styles['border']['style'];
+			}
+			if ( ! empty( $styles['border']['color'] ) && ! isset( $normalized['border_color'] ) ) {
+				$normalized['border_color'] = $styles['border']['color'];
+			}
+		}
+
+		// Nested padding object.
+		if ( isset( $styles['padding'] ) && is_array( $styles['padding'] ) ) {
+			foreach ( array( 'top', 'bottom', 'left', 'right' ) as $side ) {
+				if ( ! empty( $styles['padding'][ $side ] ) && ! isset( $normalized[ 'padding_' . $side ] ) ) {
+					$normalized[ 'padding_' . $side ] = $styles['padding'][ $side ];
+				}
+			}
+		}
+
+		// Nested margin object.
+		if ( isset( $styles['margin'] ) && is_array( $styles['margin'] ) ) {
+			foreach ( array( 'top', 'bottom', 'left', 'right' ) as $side ) {
+				if ( ! empty( $styles['margin'][ $side ] ) && ! isset( $normalized[ 'margin_' . $side ] ) ) {
+					$normalized[ 'margin_' . $side ] = $styles['margin'][ $side ];
+				}
+			}
+		}
+
+		return $normalized;
+	}
+
+	/**
 	 * Generates a scoped inline CSS block using CSS variables.
 	 *
-	 * @param int                   $series_id Target series ID to scope the styles to.
-	 * @param array<string, string> $styles    Sanitized style key-value pairs.
+	 * @param int                  $series_id Target series ID to scope the styles to.
+	 * @param array<string, mixed> $styles    Sanitized or raw style key-value pairs.
 	 * @return string Generated CSS rules or empty string if no valid properties exist.
 	 */
 	public function generate_inline_css( int $series_id, array $styles ): string {
-		$rules = array();
+		$styles = $this->normalize_styles( $styles );
+		$rules  = array();
 
 		foreach ( $styles as $key => $value ) {
-			if ( '' === $value || ! isset( self::CSS_VARIABLE_MAP[ $key ] ) ) {
+			if ( ! is_scalar( $value ) || '' === (string) $value || ! isset( self::CSS_VARIABLE_MAP[ $key ] ) ) {
 				continue;
 			}
 
 			$variable_name = self::CSS_VARIABLE_MAP[ $key ];
-			$rules[]       = sprintf( '%s: %s;', $variable_name, $value );
+			$rules[]       = sprintf( '%s: %s;', $variable_name, (string) $value );
+			if ( 'button_color' === $key ) {
+				$rules[] = sprintf( '--sm-hover-color: %s;', (string) $value );
+			}
 		}
 
 		if ( empty( $rules ) ) {
 			return '';
 		}
 
-		$selector     = sprintf( '.seriescraft-series-%d', $series_id );
+		$selector     = sprintf( '.seriescraft-series-%d, [data-sm-series-term-id="%d"]', $series_id, $series_id );
 		$declarations = implode( ' ', $rules );
 
 		return sprintf( '%s { %s }', $selector, $declarations );

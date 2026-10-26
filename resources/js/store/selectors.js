@@ -1,66 +1,106 @@
 /**
  * SeriesCraft Store Selectors.
+ *
+ * @package SeriesCraft\Store
  */
 
 /**
- * Gets the currently selected series term ID.
+ * Retrieves the list of all available series.
  *
  * @param {Object} state Store state.
- * @return {number|null} Current series ID.
+ * @return {Array} List of series terms.
  */
-export function getCurrentSeriesId( state ) {
-	return state?.currentSeriesId ?? null;
+export function getSeries( state ) {
+	return state?.series || [];
 }
 
 /**
- * Gets the current series settings.
+ * Retrieves the ordered list of posts for a specific series.
  *
  * @param {Object} state Store state.
- * @return {Object} Series settings object.
+ * @param {number|string} seriesId Series term ID.
+ * @return {Array} List of ordered posts or IDs.
  */
-export function getSeriesSettings( state ) {
-	return state?.settings || {};
+export function getSeriesPosts( state, seriesId ) {
+	if ( ! seriesId ) {
+		return [];
+	}
+	return state?.postsBySeries?.[ seriesId ] || [];
 }
 
 /**
- * Gets a specific setting value by key.
- *
- * @param {Object} state        Store state.
- * @param {string} key          Setting key name.
- * @param {*}      defaultValue Fallback value if setting not found.
- * @return {*} Setting value.
- */
-export function getSeriesSetting( state, key, defaultValue = undefined ) {
-	const settings = getSeriesSettings( state );
-	return settings[ key ] !== undefined ? settings[ key ] : defaultValue;
-}
-
-/**
- * Gets the ordered array of post IDs for the active series.
+ * Checks whether a specific series is currently saving its post order.
  *
  * @param {Object} state Store state.
- * @return {Array<number>} List of ordered post IDs.
+ * @param {number|string} seriesId Series term ID.
+ * @return {boolean} True if currently saving order, false otherwise.
  */
-export function getOrderedPostIds( state ) {
-	return state?.orderedPostIds || [];
+export function isSavingOrder( state, seriesId ) {
+	if ( ! seriesId ) {
+		return false;
+	}
+	return Boolean( state?.isSaving?.[ seriesId ] );
 }
 
 /**
- * Checks whether an asynchronous save operation is in progress.
+ * Retrieves styling and layout settings metadata for a specific series.
  *
  * @param {Object} state Store state.
- * @return {boolean} True if saving.
+ * @param {number|string} seriesId Series term ID.
+ * @return {Object|null} Series metadata or null if not loaded.
  */
-export function isSavingSeries( state ) {
-	return Boolean( state?.isSaving );
+export function getSeriesMeta( state, seriesId ) {
+	if ( ! seriesId ) {
+		return null;
+	}
+	return state?.metaBySeries?.[ seriesId ] || null;
 }
 
 /**
- * Gets the latest error message if any.
+ * Retrieves the current status notice for a specific series order operation.
  *
  * @param {Object} state Store state.
- * @return {string|null} Error message or null.
+ * @param {number|string} seriesId Series term ID.
+ * @return {Object|null} Notice object with { status, message } or null.
  */
-export function getSeriesError( state ) {
-	return state?.error ?? null;
+export function getOrderNotice( state, seriesId ) {
+	if ( ! seriesId ) {
+		return null;
+	}
+	return state?.notices?.[ seriesId ] || null;
 }
+
+/**
+ * Retrieves a single series item by its ID.
+ *
+ * @param {Object} state Store state.
+ * @param {number|string} seriesId Series term ID.
+ * @return {Object|null} Series item or null if not found.
+ */
+export function getSeriesById( state, seriesId ) {
+	if ( ! seriesId ) {
+		return null;
+	}
+	const list = getSeries( state );
+	return list.find( ( item ) => Number( item.id ) === Number( seriesId ) ) || null;
+}
+
+/**
+ * Retrieves all currently active notices across all series.
+ *
+ * @param {Object} state Store state.
+ * @return {Object} Notices dictionary keyed by seriesId.
+ */
+export function getAllNotices( state ) {
+	return state?.notices || {};
+}
+
+export default {
+	getSeries,
+	getSeriesPosts,
+	isSavingOrder,
+	getSeriesMeta,
+	getOrderNotice,
+	getSeriesById,
+	getAllNotices,
+};

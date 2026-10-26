@@ -1,0 +1,57 @@
+// =============================================================================
+// SeriesCraft - Accordion Layout Details/Summary
+// =============================================================================
+
+.sc-accordion,
+.sm-series-accordion,
+.seriescraft-accordion {
+  details summary {
+    list-style: none;
+    display: block;
+    cursor: pointer;
+  }
+
+  details summary::-webkit-details-marker,
+  details summary::marker {
+    display: none;
+    content: none;
+  }
+
+  details summary:focus {
+    outline: none;
+  }
+
+  .sc-accordion__item,
+  .seriescraft-accordion-item {
+    border: 1px solid #e2e8f0;
+    border-radius: 1rem;
+    margin-bottom: 1rem;
+    overflow: hidden;
+    transition: box-shadow 0.2s ease;
+
+    &[open] {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    }
+  }
+
+  .sc-accordion__summary,
+  .seriescraft-accordion-summary {
+    padding: 1rem 1.5rem;
+    background-color: #f8fafc;
+    font-weight: 600;
+    user-select: none;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background-color: #f1f5f9;
+    }
+  }
+
+  .sc-accordion__body,
+  .seriescraft-accordion-body {
+    padding: 1.5rem;
+    border-top: 1px solid #e2e8f0;
+    background-color: #ffffff;
+  }
+}
+

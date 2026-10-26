@@ -92,5 +92,97 @@ class SeriesTaxonomy {
 		);
 
 		register_taxonomy( self::TAXONOMY, $object_types, $args );
+
+		if ( function_exists( 'add_action' ) ) {
+			add_action( 'rest_api_init', array( $this, 'register_rest_fields' ) );
+		}
+	}
+
+	/**
+	 * Registers custom REST API fields for the series taxonomy.
+	 *
+	 * @return void
+	 */
+	public function register_rest_fields(): void {
+		if ( ! function_exists( 'register_rest_field' ) ) {
+			return;
+		}
+
+		register_rest_field(
+			self::TAXONOMY,
+			'settings',
+			array(
+				'get_callback'    => array( $this, 'get_term_settings_rest' ),
+				'update_callback' => array( $this, 'update_term_settings_rest' ),
+				'schema'          => array(
+					'description' => 'Series settings including layout and styling.',
+					'type'        => 'object',
+				),
+			)
+		);
+	}
+
+	/**
+	 * REST field getter for series term settings.
+	 *
+	 * @param array<string, mixed> $term Prepared term array.
+	 * @return array<string, mixed> Series settings payload.
+	 */
+	public function get_term_settings_rest( array $term ): array {
+		$term_id       = (int) ( $term['id'] ?? 0 );
+		$meta_settings = get_term_meta( $term_id, 'sm_series_settings', true );
+
+		if ( ! is_array( $meta_settings ) ) {
+			if ( is_string( $meta_settings ) ) {
+				$decoded       = json_decode( $meta_settings, true );
+				$meta_settings = is_array( $decoded ) ? $decoded : array();
+			} else {
+				$meta_settings = array();
+			}
+		}
+
+		$default_layout = get_option( 'seriescraft_default_layout', '' );
+		if ( empty( $default_layout ) ) {
+			$default_layout = get_option( 'content_variant', 'link-list' );
+		}
+		if ( empty( $default_layout ) ) {
+			$default_layout = 'link-list';
+		}
+
+		$layout = ! empty( $meta_settings['layout'] )
+			? (string) $meta_settings['layout']
+			: ( ! empty( $meta_settings['content_variant'] )
+				? (string) $meta_settings['content_variant']
+				: (string) $default_layout );
+
+		$styles = (array) ( $meta_settings['custom_styles'] ?? ( $meta_settings['style'] ?? array() ) );
+
+		return array(
+			'layout'        => $layout,
+			'custom_styles' => $styles,
+			'style'         => $styles,
+		);
+	}
+
+	/**
+	 * REST field setter for series term settings.
+	 *
+	 * @param mixed   $value Value sent in REST request.
+	 * @param WP_Term $term  Term object.
+	 * @return bool True on success, false on failure.
+	 */
+	public function update_term_settings_rest( $value, WP_Term $term ): bool {
+		if ( ! is_array( $value ) ) {
+			return false;
+		}
+
+		$existing = get_term_meta( $term->term_id, 'sm_series_settings', true );
+		if ( ! is_array( $existing ) ) {
+			$existing = array();
+		}
+
+		$merged = array_merge( $existing, $value );
+
+		return (bool) update_term_meta( $term->term_id, 'sm_series_settings', $merged );
 	}
 }

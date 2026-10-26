@@ -47,4 +47,14 @@ interface SeriesRepositoryInterface {
 	 * @return array<WP_Term> Array of assigned series WP_Term objects.
 	 */
 	public function get_post_series( int $post_id ): array;
+
+	// phpcs:disable WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid
+	/**
+	 * Retrieves formatted series data with posts, layout, and styles for a specific post.
+	 *
+	 * @param int $post_id Target post ID.
+	 * @return array<int, array{id: int, name: string, layout: string, styles: array<string, mixed>, posts: array<int, array{id: int, title: string, url: string, part_order: int, thumbnail: string|null}>}> Array of series data.
+	 */
+	public function getSeriesForPost( int $post_id ): array;
+	// phpcs:enable WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid
 }

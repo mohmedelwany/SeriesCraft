@@ -1,9 +1,16 @@
 /**
  * Save component for 'seriescraft/series-list' Gutenberg block.
  *
- * Dynamic block returns null as it renders dynamically on the server/client.
+ * Returns null for server-side dynamic rendering via PHP render_series_block.
+ *
+ * @package SeriesCraft\Blocks
  */
 
+/**
+ * Save function.
+ *
+ * @return {null} Always null for dynamic block.
+ */
 export default function save() {
 	return null;
 }

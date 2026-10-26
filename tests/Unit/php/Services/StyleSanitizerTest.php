@@ -95,4 +95,25 @@ class StyleSanitizerTest extends TestCase
 
         $this->assertSame('', $css);
     }
+
+    public function testNormalizeStylesHandlesCamelCaseAndLowercasedAliases(): void
+    {
+        $input = [
+            'titlecolor'            => '#ff0000',
+            'headerbackgroundcolor' => '#00ff00',
+            'buttoncolor'           => '#0000ff',
+            'bordercolor'           => '#123456',
+            'borderwidth'           => '3px',
+            'borderstyle'           => 'dotted',
+        ];
+
+        $css = $this->sanitizer->generate_inline_css(99, $input);
+
+        $this->assertStringContainsString('--sc-title-color: #ff0000;', $css);
+        $this->assertStringContainsString('--sc-header-bg: #00ff00;', $css);
+        $this->assertStringContainsString('--sc-button-color: #0000ff;', $css);
+        $this->assertStringContainsString('--sc-border-color: #123456;', $css);
+        $this->assertStringContainsString('--sc-border-width: 3px;', $css);
+        $this->assertStringContainsString('--sc-border-style: dotted;', $css);
+    }
 }
