@@ -72,3 +72,22 @@ jobs:
             echo "### ❌ Compatibility Alert: REGRESSION DETECTED" >> $GITHUB_STEP_SUMMARY
             echo "⚠️ One or more PHP / WordPress matrix combinations failed during integration testing. Check step logs above to identify failing assertions or deprecated syntax." >> $GITHUB_STEP_SUMMARY
           fi
+          
+      - name: Send Compatibility Report Email
+        if: always()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_APP_PASSWORD }}
+          subject: "SeriesCraft Matrix: ${{ job.status == 'success' && '✅ All Passed' || '❌ Regressions Detected' }}"
+          to: rofaida.abdelnasser.33@gmail.com
+          from: GitHub Actions <no-reply@seriescraft.io>
+          body: |
+            Weekly Compatibility Matrix Execution Summary:
+            Status: ${{ job.status }}
+            Trigger: ${{ github.event_name }}
+            
+            Full Details & Logs:
+            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
