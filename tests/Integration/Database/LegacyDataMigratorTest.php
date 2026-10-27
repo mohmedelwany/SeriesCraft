@@ -205,4 +205,108 @@ class LegacyDataMigratorTest extends IntegrationTestCase
             'Original legacy term meta must remain intact for non-destructive backwards compatibility.'
         );
     }
+
+    /**
+     * Test 5: Verifies that existing relationships in core term_relationships table are migrated.
+     */
+    public function test_migrates_relationships_from_term_relationships_table(): void
+    {
+        $p1 = $this->create_dummy_post('Core Rel Post 1');
+        $p2 = $this->create_dummy_post('Core Rel Post 2');
+        $p3 = $this->create_dummy_post('Core Rel Post 3');
+        $term_id = $this->create_dummy_term('Taxonomy Rel Series');
+
+        // Associate posts with series taxonomy
+        wp_set_object_terms($p1, $term_id, 'series');
+        wp_set_object_terms($p2, $term_id, 'series');
+        wp_set_object_terms($p3, $term_id, 'series');
+
+        // Set custom term_order values in wp_term_relationships
+        $term_rel_table = ! empty($this->wpdb->term_relationships) ? $this->wpdb->term_relationships : $this->wpdb->prefix . 'term_relationships';
+        $this->wpdb->update($term_rel_table, ['term_order' => 10], ['object_id' => $p1]);
+        $this->wpdb->update($term_rel_table, ['term_order' => 20], ['object_id' => $p2]);
+        $this->wpdb->update($term_rel_table, ['term_order' => 30], ['object_id' => $p3]);
+
+        $migrator = new LegacyDataMigrator();
+        $migrator->migrate();
+
+        $rows = $this->wpdb->get_results(
+            $this->wpdb->prepare(
+                "SELECT post_id, sort_order FROM {$this->table_name} WHERE series_id = %d ORDER BY sort_order ASC",
+                $term_id
+            ),
+            ARRAY_A
+        );
+
+        $this->assertCount(3, $rows, 'All 3 posts from term_relationships should be in the custom table.');
+        $this->assertSame($p1, (int) $rows[0]['post_id']);
+        $this->assertSame(10, (int) $rows[0]['sort_order']);
+        $this->assertSame($p2, (int) $rows[1]['post_id']);
+        $this->assertSame(20, (int) $rows[1]['sort_order']);
+        $this->assertSame($p3, (int) $rows[2]['post_id']);
+        $this->assertSame(30, (int) $rows[2]['sort_order']);
+    }
+
+    /**
+     * Test 6: Verifies that explicit term meta ordering overlays term_relationships default ordering.
+     */
+    public function test_term_meta_order_overlays_term_relationships_order(): void
+    {
+        $p1 = $this->create_dummy_post('Overlap Post 1');
+        $p2 = $this->create_dummy_post('Overlap Post 2');
+        $p3 = $this->create_dummy_post('Overlap Post 3');
+        $term_id = $this->create_dummy_term('Overlap Series');
+
+        // In term_relationships, all default to term_order = 0
+        wp_set_object_terms($p1, $term_id, 'series');
+        wp_set_object_terms($p2, $term_id, 'series');
+        wp_set_object_terms($p3, $term_id, 'series');
+
+        // In term meta, custom drag-and-drop order was saved as p3, p1, p2
+        update_term_meta($term_id, 'series_post_order', "{$p3},{$p1},{$p2}");
+
+        $migrator = new LegacyDataMigrator();
+        $migrator->migrate();
+
+        $rows = $this->wpdb->get_results(
+            $this->wpdb->prepare(
+                "SELECT post_id, sort_order FROM {$this->table_name} WHERE series_id = %d ORDER BY sort_order ASC",
+                $term_id
+            ),
+            ARRAY_A
+        );
+
+        $this->assertCount(3, $rows);
+        $this->assertSame($p3, (int) $rows[0]['post_id']);
+        $this->assertSame(0, (int) $rows[0]['sort_order']);
+        $this->assertSame($p1, (int) $rows[1]['post_id']);
+        $this->assertSame(1, (int) $rows[1]['sort_order']);
+        $this->assertSame($p2, (int) $rows[2]['post_id']);
+        $this->assertSame(2, (int) $rows[2]['sort_order']);
+    }
+
+    /**
+     * Test 7: Verifies that relationships from other taxonomies are ignored during migration.
+     */
+    public function test_ignores_relationships_from_other_taxonomies(): void
+    {
+        $p = $this->create_dummy_post('Category Post');
+        $cat_term = wp_insert_term('Non Series Cat ' . uniqid(), 'category');
+        $cat_id = is_array($cat_term) && isset($cat_term['term_id']) ? (int) $cat_term['term_id'] : 88;
+
+        wp_set_object_terms($p, $cat_id, 'category');
+
+        $migrator = new LegacyDataMigrator();
+        $migrator->migrate();
+
+        $count = (int) $this->wpdb->get_var(
+            $this->wpdb->prepare(
+                "SELECT COUNT(*) FROM {$this->table_name} WHERE series_id = %d",
+                $cat_id
+            )
+        );
+
+        $this->assertSame(0, $count, 'Relationships belonging to non-series taxonomies must not be migrated.');
+    }
 }
+
