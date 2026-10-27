@@ -9,10 +9,11 @@ declare(strict_types=1);
 
 namespace SeriesCraft\Database;
 
+use SeriesCraft\Taxonomy\SeriesTaxonomy;
 use wpdb;
 
 /**
- * Migrates legacy series post ordering data from term meta to custom junction table.
+ * Migrates legacy series post ordering data from term meta and core term relationships to custom junction table.
  */
 class LegacyDataMigrator {
 
@@ -61,14 +62,82 @@ class LegacyDataMigrator {
 	}
 
 	/**
-	 * Migrates all legacy series_post_order term meta entries into the custom table.
+	 * Migrates all legacy series post data into the custom junction table.
 	 *
-	 * The migration is non-destructive (legacy meta is preserved as fallback)
+	 * 1. Syncs relationships from WordPress core term_relationships joined with term_taxonomy.
+	 * 2. Overlays any explicit post order stored in legacy term meta ('series_post_order').
+	 *
+	 * The migration is non-destructive (legacy records are preserved as fallback)
 	 * and idempotent (safe to run multiple times without duplicate entries or errors).
 	 *
 	 * @return void
 	 */
 	public function migrate(): void {
+		$this->migrate_term_relationships();
+		$this->migrate_term_meta();
+	}
+
+	/**
+	 * Migrates existing series-post relationships from WordPress core term_relationships.
+	 *
+	 * Queries relationships joined with term_taxonomy where taxonomy matches SeriesTaxonomy::TAXONOMY
+	 * and inserts/syncs them into the custom junction table.
+	 *
+	 * @return void
+	 */
+	public function migrate_term_relationships(): void {
+		$term_rel_table = ! empty( $this->wpdb->term_relationships ) ? $this->wpdb->term_relationships : $this->wpdb->prefix . 'term_relationships';
+		$term_tax_table = ! empty( $this->wpdb->term_taxonomy ) ? $this->wpdb->term_taxonomy : $this->wpdb->prefix . 'term_taxonomy';
+
+		$taxonomy = class_exists( SeriesTaxonomy::class ) && defined( SeriesTaxonomy::class . '::TAXONOMY' )
+			? SeriesTaxonomy::TAXONOMY
+			: 'series';
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
+		$results = $this->wpdb->get_results(
+			$this->wpdb->prepare(
+				"SELECT tt.term_id AS series_id, tr.object_id AS post_id, tr.term_order AS sort_order
+				FROM {$term_rel_table} tr
+				INNER JOIN {$term_tax_table} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+				WHERE tt.taxonomy = %s",
+				$taxonomy
+			),
+			ARRAY_A
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
+
+		if ( empty( $results ) || ! is_array( $results ) ) {
+			return;
+		}
+
+		foreach ( $results as $row ) {
+			$series_id  = isset( $row['series_id'] ) ? (int) $row['series_id'] : 0;
+			$post_id    = isset( $row['post_id'] ) ? (int) $row['post_id'] : 0;
+			$sort_order = isset( $row['sort_order'] ) ? (int) $row['sort_order'] : 0;
+
+			if ( $series_id <= 0 || $post_id <= 0 ) {
+				continue;
+			}
+
+			$this->wpdb->replace(
+				$this->get_table_name(),
+				array(
+					'series_id'  => $series_id,
+					'post_id'    => $post_id,
+					'sort_order' => $sort_order,
+					'created_at' => current_time( 'mysql' ),
+				),
+				array( '%d', '%d', '%d', '%s' )
+			);
+		}
+	}
+
+	/**
+	 * Migrates legacy series_post_order term meta entries into the custom table.
+	 *
+	 * @return void
+	 */
+	public function migrate_term_meta(): void {
 		$termmeta_table = ! empty( $this->wpdb->termmeta ) ? $this->wpdb->termmeta : $this->wpdb->prefix . 'termmeta';
 
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
