@@ -1,0 +1,46 @@
+@use "../abstracts/variables" as *;
+@use "../abstracts/mixins" as *;
+
+.sc-layout-selector {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sc-spacing-xs);
+  margin-top: var(--sc-spacing-xs);
+
+  &__option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sc-spacing-xxs);
+    padding: var(--sc-spacing-sm) var(--sc-spacing-xs);
+    background-color: var(--sc-surface-muted);
+    border: 1px solid var(--sc-color-border);
+    border-radius: var(--sc-border-radius-md);
+    cursor: pointer;
+    transition: all var(--sc-transition-fast);
+    text-align: center;
+
+    &:hover {
+      background-color: var(--sc-surface-bg);
+      border-color: var(--sc-color-border-hover);
+    }
+
+    &.is-selected {
+      background-color: var(--sc-color-primary-light);
+      border-color: var(--sc-color-primary);
+      color: var(--sc-color-primary);
+
+      .sc-layout-selector__label {
+        color: var(--sc-color-primary);
+        font-weight: var(--sc-font-weight-semibold);
+      }
+    }
+  }
+
+  &__label {
+    font-family: var(--sc-font-family-body);
+    font-size: var(--sc-font-size-xs);
+    color: var(--sc-color-text-secondary);
+  }
+}
