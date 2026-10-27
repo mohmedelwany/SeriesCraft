@@ -25,10 +25,11 @@ interface SeriesRepositoryInterface {
 	/**
 	 * Retrieves all posts assigned to a series ordered explicitly by numerical position.
 	 *
-	 * @param int $term_id Series taxonomy term ID.
+	 * @param int           $term_id  Series taxonomy term ID.
+	 * @param array<string> $statuses Post statuses to include. Defaults to array( 'publish' ).
 	 * @return array<WP_Post> Ordered list of WP_Post objects.
 	 */
-	public function get_series_posts( int $term_id ): array;
+	public function get_series_posts( int $term_id, array $statuses = array( 'publish', 'draft', 'pending' ) ): array;
 
 	/**
 	 * Persists an explicit numerical order for posts in a specific series.
