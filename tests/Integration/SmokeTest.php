@@ -14,6 +14,15 @@ namespace SeriesCraft\Tests\Integration;
 class SmokeTest extends IntegrationTestCase
 {
     /**
+     * Set up fixture before each test.
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        ( new \SeriesCraft\Database\SchemaManager() )->create_tables();
+    }
+    /**
      * Verify that WordPress core is loaded correctly in the test environment.
      */
     public function test_wordpress_is_loaded(): void
