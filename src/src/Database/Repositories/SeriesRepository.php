@@ -29,9 +29,9 @@ class SeriesRepository implements SeriesRepositoryInterface {
 	/**
 	 * WordPress database abstraction instance.
 	 *
-	 * @var wpdb
+	 * @var wpdb|null
 	 */
-	private wpdb $wpdb;
+	private ?wpdb $wpdb = null;
 
 	/**
 	 * Target table name.
@@ -53,7 +53,8 @@ class SeriesRepository implements SeriesRepositoryInterface {
 			$this->wpdb = $wpdb;
 		}
 
-		$this->table_name = $this->wpdb->prefix . 'series_craft_posts';
+		$prefix           = ( $this->wpdb && isset( $this->wpdb->prefix ) ) ? $this->wpdb->prefix : 'wp_';
+		$this->table_name = $prefix . 'series_craft_posts';
 	}
 
 	/**
@@ -75,6 +76,10 @@ class SeriesRepository implements SeriesRepositoryInterface {
 	 * @return array<WP_Post> Ordered list of WP_Post objects.
 	 */
 	public function get_series_posts( int $term_id, array $statuses = array( 'publish', 'draft', 'pending' ) ): array {
+		if ( ! $this->wpdb ) {
+			return array();
+		}
+
 		if ( empty( $statuses ) ) {
 			$statuses = array( 'publish', 'draft', 'pending' );
 		}
@@ -124,6 +129,10 @@ class SeriesRepository implements SeriesRepositoryInterface {
 	 * @return bool True on success, false on failure.
 	 */
 	public function update_series_order( int $term_id, array $post_ids ): bool {
+		if ( ! $this->wpdb ) {
+			return false;
+		}
+
 		$term_taxonomy = get_term( $term_id, SeriesTaxonomy::TAXONOMY );
 		if ( ! ( $term_taxonomy instanceof WP_Term ) ) {
 			return false;

@@ -67,11 +67,11 @@ class Main {
 	/**
 	 * Constructor.
 	 *
-	 * @param EnqueueManager|null       $enqueue_manager      Optional injected asset manager.
-	 * @param SeriesTaxonomy|null       $taxonomy             Optional injected taxonomy manager.
-	 * @param SavePostSubscriber|null   $save_post_subscriber Optional injected save post subscriber.
-	 * @param FrontendRenderer|null     $frontend_renderer    Optional injected frontend renderer.
-	 * @param LifecycleSubscriber|null  $lifecycle_subscriber Optional injected lifecycle subscriber.
+	 * @param EnqueueManager|null      $enqueue_manager      Optional injected asset manager.
+	 * @param SeriesTaxonomy|null      $taxonomy             Optional injected taxonomy manager.
+	 * @param SavePostSubscriber|null  $save_post_subscriber Optional injected save post subscriber.
+	 * @param FrontendRenderer|null    $frontend_renderer    Optional injected frontend renderer.
+	 * @param LifecycleSubscriber|null $lifecycle_subscriber Optional injected lifecycle subscriber.
 	 */
 	public function __construct(
 		?EnqueueManager $enqueue_manager = null,
