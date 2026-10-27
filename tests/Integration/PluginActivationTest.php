@@ -42,6 +42,20 @@ class PluginActivationTest extends IntegrationTestCase {
 	private SchemaManager $schema_manager;
 
 	/**
+	 * Created post IDs for teardown cleanup.
+	 *
+	 * @var array<int>
+	 */
+	private array $created_post_ids = array();
+
+	/**
+	 * Created term IDs for teardown cleanup.
+	 *
+	 * @var array<int>
+	 */
+	private array $created_term_ids = array();
+
+	/**
 	 * Set up test fixtures before each test execution.
 	 */
 	protected function setUp(): void {
@@ -61,11 +75,25 @@ class PluginActivationTest extends IntegrationTestCase {
 	}
 
 	/**
-	 * Clean up after test execution.
+	 * Clean up after test execution and ensure custom table is restored.
 	 */
 	protected function tearDown(): void {
+		foreach ( $this->created_post_ids as $post_id ) {
+			wp_delete_post( $post_id, true );
+		}
+		$this->created_post_ids = array();
+
+		foreach ( $this->created_term_ids as $term_id ) {
+			wp_delete_term( $term_id, 'series' );
+		}
+		$this->created_term_ids = array();
+
 		if ( isset( $this->schema_manager ) ) {
-			$this->schema_manager->drop_tables();
+			$this->schema_manager->create_tables();
+		}
+
+		if ( isset( $this->wpdb ) && ! empty( $this->table_name ) ) {
+			$this->wpdb->query( "DELETE FROM {$this->table_name}" );
 		}
 
 		parent::tearDown();
@@ -78,19 +106,31 @@ class PluginActivationTest extends IntegrationTestCase {
 		// 1. Prepare legacy term and posts.
 		$term_result = wp_insert_term( 'Legacy Series ' . uniqid(), 'series' );
 		$series_id   = is_array( $term_result ) && isset( $term_result['term_id'] ) ? (int) $term_result['term_id'] : 999;
+		if ( $series_id > 0 ) {
+			$this->created_term_ids[] = $series_id;
+		}
 
+		$this->wpdb->suppress_errors( true );
 		$post1_id = (int) wp_insert_post(
 			array(
 				'post_title'  => 'Legacy Post 1',
 				'post_status' => 'publish',
 			)
 		);
+		if ( $post1_id > 0 ) {
+			$this->created_post_ids[] = $post1_id;
+		}
+
 		$post2_id = (int) wp_insert_post(
 			array(
 				'post_title'  => 'Legacy Post 2',
 				'post_status' => 'publish',
 			)
 		);
+		if ( $post2_id > 0 ) {
+			$this->created_post_ids[] = $post2_id;
+		}
+		$this->wpdb->suppress_errors( false );
 
 		update_term_meta( $series_id, LegacyDataMigrator::LEGACY_META_KEY, array( $post1_id, $post2_id ) );
 
@@ -154,5 +194,13 @@ class PluginActivationTest extends IntegrationTestCase {
 			has_action( 'pre_delete_term', array( $subscriber, 'on_pre_delete_term' ) ),
 			'pre_delete_term hook must be registered by LifecycleSubscriber.'
 		);
+	}
+
+	/**
+	 * Restore custom table schema after all activation tests finish.
+	 */
+	public static function tearDownAfterClass(): void {
+		( new SchemaManager() )->create_tables();
+		parent::tearDownAfterClass();
 	}
 }

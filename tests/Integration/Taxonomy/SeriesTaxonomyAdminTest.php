@@ -11,7 +11,6 @@ namespace SeriesCraft\Tests\Integration\Taxonomy;
 
 use SeriesCraft\Tests\Integration\IntegrationTestCase;
 use SeriesCraft\Database\Repositories\SeriesRepository;
-use SeriesCraft\Database\SchemaManager;
 use SeriesCraft\Taxonomy\SeriesTaxonomy;
 use SeriesCraft\Taxonomy\SeriesTaxonomyAdmin;
 
@@ -62,7 +61,6 @@ class SeriesTaxonomyAdminTest extends IntegrationTestCase {
 	protected function setUp(): void {
 		parent::setUp();
 
-		( new SchemaManager() )->create_tables();
 		( new SeriesTaxonomy() )->register();
 		$this->repository = new SeriesRepository();
 		$this->admin      = new SeriesTaxonomyAdmin( $this->repository );

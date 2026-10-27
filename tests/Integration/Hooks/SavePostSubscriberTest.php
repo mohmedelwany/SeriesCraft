@@ -10,7 +10,6 @@ declare(strict_types=1);
 namespace SeriesCraft\Tests\Integration\Hooks;
 
 use SeriesCraft\Database\Repositories\SeriesRepository;
-use SeriesCraft\Database\SchemaManager;
 use SeriesCraft\Hooks\SavePostSubscriber;
 use SeriesCraft\Taxonomy\SeriesTaxonomy;
 use SeriesCraft\Tests\Integration\IntegrationTestCase;
@@ -36,13 +35,6 @@ class SavePostSubscriberTest extends IntegrationTestCase {
 	 * @var wpdb
 	 */
 	private wpdb $wpdb;
-
-	/**
-	 * Schema manager instance.
-	 *
-	 * @var SchemaManager
-	 */
-	private SchemaManager $schema_manager;
 
 	/**
 	 * Save post subscriber under test.
@@ -87,9 +79,6 @@ class SavePostSubscriberTest extends IntegrationTestCase {
 
 		global $wpdb;
 		$this->wpdb = $wpdb;
-
-		$this->schema_manager = new SchemaManager();
-		$this->schema_manager->create_tables();
 
 		( new SeriesTaxonomy() )->register();
 

@@ -268,3 +268,36 @@ series-craft/
   {
       // ...
   }
+  ```
+
+---
+
+## 7. Database Transaction Isolation & DDL Rules in Integration Tests
+
+### 7.1. MySQL DDL Implicit Commit Architectural Rule
+- **The Issue:** In MySQL, Data Definition Language (DDL) statements (`CREATE TABLE`, `ALTER TABLE`, `DROP TABLE`, `TRUNCATE`, or `dbDelta()`) trigger an **implicit commit** immediately. An implicit commit terminates any active MySQL transaction without issuing an explicit `COMMIT`, preventing subsequent `ROLLBACK` commands from reverting database changes.
+- **Root Cause in Test Suites:** When child integration tests call `(new SchemaManager())->create_tables()` or `$schema_manager->drop_tables()` inside `setUp()`, `tearDown()`, or individual test methods *after* `parent::setUp()` starts a transaction, the active transaction is instantly committed. As a result, test posts, series terms, and database rows permanently persist into the test database.
+
+### 7.2. Integration Test Transaction Rules
+1. **Pre-Transaction Schema Initialization:**
+   - In `IntegrationTestCase::setUp()`, the custom table schema must be initialized ONCE **before** `$wpdb->query('START TRANSACTION')`.
+   - A static flag `private static bool $schema_initialized = false;` ensures `(new SchemaManager())->create_tables()` is called only once prior to the start of transactions:
+     ```php
+     if ( ! self::$schema_initialized && class_exists( \SeriesCraft\Database\SchemaManager::class ) ) {
+         ( new \SeriesCraft\Database\SchemaManager() )->create_tables();
+         self::$schema_initialized = true;
+     }
+     ```
+2. **Prohibition of DDL in Child Tests:**
+   - Child integration tests extending `IntegrationTestCase` must **never** call `create_tables()` or `drop_tables()` inside `setUp()`, `tearDown()`, or test methods.
+   - Rely strictly on `IntegrationTestCase` transaction rollback (`$wpdb->query('ROLLBACK')` in `tearDown()`) to clean up test fixtures and records.
+3. **Restoration in Schema-Specific Tests:**
+   - Test suites specifically testing table creation or dropping lifecycle (e.g., `SchemaManagerTest`, `PluginActivationTest`) must implement `tearDownAfterClass()` to restore the custom schema:
+     ```php
+     public static function tearDownAfterClass(): void
+     {
+         ( new \SeriesCraft\Database\SchemaManager() )->create_tables();
+         parent::tearDownAfterClass();
+     }
+     ```
+   - This ensures that subsequent test suites running in the same test process find the database schema intact.

@@ -11,7 +11,6 @@ namespace SeriesCraft\Tests\Integration\Database\Repositories;
 
 use SeriesCraft\Tests\Integration\IntegrationTestCase;
 use SeriesCraft\Database\Repositories\SeriesRepository;
-use SeriesCraft\Database\SchemaManager;
 use SeriesCraft\Taxonomy\SeriesTaxonomy;
 
 /**
@@ -55,7 +54,6 @@ class SeriesRepositoryTest extends IntegrationTestCase {
 	protected function setUp(): void {
 		parent::setUp();
 
-		( new SchemaManager() )->create_tables();
 		( new SeriesTaxonomy() )->register();
 		$this->repository = new SeriesRepository();
 

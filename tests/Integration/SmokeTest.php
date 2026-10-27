@@ -19,9 +19,8 @@ class SmokeTest extends IntegrationTestCase
     protected function setUp(): void
     {
         parent::setUp();
-
-        ( new \SeriesCraft\Database\SchemaManager() )->create_tables();
     }
+
     /**
      * Verify that WordPress core is loaded correctly in the test environment.
      */
@@ -56,5 +55,6 @@ class SmokeTest extends IntegrationTestCase
         $post = get_post($post_id);
         $this->assertEquals('Test Series Post', $post->post_title);
 
+        wp_delete_post($post_id, true);
     }
 }

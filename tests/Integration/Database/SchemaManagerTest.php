@@ -221,4 +221,14 @@ class SchemaManagerTest extends IntegrationTestCase
         );
         $this->assertSame(1, $count, 'Exactly one row must exist for the composite key pair.');
     }
+
+    /**
+     * Restore custom table schema after all schema tests complete.
+     */
+    public static function tearDownAfterClass(): void
+    {
+        ( new SchemaManager() )->create_tables();
+        parent::tearDownAfterClass();
+    }
 }
+

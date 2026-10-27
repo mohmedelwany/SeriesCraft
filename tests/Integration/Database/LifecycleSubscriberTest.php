@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SeriesCraft\Tests\Integration\Database;
 
 use SeriesCraft\Database\LifecycleSubscriber;
-use SeriesCraft\Database\SchemaManager;
 use SeriesCraft\Tests\Integration\IntegrationTestCase;
 use wpdb;
 
@@ -19,7 +18,20 @@ class LifecycleSubscriberTest extends IntegrationTestCase
 {
     private wpdb $wpdb;
     private string $table_name;
-    private SchemaManager $schema_manager;
+
+    /**
+     * Created post IDs for teardown cleanup.
+     *
+     * @var array<int>
+     */
+    private array $created_post_ids = [];
+
+    /**
+     * Created term IDs for teardown cleanup.
+     *
+     * @var array<int>
+     */
+    private array $created_term_ids = [];
 
     /**
      * Set up test fixtures before each test execution.
@@ -29,12 +41,8 @@ class LifecycleSubscriberTest extends IntegrationTestCase
         parent::setUp();
 
         global $wpdb;
-        $this->wpdb           = $wpdb;
-        $this->table_name     = $this->wpdb->prefix . 'series_craft_posts';
-        $this->schema_manager = new SchemaManager();
-
-        // Ensure table exists with fresh state
-        $this->schema_manager->create_tables();
+        $this->wpdb       = $wpdb;
+        $this->table_name = $this->wpdb->prefix . 'series_craft_posts';
 
         // Ensure 'series' taxonomy exists in WordPress test environment
         if (! taxonomy_exists('series')) {
@@ -47,8 +55,18 @@ class LifecycleSubscriberTest extends IntegrationTestCase
      */
     protected function tearDown(): void
     {
-        if (isset($this->schema_manager)) {
-            $this->schema_manager->drop_tables();
+        foreach ($this->created_post_ids as $post_id) {
+            wp_delete_post($post_id, true);
+        }
+        $this->created_post_ids = [];
+
+        foreach ($this->created_term_ids as $term_id) {
+            wp_delete_term($term_id, 'series');
+        }
+        $this->created_term_ids = [];
+
+        if (isset($this->wpdb) && ! empty($this->table_name)) {
+            $this->wpdb->query("DELETE FROM {$this->table_name}");
         }
 
         parent::tearDown();
@@ -69,6 +87,7 @@ class LifecycleSubscriberTest extends IntegrationTestCase
             ]);
 
         $this->assertGreaterThan(0, $post_id, 'Dummy post should be created successfully.');
+        $this->created_post_ids[] = $post_id;
 
         $series_id = 101;
 
@@ -122,6 +141,7 @@ class LifecycleSubscriberTest extends IntegrationTestCase
             : 202;
 
         $this->assertGreaterThan(0, $series_id, 'Term ID must be greater than zero.');
+        $this->created_term_ids[] = $series_id;
 
         // 2. Insert multiple relationship records for this series_id
         for ($order = 1; $order <= 3; $order++) {
@@ -133,6 +153,7 @@ class LifecycleSubscriberTest extends IntegrationTestCase
                 ]);
 
             $this->assertGreaterThan(0, $post_id);
+            $this->created_post_ids[] = $post_id;
 
             $this->wpdb->insert(
                 $this->table_name,
