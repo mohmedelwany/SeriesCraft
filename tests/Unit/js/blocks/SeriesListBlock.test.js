@@ -510,6 +510,10 @@ describe('Series List Block (seriescraft/series-list)', () => {
 			unmount();
 
 			expect(removeEventListenerSpy).toHaveBeenCalledWith(
+				'seriescraft:order-updated',
+				expect.any(Function)
+			);
+			expect(removeEventListenerSpy).toHaveBeenCalledWith(
 				'sc-series-preview-refresh',
 				expect.any(Function)
 			);
@@ -715,6 +719,59 @@ describe('Series List Block (seriescraft/series-list)', () => {
 			expect(mockBox.style.getPropertyValue('--sc-header-bg')).toBe('#eef2f5');
 			expect(mockBox.style.getPropertyValue('--sc-border-width')).toBe('2px');
 			expect(mockBox.style.getPropertyValue('--sc-border-style')).toBe('dashed');
+		});
+
+		test('Test 25: increments previewRefreshKey when window event seriescraft:order-updated fires for active series', () => {
+			render(
+				<Edit
+					attributes={{ mode: 'all' }}
+					setAttributes={jest.fn()}
+				/>
+			);
+
+			const ssr = screen.getByTestId('server-side-render');
+			expect(ssr.getAttribute('data-preview-key')).toBe('10-Test Post Title-0');
+
+			act(() => {
+				window.dispatchEvent(
+					new CustomEvent('seriescraft:order-updated', {
+						detail: {
+							seriesId: 10,
+							postIds: [102, 101],
+							timestamp: Date.now(),
+						},
+					})
+				);
+			});
+
+			expect(ssr.getAttribute('data-preview-key')).toBe('10-Test Post Title-1');
+		});
+
+		test('Test 26: ignores seriescraft:order-updated event when seriesId does not match active series', () => {
+			render(
+				<Edit
+					attributes={{ mode: 'all' }}
+					setAttributes={jest.fn()}
+				/>
+			);
+
+			const ssr = screen.getByTestId('server-side-render');
+			expect(ssr.getAttribute('data-preview-key')).toBe('10-Test Post Title-0');
+
+			act(() => {
+				window.dispatchEvent(
+					new CustomEvent('seriescraft:order-updated', {
+						detail: {
+							seriesId: 999,
+							postIds: [201, 202],
+							timestamp: Date.now(),
+						},
+					})
+				);
+			});
+
+			// Should remain 0 because event was for series 999 and active series is 10
+			expect(ssr.getAttribute('data-preview-key')).toBe('10-Test Post Title-0');
 		});
 	});
 

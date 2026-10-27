@@ -25,6 +25,7 @@ import ModeSelector from './components/ModeSelector';
 import UserSelector from './components/UserSelector';
 import TopicSelector from './components/TopicSelector';
 import SeriesPreviewCard from './components/SeriesPreviewCard';
+import { STORE_NAME } from '../../store/constants';
 import { applyStylePreview } from '../../settings-sidebar/constants';
 import SeriesSettingsSidebar from '../../settings-sidebar/SeriesSettingsSidebar';
 
@@ -191,11 +192,12 @@ export default function Edit({ attributes = {}, setAttributes }) {
 		};
 	}, []);
 
-	// Retrieve current post ID, title, series assignment, image, and authors from core stores
-	const { currentPostId, currentPostTitle, activeSeriesId, currentPostImage, users } = useSelect((select) => {
+	// Retrieve current post ID, title, series assignment, image, authors, and order hash from stores
+	const { currentPostId, currentPostTitle, activeSeriesId, currentPostImage, users, storeOrderHash } = useSelect((select) => {
 		const core = select('core');
 		const editor = select('core/editor');
 		const blockEditor = select('core/block-editor');
+		const seriesStore = select(STORE_NAME);
 
 		const postId = editor?.getCurrentPostId?.() || 0;
 		const postTitle = editor?.getEditedPostAttribute?.('title') || '';
@@ -229,25 +231,36 @@ export default function Edit({ attributes = {}, setAttributes }) {
 			seriesId = !isNaN(num) ? num : 0;
 		}
 
+		let orderHash = '';
+		if (seriesId && seriesStore?.getSeriesPosts) {
+			const seriesPosts = seriesStore.getSeriesPosts(seriesId) || [];
+			if (Array.isArray(seriesPosts) && seriesPosts.length > 0) {
+				orderHash = seriesPosts.map((p) => (typeof p === 'object' && p !== null ? p.id : p)).join('-');
+			}
+		}
+
 		return {
 			currentPostId: postId,
 			currentPostTitle: postTitle,
 			activeSeriesId: seriesId,
 			currentPostImage: resolvedImage,
 			users: authors,
+			storeOrderHash: orderHash,
 		};
 	}, []);
 
-	// Listen to preview refresh events triggered from Settings Sidebar / Toolbar Gear Modal
+	// Listen to preview refresh events triggered from Settings Sidebar / Toolbar Gear Modal / Order Reorder UI
 	useEffect(() => {
 		if (typeof window === 'undefined') {
 			return;
 		}
 
+		let lastRefreshTimestamp = 0;
+
 		// Instant visual style resolution via CSS custom properties on container without triggering full server re-render
 		const handleLivePreview = (event) => {
 			const detail = event?.detail || {};
-			const termId = detail.termId || activeSeriesId;
+			const termId = detail.termId || detail.seriesId || activeSeriesId;
 			const style = detail.style || detail.layoutStyles?.[termId];
 			if (style) {
 				applyStylePreview({ termId, style });
@@ -256,10 +269,20 @@ export default function Edit({ attributes = {}, setAttributes }) {
 			// Styling reflects instantly via CSS custom properties with zero unmounting or flicker.
 		};
 
-		// Full ServerSideRender refresh ONLY when layout variant, taxonomy, or post ordering changes
+		// Full ServerSideRender refresh when layout variant, taxonomy, or post ordering changes
 		const handleServerRefresh = (event) => {
 			const detail = event?.detail || {};
-			const termId = detail.termId || activeSeriesId;
+			const termId = detail.termId || detail.seriesId || activeSeriesId;
+			if (termId && activeSeriesId && Number(termId) !== Number(activeSeriesId)) {
+				return;
+			}
+			// Deduplicate if multiple events fire in the same cycle with the exact same timestamp
+			if (detail.timestamp && detail.timestamp === lastRefreshTimestamp) {
+				return;
+			}
+			if (detail.timestamp) {
+				lastRefreshTimestamp = detail.timestamp;
+			}
 			const style = detail.style || detail.layoutStyles?.[termId];
 			if (style) {
 				applyStylePreview({ termId, style });
@@ -267,11 +290,13 @@ export default function Edit({ attributes = {}, setAttributes }) {
 			setPreviewRefreshKey((prev) => prev + 1);
 		};
 
+		window.addEventListener('seriescraft:order-updated', handleServerRefresh);
 		window.addEventListener('sc-series-preview-refresh', handleServerRefresh);
 		window.addEventListener('sm-series-preview-refresh', handleServerRefresh);
 		window.addEventListener('sm-series-live-preview', handleLivePreview);
 
 		return () => {
+			window.removeEventListener('seriescraft:order-updated', handleServerRefresh);
 			window.removeEventListener('sc-series-preview-refresh', handleServerRefresh);
 			window.removeEventListener('sm-series-preview-refresh', handleServerRefresh);
 			window.removeEventListener('sm-series-live-preview', handleLivePreview);
@@ -388,6 +413,9 @@ export default function Edit({ attributes = {}, setAttributes }) {
 						preview_key: currentPostImage
 							? `${activeSeriesId}-${currentPostTitle}-${currentPostImage}-${previewRefreshKey}`
 							: `${activeSeriesId}-${currentPostTitle}-${previewRefreshKey}`,
+						_order_revision: previewRefreshKey,
+						_order: storeOrderHash || undefined,
+						_t: previewRefreshKey > 0 ? previewRefreshKey : undefined,
 					}}
 					EmptyResponsePlaceholder={EmptyPlaceholder}
 					LoadingResponsePlaceholder={() => <LoadingPlaceholder lastMarkup={lastMarkup} />}

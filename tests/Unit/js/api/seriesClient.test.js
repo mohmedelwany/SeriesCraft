@@ -1,3 +1,7 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import apiFetch from '@wordpress/api-fetch';
 import {
 	fetchSeriesSettings,
@@ -70,7 +74,8 @@ describe('seriesClient API Service', () => {
 	});
 
 	describe('updateSeriesOrder', () => {
-		it('should call POST endpoint with ordered post IDs array', async () => {
+		it('should call POST endpoint with ordered post IDs array and dispatch synchronization events', async () => {
+			const dispatchEventSpy = jest.spyOn(window, 'dispatchEvent');
 			const postIds = [105, 101, 108];
 			const mockResponse = {
 				success: true,
@@ -88,6 +93,17 @@ describe('seriesClient API Service', () => {
 				data: { post_ids: postIds },
 			});
 			expect(result).toEqual(mockResponse);
+
+			expect(dispatchEventSpy).toHaveBeenCalledWith(
+				expect.objectContaining({
+					type: 'seriescraft:order-updated',
+					detail: expect.objectContaining({
+						seriesId: 20,
+						postIds,
+					}),
+				})
+			);
+			dispatchEventSpy.mockRestore();
 		});
 
 		it('should throw an error when postIds is not an array', async () => {

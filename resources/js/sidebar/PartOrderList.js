@@ -140,9 +140,22 @@ export default function PartOrderList( { seriesId, currentPostId, currentPostTit
 			.map( ( post ) => Number( post.id ) )
 			.filter( ( id ) => ! isNaN( id ) && id > 0 );
 		if ( orderedIds.length > 0 ) {
-			reorderSeriesPosts( numericSeriesId, orderedIds ).catch( () => {
-				// Rollback is managed by the store action
-			} );
+			reorderSeriesPosts( numericSeriesId, orderedIds )
+				.then( () => {
+					if ( typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' ) {
+						const eventPayload = {
+							seriesId: numericSeriesId,
+							termId: numericSeriesId,
+							postIds: orderedIds,
+							timestamp: Date.now(),
+						};
+						window.dispatchEvent( new CustomEvent( 'seriescraft:order-updated', { detail: eventPayload } ) );
+						window.dispatchEvent( new CustomEvent( 'sc-series-preview-refresh', { detail: eventPayload } ) );
+					}
+				} )
+				.catch( () => {
+					// Rollback is managed by the store action
+				} );
 		}
 	};
 

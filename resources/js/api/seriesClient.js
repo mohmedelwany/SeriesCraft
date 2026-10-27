@@ -63,13 +63,26 @@ export async function updateSeriesOrder( termId, postIds ) {
 		throw new Error( 'postIds must be an array of integers' );
 	}
 
-	return await apiFetch( {
+	const response = await apiFetch( {
 		path: `${ REST_NAMESPACE }/series/${ termId }/order`,
 		method: 'POST',
 		data: {
 			post_ids: postIds,
 		},
 	} );
+
+	if ( typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' ) {
+		const eventPayload = {
+			seriesId: termId,
+			termId,
+			postIds,
+			timestamp: Date.now(),
+		};
+		window.dispatchEvent( new CustomEvent( 'seriescraft:order-updated', { detail: eventPayload } ) );
+		window.dispatchEvent( new CustomEvent( 'sc-series-preview-refresh', { detail: eventPayload } ) );
+	}
+
+	return response;
 }
 
 /**

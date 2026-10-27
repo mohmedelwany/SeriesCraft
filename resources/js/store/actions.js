@@ -176,6 +176,18 @@ export const reorderSeriesPosts = ( seriesId, orderedPostIds ) => async ( { disp
 		}, 3500 );
 		noticeTimers.set( numericSeriesId, timerId );
 
+		// Dispatch synchronization signals for the Gutenberg editor canvas
+		if ( typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' ) {
+			const eventPayload = {
+				seriesId: numericSeriesId,
+				termId: numericSeriesId,
+				postIds,
+				timestamp: Date.now(),
+			};
+			window.dispatchEvent( new CustomEvent( 'seriescraft:order-updated', { detail: eventPayload } ) );
+			window.dispatchEvent( new CustomEvent( 'sc-series-preview-refresh', { detail: eventPayload } ) );
+		}
+
 		return response;
 	} catch ( error ) {
 		// Roll back to previous snapshot immediately

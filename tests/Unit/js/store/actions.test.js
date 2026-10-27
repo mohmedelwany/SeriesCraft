@@ -1,4 +1,6 @@
 /**
+ * @jest-environment jsdom
+ *
  * Unit Tests for SeriesCraft Store Actions.
  *
  * @package SeriesCraft\Tests\Unit\Js\Store
@@ -134,6 +136,7 @@ describe('SeriesCraft Store Actions', () => {
 		it('Test 8: performs optimistic update, calls REST API, and dispatches success notice on success', async () => {
 			jest.useFakeTimers();
 
+			const dispatchEventSpy = jest.spyOn( window, 'dispatchEvent' );
 			const mockDispatch = jest.fn();
 			const mockSelect = {
 				getSeriesPosts: jest.fn().mockReturnValue( [
@@ -172,6 +175,27 @@ describe('SeriesCraft Store Actions', () => {
 			);
 
 			expect( result ).toEqual( mockResponse );
+
+			// Check window synchronization events dispatched
+			expect( dispatchEventSpy ).toHaveBeenCalledWith(
+				expect.objectContaining( {
+					type: 'seriescraft:order-updated',
+					detail: expect.objectContaining( {
+						seriesId: 10,
+						postIds: [ 102, 101 ],
+					} ),
+				} )
+			);
+			expect( dispatchEventSpy ).toHaveBeenCalledWith(
+				expect.objectContaining( {
+					type: 'sc-series-preview-refresh',
+					detail: expect.objectContaining( {
+						seriesId: 10,
+						postIds: [ 102, 101 ],
+					} ),
+				} )
+			);
+			dispatchEventSpy.mockRestore();
 
 			// Fast-forward timers to test transient notice auto-clear
 			jest.advanceTimersByTime( 3500 );
