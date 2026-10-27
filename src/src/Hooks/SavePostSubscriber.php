@@ -159,7 +159,7 @@ class SavePostSubscriber {
 	 * @return void
 	 */
 	public function sync_junction_table( int $post_id ): void {
-		if ( ! function_exists( 'wp_get_object_terms' ) ) {
+		if ( ! $this->wpdb || ! function_exists( 'wp_get_object_terms' ) ) {
 			return;
 		}
 
@@ -233,7 +233,7 @@ class SavePostSubscriber {
 			$this->wpdb->query(
 				$this->wpdb->prepare(
 					"DELETE FROM {$this->table_name} WHERE post_id = %d AND series_id NOT IN ({$placeholders})",
-					array_merge( array( $post_id ), $assigned_series_ids )
+					...array_merge( array( $post_id ), $assigned_series_ids )
 				)
 			);
 		} else {

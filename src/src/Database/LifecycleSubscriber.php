@@ -19,9 +19,9 @@ class LifecycleSubscriber {
 	/**
 	 * WordPress database abstraction instance.
 	 *
-	 * @var wpdb
+	 * @var wpdb|null
 	 */
-	private wpdb $wpdb;
+	private ?wpdb $wpdb = null;
 
 	/**
 	 * Target table name.
@@ -51,7 +51,8 @@ class LifecycleSubscriber {
 			$this->wpdb = $wpdb;
 		}
 
-		$this->table_name = $this->wpdb->prefix . 'series_craft_posts';
+		$prefix           = ( $this->wpdb && isset( $this->wpdb->prefix ) ) ? $this->wpdb->prefix : 'wp_';
+		$this->table_name = $prefix . 'series_craft_posts';
 
 		if ( $auto_register ) {
 			$this->register();
@@ -90,6 +91,10 @@ class LifecycleSubscriber {
 	 * @return void
 	 */
 	public function on_deleted_post( int $post_id ): void {
+		if ( ! $this->wpdb ) {
+			return;
+		}
+
 		$this->wpdb->delete(
 			$this->get_table_name(),
 			array( 'post_id' => $post_id ),
@@ -105,7 +110,7 @@ class LifecycleSubscriber {
 	 * @return void
 	 */
 	public function on_pre_delete_term( int $term_id, string $taxonomy ): void {
-		if ( 'series' !== $taxonomy ) {
+		if ( 'series' !== $taxonomy || ! $this->wpdb ) {
 			return;
 		}
 

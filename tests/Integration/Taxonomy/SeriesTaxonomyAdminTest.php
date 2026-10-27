@@ -10,9 +10,10 @@ declare(strict_types=1);
 namespace SeriesCraft\Tests\Integration\Taxonomy;
 
 use SeriesCraft\Tests\Integration\IntegrationTestCase;
+use SeriesCraft\Database\Repositories\SeriesRepository;
+use SeriesCraft\Database\SchemaManager;
 use SeriesCraft\Taxonomy\SeriesTaxonomy;
 use SeriesCraft\Taxonomy\SeriesTaxonomyAdmin;
-use SeriesCraft\Database\Repositories\SeriesRepository;
 
 /**
  * Class SeriesTaxonomyAdminTest
@@ -61,6 +62,7 @@ class SeriesTaxonomyAdminTest extends IntegrationTestCase {
 	protected function setUp(): void {
 		parent::setUp();
 
+		( new SchemaManager() )->create_tables();
 		( new SeriesTaxonomy() )->register();
 		$this->repository = new SeriesRepository();
 		$this->admin      = new SeriesTaxonomyAdmin( $this->repository );
@@ -87,6 +89,8 @@ class SeriesTaxonomyAdminTest extends IntegrationTestCase {
 		foreach ( $this->post_ids as $post_id ) {
 			wp_set_object_terms( $post_id, array( $this->term_id ), SeriesTaxonomy::TAXONOMY, true );
 		}
+
+		$this->repository->update_series_order( $this->term_id, $this->post_ids );
 	}
 
 	/**

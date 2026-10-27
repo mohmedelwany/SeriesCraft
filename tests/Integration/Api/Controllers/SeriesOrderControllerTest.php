@@ -21,7 +21,7 @@ use WP_REST_Server;
  *
  * Integration tests for the SeriesRestController REST endpoints.
  */
-class SeriesRestControllerTest extends IntegrationTestCase {
+class SeriesOrderControllerTest extends IntegrationTestCase {
 
 	/**
 	 * REST Server instance.
