@@ -11,6 +11,7 @@ namespace SeriesCraft\Tests\Integration\Database\Repositories;
 
 use SeriesCraft\Tests\Integration\IntegrationTestCase;
 use SeriesCraft\Database\Repositories\SeriesRepository;
+use SeriesCraft\Database\SchemaManager;
 use SeriesCraft\Taxonomy\SeriesTaxonomy;
 
 /**
@@ -54,6 +55,7 @@ class SeriesRepositoryTest extends IntegrationTestCase {
 	protected function setUp(): void {
 		parent::setUp();
 
+		( new SchemaManager() )->create_tables();
 		( new SeriesTaxonomy() )->register();
 		$this->repository = new SeriesRepository();
 
@@ -159,5 +161,87 @@ class SeriesRepositoryTest extends IntegrationTestCase {
 		$this->assertContains( $second_term_id, $series_ids );
 
 		wp_delete_term( $second_term_id, SeriesTaxonomy::TAXONOMY );
+	}
+
+	/**
+	 * Test 4: Verify persisting post sequence directly to the custom series_craft_posts table with replace.
+	 */
+	public function test_04_it_persists_ordering_to_custom_table_with_replace(): void {
+		global $wpdb;
+
+		$custom_order = array(
+			$this->post_ids[1], // Post B (Position 1).
+			$this->post_ids[0], // Post A (Position 2).
+			$this->post_ids[2], // Post C (Position 3).
+		);
+
+		$updated = $this->repository->update_series_order( $this->term_id, $custom_order );
+		$this->assertTrue( $updated );
+
+		$table_name = $this->repository->get_table_name();
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT post_id, sort_order, created_at FROM {$table_name} WHERE series_id = %d ORDER BY sort_order ASC",
+				$this->term_id
+			),
+			ARRAY_A
+		);
+
+		$this->assertCount( 3, $rows );
+		$this->assertSame( (int) $rows[0]['post_id'], $this->post_ids[1] );
+		$this->assertSame( 1, (int) $rows[0]['sort_order'] );
+		$this->assertNotEmpty( $rows[0]['created_at'] );
+
+		$this->assertSame( (int) $rows[1]['post_id'], $this->post_ids[0] );
+		$this->assertSame( 2, (int) $rows[1]['sort_order'] );
+
+		$this->assertSame( (int) $rows[2]['post_id'], $this->post_ids[2] );
+		$this->assertSame( 3, (int) $rows[2]['sort_order'] );
+	}
+
+	/**
+	 * Test 5: Verify get_series_posts filters by custom post statuses and defaults to publish.
+	 */
+	public function test_05_it_filters_series_posts_by_custom_statuses(): void {
+		$draft_post       = (int) wp_insert_post(
+			array(
+				'post_title'  => 'Draft Post',
+				'post_status' => 'draft',
+				'post_date'   => '2026-01-04 10:00:00',
+			)
+		);
+		$this->post_ids[] = $draft_post;
+
+		wp_set_object_terms( $draft_post, array( $this->term_id ), SeriesTaxonomy::TAXONOMY, true );
+
+		$this->repository->update_series_order(
+			$this->term_id,
+			array(
+				$draft_post,
+				$this->post_ids[0],
+				$this->post_ids[1],
+				$this->post_ids[2],
+			)
+		);
+
+		// Default behavior: publish, draft, and pending statuses are returned.
+		$default_posts = $this->repository->get_series_posts( $this->term_id );
+		$default_ids   = array_map( 'intval', wp_list_pluck( $default_posts, 'ID' ) );
+		$this->assertContains( $draft_post, $default_ids );
+		$this->assertCount( 4, $default_posts );
+
+		// Custom status filter: only publish status.
+		$published_posts = $this->repository->get_series_posts( $this->term_id, array( 'publish' ) );
+		$published_ids   = array_map( 'intval', wp_list_pluck( $published_posts, 'ID' ) );
+		$this->assertNotContains( $draft_post, $published_ids );
+		$this->assertCount( 3, $published_posts );
+
+		// Custom status filter: include draft.
+		$draft_posts = $this->repository->get_series_posts( $this->term_id, array( 'draft' ) );
+		$draft_ids   = array_map( 'intval', wp_list_pluck( $draft_posts, 'ID' ) );
+		$this->assertSame( array( $draft_post ), $draft_ids );
 	}
 }

@@ -25,7 +25,29 @@ define( 'SCFT_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 // Load Composer autoloader.
 if ( file_exists( SCFT_PLUGIN_DIR . 'vendor/autoload.php' ) ) {
 	require_once SCFT_PLUGIN_DIR . 'vendor/autoload.php';
+} elseif ( file_exists( dirname( SCFT_PLUGIN_DIR ) . '/vendor/autoload.php' ) ) {
+	require_once dirname( SCFT_PLUGIN_DIR ) . '/vendor/autoload.php';
 }
+
+/**
+ * Register plugin activation hook callback.
+ *
+ * Ensures custom database junction table exists and migrates legacy post order metadata.
+ */
+register_activation_hook(
+	__FILE__,
+	function () {
+		if ( class_exists( 'SeriesCraft\\Database\\SchemaManager' ) ) {
+			$schema_manager = new \SeriesCraft\Database\SchemaManager();
+			$schema_manager->create_tables();
+		}
+
+		if ( class_exists( 'SeriesCraft\\Database\\LegacyDataMigrator' ) ) {
+			$legacy_migrator = new \SeriesCraft\Database\LegacyDataMigrator();
+			$legacy_migrator->migrate();
+		}
+	}
+);
 
 /**
  * Initialize the plugin
