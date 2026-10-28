@@ -173,7 +173,7 @@ class SavePostSubscriber {
 
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
-		// 1. Insert or update sort_order for newly assigned series
+		// 1. Insert sort_order for newly assigned series in wp_series_craft_posts.
 		foreach ( $assigned_series_ids as $series_id ) {
 			if ( $series_id <= 0 ) {
 				continue;
@@ -207,27 +207,10 @@ class SavePostSubscriber {
 					),
 					array( '%d', '%d', '%d', '%s' )
 				);
-
-				// Sync term_order in wp_term_relationships if available.
-				if ( ! empty( $this->wpdb->term_relationships ) && function_exists( 'get_term' ) ) {
-					$term_obj = get_term( $series_id, SeriesTaxonomy::TAXONOMY );
-					if ( is_object( $term_obj ) && isset( $term_obj->term_taxonomy_id ) ) {
-						$this->wpdb->update(
-							$this->wpdb->term_relationships,
-							array( 'term_order' => $sort_order ),
-							array(
-								'object_id'        => $post_id,
-								'term_taxonomy_id' => (int) $term_obj->term_taxonomy_id,
-							),
-							array( '%d' ),
-							array( '%d', '%d' )
-						);
-					}
-				}
 			}
 		}
 
-		// 2. Remove unassigned series for this post from the junction table
+		// 2. Remove unassigned series for this post from the junction table.
 		if ( ! empty( $assigned_series_ids ) ) {
 			$placeholders = implode( ',', array_fill( 0, count( $assigned_series_ids ), '%d' ) );
 			$this->wpdb->query(

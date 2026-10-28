@@ -19,9 +19,7 @@ use WP_Term;
  * Class SeriesRepository
  *
  * Implements data access operations for series terms and explicit post ordering.
- * Uses the custom series_craft_posts table as the primary source of truth,
- * while maintaining backward-compatible synchronization with wp_term_relationships
- * and sm_series_order post meta.
+ * Uses the custom series_craft_posts junction table as the exclusive source of truth.
  *
  * @package SeriesCraft\Database\Repositories
  */
@@ -70,7 +68,7 @@ class SeriesRepository implements SeriesRepositoryInterface {
 	/**
 	 * Retrieves all posts assigned to a series ordered explicitly by numerical position.
 	 *
-	 * Queries the custom series_craft_posts table as primary source of truth.
+	 * Queries the custom series_craft_posts table as the exclusive source of truth.
 	 *
 	 * @param int           $term_id  Series taxonomy term ID.
 	 * @param array<string> $statuses Post statuses to include. Defaults to array( 'publish', 'draft', 'pending' ).
@@ -122,8 +120,7 @@ class SeriesRepository implements SeriesRepositoryInterface {
 	 * Persists an explicit numerical order for posts in a specific series.
 	 *
 	 * Uses $wpdb->replace() on series_craft_posts so records are guaranteed
-	 * to be persisted even if missing, and syncs backward-compatibly with
-	 * wp_term_relationships and sm_series_order post meta.
+	 * to be persisted in the dedicated junction table without altering core tables.
 	 *
 	 * @param int        $term_id  Series taxonomy term ID.
 	 * @param array<int> $post_ids Ordered list of post IDs.
@@ -139,14 +136,13 @@ class SeriesRepository implements SeriesRepositoryInterface {
 			return false;
 		}
 
-		$term_taxonomy_id = (int) $term_taxonomy->term_taxonomy_id;
-		$table_name       = $this->get_table_name();
+		$table_name = $this->get_table_name();
 
 		foreach ( $post_ids as $index => $post_id ) {
 			$order   = $index + 1;
 			$post_id = (int) $post_id;
 
-			// 1. Persist explicit order to custom table series_craft_posts via replace.
+			// Persist explicit order exclusively to custom table series_craft_posts.
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$this->wpdb->replace(
 				$table_name,
@@ -158,22 +154,6 @@ class SeriesRepository implements SeriesRepositoryInterface {
 				),
 				array( '%d', '%d', '%d', '%s' )
 			);
-
-			// 2. Synchronize term_order in wp_term_relationships for backward compatibility.
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$this->wpdb->update(
-				$this->wpdb->term_relationships,
-				array( 'term_order' => $order ),
-				array(
-					'object_id'        => $post_id,
-					'term_taxonomy_id' => $term_taxonomy_id,
-				),
-				array( '%d' ),
-				array( '%d', '%d' )
-			);
-
-			// 3. Synchronize legacy/fallback post meta.
-			update_post_meta( $post_id, 'sm_series_order', $order );
 		}
 
 		clean_term_cache( $term_id, SeriesTaxonomy::TAXONOMY );
