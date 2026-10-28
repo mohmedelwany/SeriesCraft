@@ -7,12 +7,12 @@
  * @package SeriesCraft\Editor\Sidebar
  */
 
-import { useState, useEffect } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
-import { Notice, Spinner } from '@wordpress/components';
-import DraggableItem from '../components/DraggableItem';
-import { useSeriesPosts } from '../../hooks/useSeriesPosts';
-import { useSeriesOrder } from '../../hooks/useSeriesOrder';
+import { useState, useEffect } from "@wordpress/element";
+import { __ } from "@wordpress/i18n";
+import { Notice, Spinner } from "@wordpress/components";
+import DraggableItem from "./DraggableItem";
+import { useSeriesPosts } from "../../hooks/useSeriesPosts";
+import { useSeriesOrder } from "../../hooks/useSeriesOrder";
 
 /**
  * Reorders an array by moving an item from one index to another.
@@ -22,11 +22,11 @@ import { useSeriesOrder } from '../../hooks/useSeriesOrder';
  * @param {number} endIndex To index.
  * @return {Array} Reordered array.
  */
-function reorderArray( list, startIndex, endIndex ) {
-	const result = Array.from( list );
-	const [ removed ] = result.splice( startIndex, 1 );
-	result.splice( endIndex, 0, removed );
-	return result;
+function reorderArray(list, startIndex, endIndex) {
+  const result = Array.from(list);
+  const [removed] = result.splice(startIndex, 1);
+  result.splice(endIndex, 0, removed);
+  return result;
 }
 
 /**
@@ -38,184 +38,215 @@ function reorderArray( list, startIndex, endIndex ) {
  * @param {string} [props.currentPostTitle] Current edited post title.
  * @return {JSX.Element} Rendered draggable post list container.
  */
-export default function PartOrderList( { seriesId, currentPostId, currentPostTitle } ) {
-	const numericSeriesId = Number( seriesId );
+export default function PartOrderList({
+  seriesId,
+  currentPostId,
+  currentPostTitle,
+}) {
+  const numericSeriesId = Number(seriesId);
 
-	const { posts, isSaving: isPostsSaving, orderNotice: postsNotice } = useSeriesPosts(
-		numericSeriesId,
-		{ currentPostId, currentPostTitle }
-	);
+  const {
+    posts,
+    isSaving: isPostsSaving,
+    orderNotice: postsNotice,
+  } = useSeriesPosts(numericSeriesId, { currentPostId, currentPostTitle });
 
-	const { reorderPosts, isSaving: isOrderSaving, orderNotice: orderSavingNotice } = useSeriesOrder( numericSeriesId );
+  const {
+    reorderPosts,
+    isSaving: isOrderSaving,
+    orderNotice: orderSavingNotice,
+  } = useSeriesOrder(numericSeriesId);
 
-	const isSaving = isPostsSaving || isOrderSaving;
-	const orderNotice = orderSavingNotice || postsNotice;
+  const isSaving = isPostsSaving || isOrderSaving;
+  const orderNotice = orderSavingNotice || postsNotice;
 
-	// Local state for interactive drag reordering
-	const [ localPosts, setLocalPosts ] = useState( () => posts );
-	const [ draggingIndex, setDraggingIndex ] = useState( null );
-	const [ dragOverIndex, setDragOverIndex ] = useState( null );
+  // Local state for interactive drag reordering
+  const [localPosts, setLocalPosts] = useState(() => posts);
+  const [draggingIndex, setDraggingIndex] = useState(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
 
-	// Keep local posts synchronized when store posts update
-	useEffect( () => {
-		if ( draggingIndex === null ) {
-			setLocalPosts( ( prev ) => {
-				if ( prev.length === posts.length ) {
-					const isSame = prev.every( ( p, i ) => {
-						const n = posts[ i ];
-						const pTitle = typeof p?.title === 'object' ? p.title.rendered : p?.title;
-						const nTitle = typeof n?.title === 'object' ? n.title.rendered : n?.title;
-						return (
-							p.id === n.id &&
-							pTitle === nTitle &&
-							Boolean( p.isCurrent ) === Boolean( n.isCurrent )
-						);
-					} );
-					if ( isSame ) {
-						return prev;
-					}
-				}
-				return posts;
-			} );
-		}
-	}, [ posts, draggingIndex ] );
+  // Keep local posts synchronized when store posts update
+  useEffect(() => {
+    if (draggingIndex === null) {
+      setLocalPosts((prev) => {
+        if (prev.length === posts.length) {
+          const isSame = prev.every((p, i) => {
+            const n = posts[i];
+            const pTitle =
+              typeof p?.title === "object" ? p.title.rendered : p?.title;
+            const nTitle =
+              typeof n?.title === "object" ? n.title.rendered : n?.title;
+            return (
+              p.id === n.id &&
+              pTitle === nTitle &&
+              Boolean(p.isCurrent) === Boolean(n.isCurrent)
+            );
+          });
+          if (isSame) {
+            return prev;
+          }
+        }
+        return posts;
+      });
+    }
+  }, [posts]);
 
-	// Auto-save reorder handler
-	const persistNewOrder = ( reorderedPosts ) => {
-		setLocalPosts( reorderedPosts );
-		const orderedIds = reorderedPosts
-			.map( ( post ) => Number( post.id ) )
-			.filter( ( id ) => ! isNaN( id ) && id > 0 );
+  // Auto-save reorder handler
+  const persistNewOrder = (reorderedPosts) => {
+    setLocalPosts(reorderedPosts);
+    const orderedIds = reorderedPosts
+      .map((post) => Number(post.id))
+      .filter((id) => !isNaN(id) && id > 0);
 
-		if ( orderedIds.length > 0 ) {
-			reorderPosts( orderedIds )
-				.then( () => {
-					if ( typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' ) {
-						const eventPayload = {
-							seriesId: numericSeriesId,
-							termId: numericSeriesId,
-							postIds: orderedIds,
-							timestamp: Date.now(),
-						};
-						window.dispatchEvent( new CustomEvent( 'seriescraft:order-updated', { detail: eventPayload } ) );
-						window.dispatchEvent( new CustomEvent( 'sc-series-preview-refresh', { detail: eventPayload } ) );
-					}
-				} )
-				.catch( () => {
-					// Rollback is managed by the store action
-				} );
-		}
-	};
+    if (orderedIds.length > 0) {
+      reorderPosts(orderedIds)
+        .then(() => {
+          if (
+            typeof window !== "undefined" &&
+            typeof window.dispatchEvent === "function"
+          ) {
+            const eventPayload = {
+              seriesId: numericSeriesId,
+              termId: numericSeriesId,
+              postIds: orderedIds,
+              timestamp: Date.now(),
+            };
+            window.dispatchEvent(
+              new CustomEvent("seriescraft:order-updated", {
+                detail: eventPayload,
+              }),
+            );
+            window.dispatchEvent(
+              new CustomEvent("sc-series-preview-refresh", {
+                detail: eventPayload,
+              }),
+            );
+          }
+        })
+        .catch(() => {
+          // Rollback is managed by the store action
+        });
+    }
+  };
 
-	// Drag-and-drop handlers
-	const handleDragStart = ( event, index ) => {
-		if ( isSaving ) {
-			event.preventDefault();
-			return;
-		}
-		setDraggingIndex( index );
-		event.dataTransfer.effectAllowed = 'move';
-		event.dataTransfer.setData( 'text/plain', String( index ) );
-	};
+  // Drag-and-drop handlers
+  const handleDragStart = (event, index) => {
+    if (isSaving) {
+      event.preventDefault();
+      return;
+    }
+    setDraggingIndex(index);
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", String(index));
+  };
 
-	const handleDragOver = ( event, index ) => {
-		event.preventDefault();
-		event.dataTransfer.dropEffect = 'move';
-		if ( dragOverIndex !== index ) {
-			setDragOverIndex( index );
-		}
-	};
+  const handleDragOver = (event, index) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    if (dragOverIndex !== index) {
+      setDragOverIndex(index);
+    }
+  };
 
-	const handleDragEnter = ( event, index ) => {
-		event.preventDefault();
-		setDragOverIndex( index );
-	};
+  const handleDragEnter = (event, index) => {
+    event.preventDefault();
+    setDragOverIndex(index);
+  };
 
-	const handleDragLeave = ( event, index ) => {
-		if ( dragOverIndex === index ) {
-			setDragOverIndex( null );
-		}
-	};
+  const handleDragLeave = (event, index) => {
+    if (dragOverIndex === index) {
+      setDragOverIndex(null);
+    }
+  };
 
-	const handleDrop = ( event, targetIndex ) => {
-		event.preventDefault();
-		if ( draggingIndex === null || draggingIndex === targetIndex || isSaving ) {
-			setDraggingIndex( null );
-			setDragOverIndex( null );
-			return;
-		}
+  const handleDrop = (event, targetIndex) => {
+    event.preventDefault();
+    if (draggingIndex === null || draggingIndex === targetIndex || isSaving) {
+      setDraggingIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
 
-		const updatedList = reorderArray( localPosts, draggingIndex, targetIndex );
-		setDraggingIndex( null );
-		setDragOverIndex( null );
+    const updatedList = reorderArray(localPosts, draggingIndex, targetIndex);
+    setDraggingIndex(null);
+    setDragOverIndex(null);
 
-		// Immediate optimistic auto-save to REST API
-		persistNewOrder( updatedList );
-	};
+    // Immediate optimistic auto-save to REST API
+    persistNewOrder(updatedList);
+  };
 
-	const handleDragEnd = () => {
-		setDraggingIndex( null );
-		setDragOverIndex( null );
-	};
+  const handleDragEnd = () => {
+    setDraggingIndex(null);
+    setDragOverIndex(null);
+  };
 
-	return (
-		<div className="seriescraft-part-order-container" data-testid="seriescraft-part-order-container">
-			<div className="seriescraft-part-order-header">
-				<span className="seriescraft-part-order-title">
-					{ __( 'Series Part Order', 'series-craft' ) }
-				</span>
-				{ isSaving && (
-					<div className="seriescraft-saving-indicator" aria-live="polite">
-						<Spinner />
-						<span className="seriescraft-saving-text">
-							{ __( 'Auto-saving...', 'series-craft' ) }
-						</span>
-					</div>
-				) }
-			</div>
+  return (
+    <div
+      className="seriescraft-part-order-container"
+      data-testid="seriescraft-part-order-container"
+    >
+      <div className="seriescraft-part-order-header">
+        <span className="seriescraft-part-order-title">
+          {__("Series Part Order", "series-craft")}
+        </span>
+        {isSaving && (
+          <div className="seriescraft-saving-indicator" aria-live="polite">
+            <Spinner />
+            <span className="seriescraft-saving-text">
+              {__("Auto-saving...", "series-craft")}
+            </span>
+          </div>
+        )}
+      </div>
 
-			<p className="seriescraft-part-order-help">
-				{ __( 'Drag handles to reorder posts sequentially. Changes auto-save instantly.', 'series-craft' ) }
-			</p>
+      <p className="seriescraft-part-order-help">
+        {__(
+          "Drag handles to reorder posts sequentially. Changes auto-save instantly.",
+          "series-craft",
+        )}
+      </p>
 
-			{ orderNotice && (
-				<Notice
-					status={ orderNotice.status || 'info' }
-					isDismissible={ false }
-					className="seriescraft-order-notice"
-				>
-					{ orderNotice.message }
-				</Notice>
-			) }
+      {orderNotice && (
+        <Notice
+          status={orderNotice.status || "info"}
+          isDismissible={false}
+          className="seriescraft-order-notice"
+        >
+          {orderNotice.message}
+        </Notice>
+      )}
 
-			{ localPosts.length === 0 ? (
-				<div className="seriescraft-no-posts-placeholder">
-					{ __( 'No posts currently assigned to this series.', 'series-craft' ) }
-				</div>
-			) : (
-				<ul
-					className={ `seriescraft-part-order-list ${ isSaving ? 'is-list-saving' : '' }` }
-					aria-label={ __( 'Series post order list', 'series-craft' ) }
-				>
-					{ localPosts.map( ( post, index ) => (
-						<DraggableItem
-							key={ post.id }
-							post={ post }
-							index={ index }
-							isCurrent={ ( currentPostId && Number( post.id ) === Number( currentPostId ) ) || Boolean( post.isCurrent ) }
-							isSaving={ isSaving }
-							isDragging={ draggingIndex === index }
-							isDragOver={ dragOverIndex === index }
-							onDragStart={ handleDragStart }
-							onDragOver={ handleDragOver }
-							onDragEnter={ handleDragEnter }
-							onDragLeave={ handleDragLeave }
-							onDrop={ handleDrop }
-							onDragEnd={ handleDragEnd }
-						/>
-					) ) }
-				</ul>
-			) }
-		</div>
-	);
+      {localPosts.length === 0 ? (
+        <div className="seriescraft-no-posts-placeholder">
+          {__("No posts currently assigned to this series.", "series-craft")}
+        </div>
+      ) : (
+        <ul
+          className={`seriescraft-part-order-list ${isSaving ? "is-list-saving" : ""}`}
+          aria-label={__("Series post order list", "series-craft")}
+        >
+          {localPosts.map((post, index) => (
+            <DraggableItem
+              key={post.id}
+              post={post}
+              index={index}
+              isCurrent={
+                (currentPostId && Number(post.id) === Number(currentPostId)) ||
+                Boolean(post.isCurrent)
+              }
+              isSaving={isSaving}
+              isDragging={draggingIndex === index}
+              isDragOver={dragOverIndex === index}
+              onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onDragEnd={handleDragEnd}
+            />
+          ))}
+        </ul>
+      )}
+    </div>
+  );
 }

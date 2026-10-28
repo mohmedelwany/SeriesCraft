@@ -8,7 +8,7 @@
 
 import React from 'react';
 import { __, sprintf } from '@wordpress/i18n';
-import LayoutVariantSelector from '../components/LayoutVariantSelector';
+import LayoutVariantSelector from './LayoutVariantSelector';
 
 /**
  * LayoutTab component.

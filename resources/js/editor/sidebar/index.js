@@ -12,7 +12,7 @@ import { registerPlugin } from '@wordpress/plugins';
 import { PluginDocumentSettingPanel } from '@wordpress/editor';
 import { Button } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import SeriesSelector from '../components/SeriesSelector';
+import SeriesSelector from './SeriesSelector';
 import PartOrderList from './PartOrderList';
 import {
 	usePostSavingSync,

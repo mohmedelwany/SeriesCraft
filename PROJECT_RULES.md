@@ -45,7 +45,6 @@ series-craft/
 │   │   ├── blocks/                         # Gutenberg custom block definitions
 │   │   │   └── series-list/                # Dynamic 'series-craft/series-list' block (block.json, edit.js, save.js, components/)
 │   │   ├── editor/                         # Gutenberg editor subsystems (strictly separated by responsibility)
-│   │   │   ├── components/                 # Shared reusable UI controls (DraggableItem, LayoutVariantSelector, SeriesSelector)
 │   │   │   ├── sidebar/                    # Document Settings Panel (index.js, PartOrderList.js)
 │   │   │   └── settings-sidebar/           # Series Appearance Drawer & Toolbar Gear Modal (SeriesSettingsSidebar, LayoutTab, StyleTab, constants)
 │   │   ├── frontend/                       # Lightweight vanilla JS for frontend interactions (accordion)
