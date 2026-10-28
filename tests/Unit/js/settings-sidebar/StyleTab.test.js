@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { StyleTab } from '../../../../resources/js/settings-sidebar/StyleTab';
+import { StyleTab } from '../../../../resources/js/editor/settings-sidebar/StyleTab';
 
 // Mock dependencies
 jest.mock('@wordpress/block-editor', () => ({

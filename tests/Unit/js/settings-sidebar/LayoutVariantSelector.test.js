@@ -4,8 +4,8 @@
 
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { LayoutVariantSelector } from '../../../../resources/js/settings-sidebar/LayoutVariantSelector';
-import { LayoutTab } from '../../../../resources/js/settings-sidebar/LayoutTab';
+import { LayoutVariantSelector } from '../../../../resources/js/editor/components/LayoutVariantSelector';
+import { LayoutTab } from '../../../../resources/js/editor/settings-sidebar/LayoutTab';
 
 describe('LayoutVariantSelector & LayoutTab Components', () => {
 	it('Test 1: renders all 4 layout variant cards with correct markup and classes', () => {

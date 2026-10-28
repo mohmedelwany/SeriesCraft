@@ -3,12 +3,12 @@
  *
  * Tab 1 in Series Settings Sidebar for choosing visual layout variants.
  *
- * @package SeriesCraft\SettingsSidebar
+ * @package SeriesCraft\Editor\SettingsSidebar
  */
 
 import React from 'react';
 import { __, sprintf } from '@wordpress/i18n';
-import { LayoutVariantSelector } from './LayoutVariantSelector';
+import LayoutVariantSelector from '../components/LayoutVariantSelector';
 
 /**
  * LayoutTab component.

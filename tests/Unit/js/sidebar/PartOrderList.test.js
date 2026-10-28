@@ -20,7 +20,7 @@ jest.mock('@wordpress/components', () => ({
 	Spinner: () => <span data-testid="mock-spinner">Loading...</span>,
 }));
 
-import PartOrderList from '../../../../resources/js/sidebar/PartOrderList';
+import PartOrderList from '../../../../resources/js/editor/sidebar/PartOrderList';
 
 describe('Sidebar PartOrderList Component', () => {
 	const mockReorderSeriesPosts = jest.fn();

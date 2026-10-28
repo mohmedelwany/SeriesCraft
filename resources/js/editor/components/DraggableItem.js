@@ -4,7 +4,7 @@
  * Renders an individual post card within the series sequence, complete with
  * drag handles and current post badge for drag-and-drop reordering.
  *
- * @package SeriesCraft\Sidebar
+ * @package SeriesCraft\Editor\Components
  */
 
 import { __ } from '@wordpress/i18n';

@@ -4,7 +4,7 @@
  * Tab 2 in Series Settings Sidebar for managing series colors, borders, dimensions,
  * and resetting to design system defaults.
  *
- * @package SeriesCraft\SettingsSidebar
+ * @package SeriesCraft\Editor\SettingsSidebar
  */
 
 import React from 'react';

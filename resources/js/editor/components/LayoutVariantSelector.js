@@ -4,11 +4,11 @@
  * Renders 4 interactive cards (.sm-layout-card) for Media Grid, Link Grid,
  * Media List, and Link List matching legacy series-manager markup and selectors.
  *
- * @package SeriesCraft\SettingsSidebar
+ * @package SeriesCraft\Editor\Components
  */
 
 import React from 'react';
-import { LAYOUT_OPTIONS } from './constants';
+import { LAYOUT_OPTIONS } from '../settings-sidebar/constants';
 
 /**
  * Pure inline SVG vector icon for media/image wireframe previews.

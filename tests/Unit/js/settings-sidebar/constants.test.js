@@ -15,7 +15,7 @@ import {
 	SPACING_PREVIEW_EVENT,
 	LIVE_PREVIEW_EVENT,
 	PREVIEW_REFRESH_EVENT,
-} from '../../../../resources/js/settings-sidebar/constants';
+} from '../../../../resources/js/editor/settings-sidebar/constants';
 
 describe('Settings Sidebar Constants & Helpers', () => {
 	it('Test 1: validates default contract constants matching legacy specifications', () => {

@@ -7,8 +7,12 @@
  * @package SeriesCraft\Store
  */
 
-import apiFetch from '@wordpress/api-fetch';
-import { ACTION_TYPES, API_ROUTES } from './constants';
+import { ACTION_TYPES } from './constants';
+import {
+	updateSeriesOrder as clientUpdateSeriesOrder,
+	updateSeriesSettings as clientUpdateSeriesSettings,
+	createSeries as clientCreateSeries,
+} from '../api/seriesClient';
 
 /**
  * In-memory map to track auto-clearing notice timer IDs per series.
@@ -155,11 +159,7 @@ export const reorderSeriesPosts = ( seriesId, orderedPostIds ) => async ( { disp
 	);
 
 	try {
-		const response = await apiFetch( {
-			path: API_ROUTES.SERIES_ORDER( numericSeriesId ),
-			method: 'POST',
-			data: { post_ids: postIds },
-		} );
+		const response = await clientUpdateSeriesOrder( numericSeriesId, postIds );
 
 		dispatch( setSavingOrder( numericSeriesId, false ) );
 		dispatch( setNotice( numericSeriesId, 'success', 'Series post order saved successfully.' ) );
@@ -175,18 +175,6 @@ export const reorderSeriesPosts = ( seriesId, orderedPostIds ) => async ( { disp
 			noticeTimers.delete( numericSeriesId );
 		}, 3500 );
 		noticeTimers.set( numericSeriesId, timerId );
-
-		// Dispatch synchronization signals for the Gutenberg editor canvas
-		if ( typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' ) {
-			const eventPayload = {
-				seriesId: numericSeriesId,
-				termId: numericSeriesId,
-				postIds,
-				timestamp: Date.now(),
-			};
-			window.dispatchEvent( new CustomEvent( 'seriescraft:order-updated', { detail: eventPayload } ) );
-			window.dispatchEvent( new CustomEvent( 'sc-series-preview-refresh', { detail: eventPayload } ) );
-		}
 
 		return response;
 	} catch ( error ) {
@@ -219,11 +207,7 @@ export const updateSeriesMeta = ( seriesId, metaData ) => async ( { dispatch } )
 	dispatch( setSeriesMeta( numericSeriesId, metaData ) );
 
 	try {
-		const response = await apiFetch( {
-			path: API_ROUTES.SERIES_SETTINGS( numericSeriesId ),
-			method: 'POST',
-			data: metaData,
-		} );
+		const response = await clientUpdateSeriesSettings( numericSeriesId, metaData );
 
 		const updatedSettings = response?.settings || response;
 		if ( updatedSettings ) {
@@ -246,35 +230,12 @@ export const updateSeriesMeta = ( seriesId, metaData ) => async ( { dispatch } )
  * @return {Function} Async thunk action.
  */
 export const createSeries = ( name, additionalData = {} ) => async ( { dispatch, select } ) => {
-	if ( ! name || typeof name !== 'string' || ! name.trim() ) {
-		throw new Error( 'Series name is required' );
-	}
-
-	const payload = {
-		name: name.trim(),
-		...additionalData,
-	};
-
 	try {
-		let response;
-		try {
-			response = await apiFetch( {
-				path: API_ROUTES.SERIES_CREATE,
-				method: 'POST',
-				data: payload,
-			} );
-		} catch ( initialErr ) {
-			// Fallback to WordPress standard taxonomy endpoint if custom route rejects POST
-			response = await apiFetch( {
-				path: API_ROUTES.SERIES_WP_TERMS,
-				method: 'POST',
-				data: payload,
-			} );
-		}
+		const response = await clientCreateSeries( name, additionalData );
 
 		const newSeries = {
 			id: Number( response?.id || response?.term_id ),
-			name: response?.name || payload.name,
+			name: response?.name || ( typeof name === 'string' ? name.trim() : '' ),
 			slug: response?.slug || '',
 			count: Number( response?.count || 0 ),
 			...response,
@@ -289,6 +250,7 @@ export const createSeries = ( name, additionalData = {} ) => async ( { dispatch,
 		throw new Error( errorMessage );
 	}
 };
+
 
 export default {
 	setSeries,

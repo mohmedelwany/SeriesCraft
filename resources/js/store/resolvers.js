@@ -6,8 +6,11 @@
  * @package SeriesCraft\Store
  */
 
-import apiFetch from '@wordpress/api-fetch';
-import { API_ROUTES } from './constants';
+import {
+	fetchSeriesList,
+	fetchSeriesPosts,
+	fetchSeriesSettings,
+} from '../api/seriesClient';
 import { setSeries, receiveSeriesPosts, setSeriesMeta } from './actions';
 
 /**
@@ -18,10 +21,7 @@ import { setSeries, receiveSeriesPosts, setSeriesMeta } from './actions';
  */
 export const getSeries = () => async ( { dispatch } ) => {
 	try {
-		const items = await apiFetch( {
-			path: API_ROUTES.SERIES,
-			method: 'GET',
-		} );
+		const items = await fetchSeriesList();
 
 		if ( Array.isArray( items ) ) {
 			dispatch( setSeries( items ) );
@@ -47,10 +47,7 @@ export const getSeriesPosts = ( seriesId ) => async ( { dispatch } ) => {
 	const numericSeriesId = Number( seriesId );
 
 	try {
-		const posts = await apiFetch( {
-			path: API_ROUTES.SERIES_POSTS( numericSeriesId ),
-			method: 'GET',
-		} );
+		const posts = await fetchSeriesPosts( numericSeriesId );
 
 		if ( Array.isArray( posts ) ) {
 			dispatch( receiveSeriesPosts( numericSeriesId, posts ) );
@@ -76,10 +73,7 @@ export const getSeriesMeta = ( seriesId ) => async ( { dispatch } ) => {
 	const numericSeriesId = Number( seriesId );
 
 	try {
-		const settings = await apiFetch( {
-			path: API_ROUTES.SERIES_SETTINGS( numericSeriesId ),
-			method: 'GET',
-		} );
+		const settings = await fetchSeriesSettings( numericSeriesId );
 
 		if ( settings ) {
 			dispatch( setSeriesMeta( numericSeriesId, settings ) );
@@ -95,3 +89,4 @@ export default {
 	getSeriesPosts,
 	getSeriesMeta,
 };
+

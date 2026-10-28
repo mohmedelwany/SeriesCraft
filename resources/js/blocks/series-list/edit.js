@@ -8,7 +8,7 @@
  * @package SeriesCraft\Blocks
  */
 
-import { useState, useEffect, useRef } from '@wordpress/element';
+import { useState, useEffect, useRef, useMemo } from '@wordpress/element';
 import { useSelect } from '@wordpress/data';
 import { InspectorControls, BlockControls, useBlockProps } from '@wordpress/block-editor';
 import {
@@ -25,9 +25,9 @@ import ModeSelector from './components/ModeSelector';
 import UserSelector from './components/UserSelector';
 import TopicSelector from './components/TopicSelector';
 import SeriesPreviewCard from './components/SeriesPreviewCard';
-import { STORE_NAME } from '../../store/constants';
-import { applyStylePreview } from '../../settings-sidebar/constants';
-import SeriesSettingsSidebar from '../../settings-sidebar/SeriesSettingsSidebar';
+import { applyStylePreview } from '../../editor/settings-sidebar/constants';
+import SeriesSettingsSidebar from '../../editor/settings-sidebar/SeriesSettingsSidebar';
+import { useSeries, useSeriesPosts } from '../../hooks';
 
 /**
  * Empty response placeholder component.
@@ -192,16 +192,25 @@ export default function Edit({ attributes = {}, setAttributes }) {
 		};
 	}, []);
 
-	// Retrieve current post ID, title, series assignment, image, authors, and order hash from stores
-	const { currentPostId, currentPostTitle, activeSeriesId, currentPostImage, users, storeOrderHash } = useSelect((select) => {
+	// Use centralized custom hooks for series assignment and posts sequence
+	const { currentPostId, assignedSeriesId } = useSeries();
+	const activeSeriesId = assignedSeriesId;
+	const { rawPosts } = useSeriesPosts(activeSeriesId);
+
+	const storeOrderHash = useMemo(() => {
+		if (!activeSeriesId || !Array.isArray(rawPosts) || rawPosts.length === 0) {
+			return '';
+		}
+		return rawPosts.map((p) => (typeof p === 'object' && p !== null ? p.id : p)).join('-');
+	}, [activeSeriesId, rawPosts]);
+
+	// Retrieve post title, featured image, and authors from core stores
+	const { currentPostTitle, currentPostImage, users } = useSelect((select) => {
 		const core = select('core');
 		const editor = select('core/editor');
 		const blockEditor = select('core/block-editor');
-		const seriesStore = select(STORE_NAME);
 
-		const postId = editor?.getCurrentPostId?.() || 0;
 		const postTitle = editor?.getEditedPostAttribute?.('title') || '';
-		const rawSeries = editor?.getEditedPostAttribute?.('series');
 		const authors = core?.getUsers?.({ per_page: -1 }) || [];
 
 		const featuredMediaId = editor?.getEditedPostAttribute?.('featured_media');
@@ -218,34 +227,10 @@ export default function Edit({ attributes = {}, setAttributes }) {
 		const blockImageUrl = findFirstImageInBlocks(editorBlocks);
 		const resolvedImage = featuredImageUrl || blockImageUrl || '';
 
-		let seriesId = 0;
-		if (Array.isArray(rawSeries) && rawSeries.length > 0) {
-			const first = rawSeries[0];
-			const id =
-				typeof first === 'object' && first !== null
-					? Number(first.id || first.term_id)
-					: Number(first);
-			seriesId = isNaN(id) ? 0 : id;
-		} else if (rawSeries) {
-			const num = Number(rawSeries);
-			seriesId = !isNaN(num) ? num : 0;
-		}
-
-		let orderHash = '';
-		if (seriesId && seriesStore?.getSeriesPosts) {
-			const seriesPosts = seriesStore.getSeriesPosts(seriesId) || [];
-			if (Array.isArray(seriesPosts) && seriesPosts.length > 0) {
-				orderHash = seriesPosts.map((p) => (typeof p === 'object' && p !== null ? p.id : p)).join('-');
-			}
-		}
-
 		return {
-			currentPostId: postId,
 			currentPostTitle: postTitle,
-			activeSeriesId: seriesId,
 			currentPostImage: resolvedImage,
 			users: authors,
-			storeOrderHash: orderHash,
 		};
 	}, []);
 

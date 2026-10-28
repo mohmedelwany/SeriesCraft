@@ -35,7 +35,7 @@ jest.mock('@wordpress/editor', () => ({
 }));
 
 jest.mock(
-	'../../../../resources/js/settings-sidebar/SeriesSettingsSidebar',
+	'../../../../resources/js/editor/settings-sidebar/SeriesSettingsSidebar',
 	() => () => (
 		<div data-testid="mock-series-settings-sidebar">
 			Series Settings Sidebar Content
@@ -43,7 +43,7 @@ jest.mock(
 	)
 );
 
-import { SettingsSidebarPlugin } from '../../../../resources/js/settings-sidebar';
+import { SettingsSidebarPlugin } from '../../../../resources/js/editor/settings-sidebar';
 
 describe('Settings Sidebar Plugin Registration', () => {
 	it('Test 1: registers series-craft-settings plugin with registerPlugin', () => {

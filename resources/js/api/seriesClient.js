@@ -105,9 +105,59 @@ export async function fetchSeriesList( params = {} ) {
 
 	const queryString = query.length > 0 ? `?${ query.join( '&' ) }` : '';
 	return await apiFetch( {
-		path: `/seriescraft/v1/series${ queryString }`,
+		path: `${ REST_NAMESPACE }/series${ queryString }`,
 		method: 'GET',
 	} );
+}
+
+/**
+ * Fetches posts associated with a specific series term.
+ *
+ * @param {number} termId Series term ID.
+ * @return {Promise<Array>} List of post objects.
+ */
+export async function fetchSeriesPosts( termId ) {
+	if ( ! termId || typeof termId !== 'number' ) {
+		throw new Error( 'Valid series term ID is required' );
+	}
+
+	return await apiFetch( {
+		path: `${ REST_NAMESPACE }/series/${ termId }/posts`,
+		method: 'GET',
+	} );
+}
+
+/**
+ * Creates a new series term inline via REST API.
+ *
+ * @param {string} name Series name.
+ * @param {Object} [additionalData] Additional payload parameters.
+ * @return {Promise<Object>} Created series term entity.
+ */
+export async function createSeries( name, additionalData = {} ) {
+	if ( ! name || typeof name !== 'string' || ! name.trim() ) {
+		throw new Error( 'Series name is required' );
+	}
+
+	const payload = {
+		name: name.trim(),
+		...additionalData,
+	};
+
+	try {
+		return await apiFetch( {
+			path: `${ REST_NAMESPACE }/series`,
+			method: 'POST',
+			data: payload,
+		} );
+	} catch ( initialErr ) {
+		// Fallback to WordPress standard taxonomy endpoint
+		return await apiFetch( {
+			path: '/wp/v2/series',
+			method: 'POST',
+			data: payload,
+		} );
+	}
 }
 
 export default {
@@ -115,4 +165,6 @@ export default {
 	updateSeriesSettings,
 	updateSeriesOrder,
 	fetchSeriesList,
+	fetchSeriesPosts,
+	createSeries,
 };

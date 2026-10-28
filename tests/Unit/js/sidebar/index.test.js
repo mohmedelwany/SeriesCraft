@@ -94,7 +94,7 @@ import {
 	removeCoreTaxonomyPanel,
 	findSeriesBlocks,
 	findSeriesListBlocks,
-} from '../../../../resources/js/sidebar';
+} from '../../../../resources/js/editor/sidebar';
 import { createBlock } from '@wordpress/blocks';
 
 describe('Sidebar Integration - SeriesDocumentSettingsPanel', () => {

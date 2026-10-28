@@ -4,7 +4,7 @@
  * Registers the dedicated PluginSidebar and PluginSidebarMoreMenuItem for per-series
  * visual customizations and layout variant selections.
  *
- * @package SeriesCraft\SettingsSidebar
+ * @package SeriesCraft\Editor\SettingsSidebar
  */
 
 import React from 'react';

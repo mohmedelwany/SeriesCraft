@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { LayoutTab } from '../../../../resources/js/settings-sidebar/LayoutTab';
+import { LayoutTab } from '../../../../resources/js/editor/settings-sidebar/LayoutTab';
 
 describe('LayoutTab Component', () => {
 	test('Test 1: formats title label with series name when series object is provided', () => {

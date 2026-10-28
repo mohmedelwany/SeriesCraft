@@ -3,7 +3,7 @@
  *
  * Provides schema contracts matching legacy series-manager and Phase 3 specifications.
  *
- * @package SeriesCraft\SettingsSidebar
+ * @package SeriesCraft\Editor\SettingsSidebar
  */
 
 import { __ } from '@wordpress/i18n';
@@ -439,4 +439,3 @@ export function applyStylePreview({ termId, style } = {}) {
 		}
 	});
 }
-

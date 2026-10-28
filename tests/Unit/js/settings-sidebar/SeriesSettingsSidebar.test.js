@@ -10,7 +10,7 @@ import {
 	LIVE_PREVIEW_EVENT,
 	PREVIEW_REFRESH_EVENT,
 	DEFAULT_STYLE,
-} from '../../../../resources/js/settings-sidebar/constants';
+} from '../../../../resources/js/editor/settings-sidebar/constants';
 
 // Mock components
 jest.mock('@wordpress/components', () => {
@@ -78,7 +78,7 @@ jest.mock('@wordpress/components', () => {
 	};
 });
 
-jest.mock('../../../../resources/js/settings-sidebar/StyleTab', () => ({
+jest.mock('../../../../resources/js/editor/settings-sidebar/StyleTab', () => ({
 	__esModule: true,
 	default: ({ onReset, onChangeStyle, onChangeSpacing, style }) => (
 		<div data-testid="mock-style-tab">
@@ -98,7 +98,7 @@ jest.mock('@wordpress/data', () => ({
 	useDispatch: jest.fn(),
 }));
 
-import { SeriesSettingsSidebar } from '../../../../resources/js/settings-sidebar/SeriesSettingsSidebar';
+import { SeriesSettingsSidebar } from '../../../../resources/js/editor/settings-sidebar/SeriesSettingsSidebar';
 
 describe('SeriesSettingsSidebar Component', () => {
 	const mockUpdateSeriesMeta = jest.fn();

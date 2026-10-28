@@ -58,7 +58,7 @@ jest.mock('@wordpress/components', () => ({
 	),
 }));
 
-import SeriesSelector from '../../../../resources/js/sidebar/SeriesSelector';
+import SeriesSelector from '../../../../resources/js/editor/components/SeriesSelector';
 
 describe('Sidebar SeriesSelector Component', () => {
 	const mockSeriesList = [

@@ -2,17 +2,17 @@
  * PartOrderList Component for Gutenberg Document Settings Sidebar.
  *
  * Coordinates post ordering for an active series using optimistic drag-and-drop
- * and instant auto-save synchronization via the centralized data store.
+ * and instant auto-save synchronization via custom hooks and centralized data store.
  *
- * @package SeriesCraft\Sidebar
+ * @package SeriesCraft\Editor\Sidebar
  */
 
 import { useState, useEffect } from '@wordpress/element';
-import { useSelect, useDispatch } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
 import { Notice, Spinner } from '@wordpress/components';
-import { STORE_NAME } from '../store/constants';
-import DraggableItem from './DraggableItem';
+import DraggableItem from '../components/DraggableItem';
+import { useSeriesPosts } from '../../hooks/useSeriesPosts';
+import { useSeriesOrder } from '../../hooks/useSeriesOrder';
 
 /**
  * Reorders an array by moving an item from one index to another.
@@ -35,87 +35,34 @@ function reorderArray( list, startIndex, endIndex ) {
  * @param {Object} props Component props.
  * @param {number} props.seriesId Active series term ID.
  * @param {number} props.currentPostId Current edited post ID.
+ * @param {string} [props.currentPostTitle] Current edited post title.
  * @return {JSX.Element} Rendered draggable post list container.
  */
 export default function PartOrderList( { seriesId, currentPostId, currentPostTitle } ) {
 	const numericSeriesId = Number( seriesId );
 
-	// Select state from SeriesCraft centralized store
-	const { posts, isSaving, orderNotice } = useSelect(
-		( select ) => {
-			const store = select( STORE_NAME );
-			return {
-				posts: store.getSeriesPosts( numericSeriesId ) || [],
-				isSaving: Boolean( store.isSavingOrder( numericSeriesId ) ),
-				orderNotice: store.getOrderNotice( numericSeriesId ),
-			};
-		},
-		[ numericSeriesId ]
+	const { posts, isSaving: isPostsSaving, orderNotice: postsNotice } = useSeriesPosts(
+		numericSeriesId,
+		{ currentPostId, currentPostTitle }
 	);
 
-	const { reorderSeriesPosts } = useDispatch( STORE_NAME );
+	const { reorderPosts, isSaving: isOrderSaving, orderNotice: orderSavingNotice } = useSeriesOrder( numericSeriesId );
 
-	const computePostList = ( fetchedSeriesPosts ) => {
-		const rawPosts = Array.isArray( fetchedSeriesPosts ) ? fetchedSeriesPosts : [];
-		if ( currentPostTitle === undefined ) {
-			return rawPosts;
-		}
-
-		const displayTitle =
-			typeof currentPostTitle === 'string' && currentPostTitle.trim() !== ''
-				? currentPostTitle
-				: '(Untitled)';
-
-		const postItems = rawPosts.map( ( p ) => {
-			const isCurrent = currentPostId && Number( p.id ) === Number( currentPostId );
-			if ( isCurrent ) {
-				const existingTitle =
-					typeof p?.title === 'object' ? p.title?.rendered : p?.title;
-				const activeTitle =
-					typeof currentPostTitle === 'string' && currentPostTitle.trim() !== ''
-						? currentPostTitle
-						: existingTitle && existingTitle.trim() !== ''
-						? existingTitle
-						: '(Untitled)';
-				return {
-					...p,
-					title: activeTitle,
-					isCurrent: true,
-				};
-			}
-			return p;
-		} );
-
-		const isCurrentPostInList = postItems.some(
-			( p ) => ( currentPostId && Number( p.id ) === Number( currentPostId ) ) || p.isCurrent
-		);
-
-		if ( ! isCurrentPostInList && numericSeriesId ) {
-			postItems.push( {
-				id: currentPostId || 'temp-current-post',
-				title: displayTitle,
-				order: postItems.length + 1,
-				part_order: postItems.length + 1,
-				isCurrent: true,
-			} );
-		}
-
-		return postItems;
-	};
+	const isSaving = isPostsSaving || isOrderSaving;
+	const orderNotice = orderSavingNotice || postsNotice;
 
 	// Local state for interactive drag reordering
-	const [ localPosts, setLocalPosts ] = useState( () => computePostList( posts ) );
+	const [ localPosts, setLocalPosts ] = useState( () => posts );
 	const [ draggingIndex, setDraggingIndex ] = useState( null );
 	const [ dragOverIndex, setDragOverIndex ] = useState( null );
 
-	// Keep local posts synchronized when store posts or active post title update
+	// Keep local posts synchronized when store posts update
 	useEffect( () => {
 		if ( draggingIndex === null ) {
-			const nextList = computePostList( posts );
 			setLocalPosts( ( prev ) => {
-				if ( prev.length === nextList.length ) {
+				if ( prev.length === posts.length ) {
 					const isSame = prev.every( ( p, i ) => {
-						const n = nextList[ i ];
+						const n = posts[ i ];
 						const pTitle = typeof p?.title === 'object' ? p.title.rendered : p?.title;
 						const nTitle = typeof n?.title === 'object' ? n.title.rendered : n?.title;
 						return (
@@ -128,10 +75,10 @@ export default function PartOrderList( { seriesId, currentPostId, currentPostTit
 						return prev;
 					}
 				}
-				return nextList;
+				return posts;
 			} );
 		}
-	}, [ posts, currentPostTitle, currentPostId, numericSeriesId, draggingIndex ] );
+	}, [ posts, draggingIndex ] );
 
 	// Auto-save reorder handler
 	const persistNewOrder = ( reorderedPosts ) => {
@@ -139,8 +86,9 @@ export default function PartOrderList( { seriesId, currentPostId, currentPostTit
 		const orderedIds = reorderedPosts
 			.map( ( post ) => Number( post.id ) )
 			.filter( ( id ) => ! isNaN( id ) && id > 0 );
+
 		if ( orderedIds.length > 0 ) {
-			reorderSeriesPosts( numericSeriesId, orderedIds )
+			reorderPosts( orderedIds )
 				.then( () => {
 					if ( typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' ) {
 						const eventPayload = {
@@ -271,4 +219,3 @@ export default function PartOrderList( { seriesId, currentPostId, currentPostTit
 		</div>
 	);
 }
-

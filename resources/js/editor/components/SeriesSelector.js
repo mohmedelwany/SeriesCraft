@@ -2,16 +2,15 @@
  * SeriesSelector Component for Gutenberg Document Settings Sidebar.
  *
  * Manages post series assignment via dropdown and facilitates inline series
- * creation with immediate auto-selection.
+ * creation with immediate auto-selection using the useSeries hook.
  *
- * @package SeriesCraft\Sidebar
+ * @package SeriesCraft\Editor\Components
  */
 
 import { useState } from '@wordpress/element';
-import { useSelect, useDispatch } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
 import { SelectControl, TextControl, Button, Notice } from '@wordpress/components';
-import { STORE_NAME } from '../store/constants';
+import { useSeries } from '../../hooks/useSeries';
 
 /**
  * SeriesSelector component.
@@ -22,11 +21,7 @@ import { STORE_NAME } from '../store/constants';
  * @return {JSX.Element} Rendered selector UI.
  */
 export default function SeriesSelector( { currentSeriesId = 0, onSelectSeries } ) {
-	const seriesList = useSelect( ( select ) => {
-		return select( STORE_NAME ).getSeries() || [];
-	}, [] );
-
-	const { createSeries } = useDispatch( STORE_NAME );
+	const { seriesList, createSeries } = useSeries();
 
 	// Inline creation states
 	const [ isCreating, setIsCreating ] = useState( false );
@@ -138,7 +133,6 @@ export default function SeriesSelector( { currentSeriesId = 0, onSelectSeries } 
 							onClick={ handleCreateSeries }
 							className="seriescraft-inline-submit-btn"
 						>
-
 							{ __( 'Add', 'series-craft' ) }
 						</Button>
 					</div>

@@ -1,5 +1,7 @@
 /**
  * @jest-environment jsdom
+ *
+ * Tests for Editor Components and Sidebar Exports.
  */
 
 jest.mock('@wordpress/plugins', () => ({
@@ -27,47 +29,37 @@ jest.mock('@wordpress/data', () => ({
 	dispatch: jest.fn(),
 }));
 
-import CompatSeriesSelector from '../../../../resources/js/components/SeriesSelector';
-import ActualSeriesSelector from '../../../../resources/js/sidebar/SeriesSelector';
-
-import CompatDefaultSidebar, {
-	SeriesDocumentSettingsPanel as CompatSettingsPanel,
-	removeCoreTaxonomyPanel as CompatRemovePanel,
-	findSeriesBlocks as CompatFindBlocks,
-	findSeriesListBlocks as CompatFindListBlocks,
-} from '../../../../resources/js/components/SeriesSidebar';
+import SeriesSelector from '../../../../resources/js/editor/components/SeriesSelector';
+import DraggableItem from '../../../../resources/js/editor/components/DraggableItem';
+import LayoutVariantSelector from '../../../../resources/js/editor/components/LayoutVariantSelector';
+import * as EditorComponents from '../../../../resources/js/editor/components';
 
 import ActualDefaultSidebar, {
-	SeriesDocumentSettingsPanel as ActualSettingsPanel,
-	removeCoreTaxonomyPanel as ActualRemovePanel,
-	findSeriesBlocks as ActualFindBlocks,
-	findSeriesListBlocks as ActualFindListBlocks,
-} from '../../../../resources/js/sidebar';
+	SeriesDocumentSettingsPanel,
+	removeCoreTaxonomyPanel,
+	findSeriesBlocks,
+	findSeriesListBlocks,
+} from '../../../../resources/js/editor/sidebar';
 
-describe('Compatibility Exports', () => {
-	describe('SeriesSelector compatibility facade', () => {
-		test('re-exports the identical default component from resources/js/sidebar/SeriesSelector', () => {
-			expect(CompatSeriesSelector).toBeDefined();
-			expect(CompatSeriesSelector).toBe(ActualSeriesSelector);
+describe('Editor Components & Sidebar Exports', () => {
+	describe('Editor Components barrel exports', () => {
+		test('exports DraggableItem, LayoutVariantSelector, and SeriesSelector', () => {
+			expect(EditorComponents.DraggableItem).toBe(DraggableItem);
+			expect(EditorComponents.LayoutVariantSelector).toBe(LayoutVariantSelector);
+			expect(EditorComponents.SeriesSelector).toBe(SeriesSelector);
 		});
 	});
 
-	describe('SeriesSidebar compatibility facade', () => {
-		test('re-exports the identical default export from resources/js/sidebar', () => {
-			expect(CompatDefaultSidebar).toBeDefined();
-			expect(CompatDefaultSidebar).toBe(ActualDefaultSidebar);
-			expect(CompatDefaultSidebar).toBe(ActualSettingsPanel);
+	describe('Editor Sidebar canonical exports', () => {
+		test('exports SeriesDocumentSettingsPanel as default and named export', () => {
+			expect(ActualDefaultSidebar).toBeDefined();
+			expect(ActualDefaultSidebar).toBe(SeriesDocumentSettingsPanel);
 		});
 
-		test('re-exports identical named symbols with strict reference equality', () => {
-			expect(CompatSettingsPanel).toBe(ActualSettingsPanel);
-			expect(CompatRemovePanel).toBe(ActualRemovePanel);
-			expect(CompatFindBlocks).toBe(ActualFindBlocks);
-			expect(CompatFindListBlocks).toBe(ActualFindListBlocks);
-		});
-
-		test('findSeriesListBlocks alias matches findSeriesBlocks', () => {
-			expect(CompatFindListBlocks).toBe(CompatFindBlocks);
+		test('exports block finding and panel removal helpers', () => {
+			expect(typeof removeCoreTaxonomyPanel).toBe('function');
+			expect(typeof findSeriesBlocks).toBe('function');
+			expect(findSeriesListBlocks).toBe(findSeriesBlocks);
 		});
 	});
 });

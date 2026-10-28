@@ -1,22 +1,16 @@
 /**
- * Gutenberg Document Settings Sidebar Panel for SeriesCraft.
+ * Custom React Hook: usePostSavingSync
  *
- * Integrates directly into the post settings document sidebar panel via PluginDocumentSettingPanel.
- * Provides lifecycle auto-synchronization and manual block addition with strict post hydration guards.
+ * Coordinates post saving lifecycle, Gutenberg editor hydration guards,
+ * and automatic synchronization (insertion/removal) of the 'seriescraft/series-list' block.
  *
- * @package SeriesCraft\Sidebar
+ * @package SeriesCraft\Hooks
  */
 
-import domReady from '@wordpress/dom-ready';
-import { registerPlugin } from '@wordpress/plugins';
-import { PluginDocumentSettingPanel } from '@wordpress/editor';
-import { useSelect, useDispatch, dispatch } from '@wordpress/data';
 import { useEffect, useRef, useMemo } from '@wordpress/element';
+import { useSelect, useDispatch, dispatch } from '@wordpress/data';
 import { createBlock } from '@wordpress/blocks';
-import { Button } from '@wordpress/components';
-import { __ } from '@wordpress/i18n';
-import SeriesSelector from './SeriesSelector';
-import PartOrderList from './PartOrderList';
+import { extractSeriesId } from './useSeries';
 
 /**
  * Removes the default core Gutenberg taxonomy panel for 'series'.
@@ -32,35 +26,6 @@ export function removeCoreTaxonomyPanel() {
 			editPostDispatch.removeEditorPanel( 'taxonomy-panel-series' );
 		}
 	}
-}
-
-// Remove default core taxonomy panel when editor DOM is ready
-if ( typeof domReady === 'function' ) {
-	domReady( removeCoreTaxonomyPanel );
-} else if ( typeof window !== 'undefined' && window.wp?.domReady ) {
-	window.wp.domReady( removeCoreTaxonomyPanel );
-}
-
-/**
- * Extracts a numeric series term ID from raw taxonomy attribute representation.
- *
- * @param {*} rawSeries Raw series terms attribute value.
- * @return {number} Extracted numeric series ID or 0.
- */
-function extractSeriesId( rawSeries ) {
-	if ( Array.isArray( rawSeries ) && rawSeries.length > 0 ) {
-		const first = rawSeries[ 0 ];
-		const id =
-			typeof first === 'object' && first !== null
-				? Number( first.id || first.term_id )
-				: Number( first );
-		return isNaN( id ) ? 0 : id;
-	}
-	if ( rawSeries ) {
-		const num = Number( rawSeries );
-		return ! isNaN( num ) ? num : 0;
-	}
-	return 0;
 }
 
 /**
@@ -85,20 +50,17 @@ export function findSeriesBlocks( blockList ) {
 	return results;
 }
 
-// Aliases for deduplication and backward compatibility
 export const findSeriesListBlocks = findSeriesBlocks;
 
 /**
- * SeriesDocumentSettingsPanel component.
+ * usePostSavingSync hook.
  *
- * @return {JSX.Element} Rendered plugin document setting panel.
+ * @return {Object} Synchronization state, block references, and trigger actions.
  */
-export function SeriesDocumentSettingsPanel() {
-	// Query current post ID, taxonomy assignment, blocks, and editor readiness from core stores
+export function usePostSavingSync() {
 	const {
 		currentPostId,
 		currentPostTitle,
-		currentSeriesIds,
 		assignedSeriesId,
 		savedSeriesId,
 		rawSeriesTerms,
@@ -144,7 +106,6 @@ export function SeriesDocumentSettingsPanel() {
 		return {
 			currentPostId: postId,
 			currentPostTitle: postTitle,
-			currentSeriesIds: rawSeries,
 			assignedSeriesId: extractSeriesId( rawSeries ),
 			savedSeriesId: extractSeriesId( cleanSeries ),
 			rawSeriesTerms: rawSeries,
@@ -153,7 +114,7 @@ export function SeriesDocumentSettingsPanel() {
 		};
 	}, [] );
 
-	const { editPost } = useDispatch( 'core/editor' );
+	const { editPost } = useDispatch( 'core/editor' ) || {};
 	const blockEditorDispatch = useDispatch( 'core/block-editor' );
 	const editorDispatch = useDispatch( 'core/editor' );
 	const insertBlock = blockEditorDispatch?.insertBlock || editorDispatch?.insertBlock;
@@ -246,7 +207,7 @@ export function SeriesDocumentSettingsPanel() {
 		previousSeriesIdRef.current = assignedSeriesId;
 		userChangedSeriesRef.current = false;
 		hasMountedRef.current = true;
-	}, [ isEditorReady, seriesTermIds, assignedSeriesId, savedSeriesId ] );
+	}, [ isEditorReady, seriesTermIds, assignedSeriesId, savedSeriesId, insertBlock, removeBlock ] );
 
 	const handleAddBlockManual = () => {
 		const blockFactory = createBlock || window?.wp?.blocks?.createBlock;
@@ -259,60 +220,24 @@ export function SeriesDocumentSettingsPanel() {
 	const handleSelectSeries = ( newSeriesId ) => {
 		userChangedSeriesRef.current = true;
 		const numericId = Number( newSeriesId );
-		editPost( {
-			series: numericId > 0 ? [ numericId ] : [],
-		} );
+		if ( typeof editPost === 'function' ) {
+			editPost( {
+				series: numericId > 0 ? [ numericId ] : [],
+			} );
+		}
 	};
 
-	return (
-		<PluginDocumentSettingPanel
-			name="seriescraft-series-panel"
-			title={ __( 'Series', 'series-craft' ) }
-			className="seriescraft-document-settings-panel"
-			icon="list-view"
-		>
-			<SeriesSelector
-				currentSeriesId={ assignedSeriesId }
-				onSelectSeries={ handleSelectSeries }
-			/>
-
-			{ assignedSeriesId > 0 && (
-				<div className="seriescraft-sidebar-block-action">
-					<Button
-						variant="secondary"
-						disabled={ hasSeriesBlock }
-						onClick={ handleAddBlockManual }
-						className="seriescraft-add-block-btn"
-					>
-						{ hasSeriesBlock
-							? __( 'Series List block already added', 'series-craft' )
-							: __( 'Add Series List block', 'series-craft' ) }
-					</Button>
-				</div>
-			) }
-
-			{ assignedSeriesId > 0 ? (
-				<PartOrderList
-					seriesId={ assignedSeriesId }
-					currentPostId={ currentPostId }
-					currentPostTitle={ currentPostTitle }
-				/>
-			) : (
-				<p className="seriescraft-empty-sidebar-notice">
-					{ __(
-						'Select or create a series to manage sequential post ordering and table of contents display.',
-						'series-craft'
-					) }
-				</p>
-			) }
-		</PluginDocumentSettingPanel>
-	);
+	return {
+		currentPostId,
+		currentPostTitle,
+		assignedSeriesId,
+		savedSeriesId,
+		isEditorReady,
+		hasSeriesBlock,
+		seriesBlocks,
+		handleAddBlockManual,
+		handleSelectSeries,
+	};
 }
 
-// Register sidebar extension with Gutenberg plugin system
-registerPlugin( 'seriescraft-document-settings', {
-	render: SeriesDocumentSettingsPanel,
-	icon: 'list-view',
-} );
-
-export default SeriesDocumentSettingsPanel;
+export default usePostSavingSync;

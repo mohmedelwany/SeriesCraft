@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import DraggableItem from '../../../../resources/js/sidebar/DraggableItem';
+import DraggableItem from '../../../../resources/js/editor/components/DraggableItem';
 
 describe('Sidebar DraggableItem Component', () => {
 	const mockPost = {

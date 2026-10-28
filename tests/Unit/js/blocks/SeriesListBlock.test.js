@@ -106,14 +106,16 @@ jest.mock('@wordpress/components', () => ({
 	),
 }));
 
-jest.mock('../../../../resources/js/settings-sidebar/SeriesSettingsSidebar', () => {
+jest.mock('../../../../resources/js/editor/settings-sidebar/SeriesSettingsSidebar', () => {
 	return function MockSeriesSettingsSidebar(props) {
 		return <div data-testid="series-settings-sidebar" data-in-modal={String(props.inModal)} />;
 	};
 });
 
+
 jest.mock('@wordpress/data', () => ({
 	useSelect: jest.fn(),
+	useDispatch: jest.fn(() => ({})),
 }));
 
 import metadata from '../../../../resources/js/blocks/series-list/block.json';
