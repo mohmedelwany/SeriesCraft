@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { LayoutVariantSelector } from '../../../../resources/js/editor/components/LayoutVariantSelector';
+import { LayoutVariantSelector } from '../../../../resources/js/editor/settings-sidebar/LayoutVariantSelector';
 import { LayoutTab } from '../../../../resources/js/editor/settings-sidebar/LayoutTab';
 
 describe('LayoutVariantSelector & LayoutTab Components', () => {
