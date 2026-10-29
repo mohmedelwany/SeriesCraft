@@ -1,0 +1,55 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "seriescraft/series-list",
+  "title": "Series List",
+  "category": "layout",
+  "icon": "list-view",
+  "description": "Displays series navigation for assigned posts, or series listings on standalone pages.",
+  "keywords": [
+    "series",
+    "list",
+    "toc",
+    "navigation",
+    "parts"
+  ],
+  "supports": {
+    "html": false,
+    "reusable": false,
+    "inserter": true,
+    "customClassName": true,
+    "lock": false
+  },
+  "textdomain": "series-craft",
+  "editorStyle": [
+    "series-craft-material-symbols",
+    "seriescraft-editor-style",
+    "seriescraft-frontend"
+  ],
+  "style": [
+    "series-craft-material-symbols",
+    "seriescraft-frontend"
+  ],
+  "attributes": {
+    "mode": {
+      "type": "string",
+      "default": "all"
+    },
+    "limit": {
+      "type": "number",
+      "default": 5
+    },
+    "selectedUser": {
+      "type": "number",
+      "default": 0
+    },
+    "selectedTopic": {
+      "type": "string",
+      "default": ""
+    },
+    "align": {
+      "type": "string",
+      "default": "wide"
+    }
+  }
+}
