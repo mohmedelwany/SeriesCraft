@@ -16,6 +16,8 @@ namespace SeriesCraft\Views;
  */
 class AccordionLayout {
 
+
+
 	/**
 	 * Renders multiple series enclosed within expandable details/summary tags.
 	 *
@@ -30,8 +32,7 @@ class AccordionLayout {
 		$output = '<div class="seriescraft-accordion">';
 
 		foreach ( $rendered_series_list as $series ) {
-			$is_open        = ! empty( $series['is_active'] );
-			$open_attribute = $is_open ? ' open' : '';
+			$open_attribute = '';
 
 			$output .= sprintf( '<details class="seriescraft-accordion-item"%s>', $open_attribute );
 			$output .= sprintf(
@@ -40,7 +41,7 @@ class AccordionLayout {
 			);
 			$output .= sprintf(
 				'<div class="seriescraft-accordion-content">%s</div>',
-				$series['html']
+				sprintf( '<div class="seriescraft-accordion-body">%s</div>', $series['html'] )
 			);
 			$output .= '</details>';
 		}

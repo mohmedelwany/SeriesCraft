@@ -115,9 +115,6 @@ export default function SeriesPreviewCard( {
 							<span className="sc-series-preview-card__name sc-series-preview-card__item-title">
 								{ term.name }
 							</span>
-							<span className="sc-series-preview-card__count sc-series-preview-card__item-count">
-								({ term.count || 0 })
-							</span>
 						</li>
 					) ) }
 				</ul>

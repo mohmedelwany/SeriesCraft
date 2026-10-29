@@ -11,7 +11,7 @@ import React from 'react';
 import { registerPlugin } from '@wordpress/plugins';
 import { PluginSidebar, PluginSidebarMoreMenuItem } from '@wordpress/editor';
 import { __ } from '@wordpress/i18n';
-import SeriesSettingsSidebar from './SeriesSettingsSidebar';
+import { SeriesSettingsSidebar } from './SeriesSettingsSidebar';
 
 /**
  * SettingsSidebarPlugin component.

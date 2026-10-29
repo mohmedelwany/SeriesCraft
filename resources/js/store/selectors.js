@@ -10,8 +10,8 @@
  * @param {Object} state Store state.
  * @return {Array} List of series terms.
  */
-export function getSeries( state ) {
-	return state?.series || [];
+export function getSeries(state) {
+  return state?.series || [];
 }
 
 /**
@@ -21,11 +21,11 @@ export function getSeries( state ) {
  * @param {number|string} seriesId Series term ID.
  * @return {Array} List of ordered posts or IDs.
  */
-export function getSeriesPosts( state, seriesId ) {
-	if ( ! seriesId ) {
-		return [];
-	}
-	return state?.postsBySeries?.[ seriesId ] || [];
+export function getSeriesPosts(state, seriesId) {
+  if (!seriesId) {
+    return [];
+  }
+  return state?.postsBySeries?.[seriesId] || [];
 }
 
 /**
@@ -35,11 +35,11 @@ export function getSeriesPosts( state, seriesId ) {
  * @param {number|string} seriesId Series term ID.
  * @return {boolean} True if currently saving order, false otherwise.
  */
-export function isSavingOrder( state, seriesId ) {
-	if ( ! seriesId ) {
-		return false;
-	}
-	return Boolean( state?.isSaving?.[ seriesId ] );
+export function isSavingOrder(state, seriesId) {
+  if (!seriesId) {
+    return false;
+  }
+  return Boolean(state?.isSaving?.[seriesId]);
 }
 
 /**
@@ -49,11 +49,21 @@ export function isSavingOrder( state, seriesId ) {
  * @param {number|string} seriesId Series term ID.
  * @return {Object|null} Series metadata or null if not loaded.
  */
-export function getSeriesMeta( state, seriesId ) {
-	if ( ! seriesId ) {
-		return null;
-	}
-	return state?.metaBySeries?.[ seriesId ] || null;
+export function getSeriesMeta(state, seriesId) {
+  if (!seriesId) {
+    return null;
+  }
+  return state?.metaBySeries?.[seriesId] || null;
+}
+
+/**
+ * Retrieves the series selected for appearance editing and live preview.
+ *
+ * @param {Object} state Store state.
+ * @return {number} Active series term ID, or zero when none is selected.
+ */
+export function getActiveSeriesId(state) {
+  return Number(state?.activeSeriesId) || 0;
 }
 
 /**
@@ -63,11 +73,11 @@ export function getSeriesMeta( state, seriesId ) {
  * @param {number|string} seriesId Series term ID.
  * @return {Object|null} Notice object with { status, message } or null.
  */
-export function getOrderNotice( state, seriesId ) {
-	if ( ! seriesId ) {
-		return null;
-	}
-	return state?.notices?.[ seriesId ] || null;
+export function getOrderNotice(state, seriesId) {
+  if (!seriesId) {
+    return null;
+  }
+  return state?.notices?.[seriesId] || null;
 }
 
 /**
@@ -77,12 +87,12 @@ export function getOrderNotice( state, seriesId ) {
  * @param {number|string} seriesId Series term ID.
  * @return {Object|null} Series item or null if not found.
  */
-export function getSeriesById( state, seriesId ) {
-	if ( ! seriesId ) {
-		return null;
-	}
-	const list = getSeries( state );
-	return list.find( ( item ) => Number( item.id ) === Number( seriesId ) ) || null;
+export function getSeriesById(state, seriesId) {
+  if (!seriesId) {
+    return null;
+  }
+  const list = getSeries(state);
+  return list.find((item) => Number(item.id) === Number(seriesId)) || null;
 }
 
 /**
@@ -91,16 +101,17 @@ export function getSeriesById( state, seriesId ) {
  * @param {Object} state Store state.
  * @return {Object} Notices dictionary keyed by seriesId.
  */
-export function getAllNotices( state ) {
-	return state?.notices || {};
+export function getAllNotices(state) {
+  return state?.notices || {};
 }
 
 export default {
-	getSeries,
-	getSeriesPosts,
-	isSavingOrder,
-	getSeriesMeta,
-	getOrderNotice,
-	getSeriesById,
-	getAllNotices,
+  getSeries,
+  getSeriesPosts,
+  isSavingOrder,
+  getSeriesMeta,
+  getActiveSeriesId,
+  getOrderNotice,
+  getSeriesById,
+  getAllNotices,
 };

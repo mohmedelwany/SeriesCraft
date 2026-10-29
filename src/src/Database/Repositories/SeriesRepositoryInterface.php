@@ -22,6 +22,8 @@ use WP_Term;
  */
 interface SeriesRepositoryInterface {
 
+
+
 	/**
 	 * Retrieves all posts assigned to a series ordered explicitly by numerical position.
 	 *
@@ -52,9 +54,10 @@ interface SeriesRepositoryInterface {
 	/**
 	 * Retrieves formatted series data with posts, layout, and styles for a specific post.
 	 *
-	 * @param int $post_id Target post ID.
+	 * @param int             $post_id    Target post ID.
+	 * @param array<int>|null $series_ids Optional explicit series IDs for editor previews.
 	 * @return array<int, array{id: int, name: string, layout: string, styles: array<string, mixed>, posts: array<int, array{id: int, title: string, url: string, part_order: int, thumbnail: string|null}>}> Array of series data.
 	 */
-	public function getSeriesForPost( int $post_id ): array;
+	public function getSeriesForPost( int $post_id, ?array $series_ids = null ): array;
 	// phpcs:enable WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid
 }

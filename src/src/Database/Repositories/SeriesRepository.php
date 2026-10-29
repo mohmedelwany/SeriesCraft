@@ -25,6 +25,8 @@ use WP_Term;
  */
 class SeriesRepository implements SeriesRepositoryInterface {
 
+
+
 	/**
 	 * WordPress database abstraction instance.
 	 *
@@ -52,7 +54,7 @@ class SeriesRepository implements SeriesRepositoryInterface {
 			$this->wpdb = $wpdb;
 		}
 
-		$prefix           = ( $this->wpdb && isset( $this->wpdb->prefix ) ) ? $this->wpdb->prefix : 'wp_';
+		$prefix           = ($this->wpdb && isset( $this->wpdb->prefix )) ? $this->wpdb->prefix : 'wp_';
 		$this->table_name = $prefix . 'series_craft_posts';
 	}
 
@@ -132,7 +134,7 @@ class SeriesRepository implements SeriesRepositoryInterface {
 		}
 
 		$term_taxonomy = get_term( $term_id, SeriesTaxonomy::TAXONOMY );
-		if ( ! ( $term_taxonomy instanceof WP_Term ) ) {
+		if ( ! ($term_taxonomy instanceof WP_Term) ) {
 			return false;
 		}
 
@@ -186,16 +188,48 @@ class SeriesRepository implements SeriesRepositoryInterface {
 	/**
 	 * Retrieves formatted series data with posts, layout, and styles for a specific post.
 	 *
-	 * @param int $post_id Target post ID.
+	 * @param int             $post_id    Target post ID.
+	 * @param array<int>|null $series_ids Optional explicit series IDs for editor previews.
 	 * @return array<int, array{id: int, name: string, layout: string, styles: array<string, mixed>, posts: array<int, array{id: int, title: string, url: string, part_order: int, thumbnail: string|null}>}> Array of series data.
 	 */
-	public function getSeriesForPost( int $post_id ): array {
+	public function getSeriesForPost( int $post_id, ?array $series_ids = null ): array {
 		/**
 		 * Terms assigned to the post.
 		 *
-		 * @var array<WP_Term>|WP_Error $terms
+		 * @var array<\WP_Term>|\WP_Error $terms
 		 */
-		$terms = wp_get_post_terms( $post_id, SeriesTaxonomy::TAXONOMY );
+		if ( null === $series_ids ) {
+			$terms = wp_get_post_terms( $post_id, SeriesTaxonomy::TAXONOMY );
+		} else {
+			$series_ids = array_values( array_unique( array_filter( array_map( 'absint', $series_ids ) ) ) );
+			if ( empty( $series_ids ) ) {
+				return array();
+			}
+
+			$terms = get_terms(
+				array(
+					'taxonomy'   => SeriesTaxonomy::TAXONOMY,
+					'hide_empty' => false,
+					'include'    => $series_ids,
+				)
+			);
+			if ( ! is_wp_error( $terms ) && is_array( $terms ) ) {
+				$terms_by_id = array();
+				foreach ( $terms as $term ) {
+					if ( $term instanceof WP_Term ) {
+						$terms_by_id[ (int) $term->term_id ] = $term;
+					}
+				}
+
+				$ordered_terms = array();
+				foreach ( $series_ids as $series_id ) {
+					if ( isset( $terms_by_id[ $series_id ] ) ) {
+						$ordered_terms[] = $terms_by_id[ $series_id ];
+					}
+				}
+				$terms = $ordered_terms;
+			}
+		}
 
 		if ( is_wp_error( $terms ) || empty( $terms ) || ! is_array( $terms ) ) {
 			return array();
@@ -212,7 +246,7 @@ class SeriesRepository implements SeriesRepositoryInterface {
 		$series_data = array();
 
 		foreach ( $terms as $term ) {
-			if ( ! ( $term instanceof WP_Term ) ) {
+			if ( ! ($term instanceof WP_Term) ) {
 				continue;
 			}
 
@@ -231,9 +265,9 @@ class SeriesRepository implements SeriesRepositoryInterface {
 				? (string) $meta_settings['layout']
 				: ( ! empty( $meta_settings['content_variant'] )
 					? (string) $meta_settings['content_variant']
-					: (string) $default_layout );
+					: (string) $default_layout);
 
-			$styles = (array) ( $meta_settings['custom_styles'] ?? ( $meta_settings['style'] ?? array() ) );
+			$styles = (array) ($meta_settings['custom_styles'] ?? ($meta_settings['style'] ?? array()));
 
 			$ordered_posts = $this->get_series_posts( $term_id );
 			$posts_data    = array();
@@ -267,10 +301,11 @@ class SeriesRepository implements SeriesRepositoryInterface {
 	/**
 	 * Snake_case alias for getSeriesForPost.
 	 *
-	 * @param int $post_id Target post ID.
+	 * @param int             $post_id    Target post ID.
+	 * @param array<int>|null $series_ids Optional explicit series IDs for editor previews.
 	 * @return array<int, array{id: int, name: string, layout: string, styles: array<string, mixed>, posts: array<int, array{id: int, title: string, url: string, part_order: int, thumbnail: string|null}>}>
 	 */
-	public function get_series_for_post( int $post_id ): array {
-		return $this->getSeriesForPost( $post_id );
+	public function get_series_for_post( int $post_id, ?array $series_ids = null ): array {
+		return $this->getSeriesForPost( $post_id, $series_ids );
 	}
 }

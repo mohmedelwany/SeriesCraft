@@ -17,15 +17,16 @@
     content: none;
   }
 
-  details summary:focus {
-    outline: none;
+  details summary:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
   }
 
   .sc-accordion__item,
   .seriescraft-accordion-item {
-    border: 1px solid #e2e8f0;
+    border: 1px solid #0062a2;
     border-radius: 1rem;
-    margin-bottom: 1rem;
+    margin-bottom: .25rem;
     overflow: hidden;
     transition: box-shadow 0.2s ease;
 
@@ -47,11 +48,36 @@
     }
   }
 
+  .seriescraft-accordion-content {
+    display: grid;
+    grid-template-rows: 0fr;
+    visibility: hidden;
+    transition: grid-template-rows 240ms ease, visibility 0s linear 240ms;
+  }
+
+  details[open] > .seriescraft-accordion-content {
+    grid-template-rows: 1fr;
+    visibility: visible;
+    transition-delay: 0s;
+  }
+
   .sc-accordion__body,
   .seriescraft-accordion-body {
+    min-height: 0;
+    overflow: hidden;
     padding: 1.5rem;
     border-top: 1px solid #e2e8f0;
     background-color: #ffffff;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sc-accordion,
+  .sm-series-accordion,
+  .seriescraft-accordion {
+    .seriescraft-accordion-content {
+      transition: none;
+    }
   }
 }
 

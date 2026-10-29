@@ -11,6 +11,43 @@
   }
 }
 
+.seriescraft-multi-series-list {
+  display: grid;
+  gap: 12px;
+}
+
+.seriescraft-series-card {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #dcdcde;
+  border-radius: 4px;
+  background: #fff;
+
+  .seriescraft-series-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .seriescraft-series-card-title {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-weight: 600;
+  }
+
+  .seriescraft-jump-settings-btn,
+  .seriescraft-remove-series-btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .seriescraft-part-order-container {
+    margin-top: 10px;
+  }
+}
+
 // Hide default core Gutenberg taxonomy panel for series to prevent duplication
 .components-panel__body.taxonomy-panel-series,
 .components-panel__body.edit-post-taxonomy-panel-series {

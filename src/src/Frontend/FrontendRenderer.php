@@ -29,6 +29,8 @@ use SeriesCraft\Views\Variants\VariantViewInterface;
  */
 class FrontendRenderer {
 
+
+
 	/**
 	 * Series repository instance.
 	 *
@@ -92,7 +94,7 @@ class FrontendRenderer {
 	 */
 	public function filter_content( string $content ): string {
 		// Prevent modifying or appending content in editor, admin, REST API, or JSON request contexts.
-		if ( ( function_exists( 'is_admin' ) && is_admin() ) || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) || ( function_exists( 'wp_is_json_request' ) && wp_is_json_request() ) ) {
+		if ( (function_exists( 'is_admin' ) && is_admin()) || (defined( 'REST_REQUEST' ) && REST_REQUEST) || (function_exists( 'wp_is_json_request' ) && wp_is_json_request()) ) {
 			return $content;
 		}
 
@@ -173,6 +175,15 @@ class FrontendRenderer {
 			$preview_series_id = (int) $_GET['preview_series_id'];
 		}
 
+		$preview_series_ids = null;
+		if ( isset( $_GET['preview_series_ids'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$decoded_series_ids = json_decode( wp_unslash( (string) $_GET['preview_series_ids'] ), true );
+			if ( is_array( $decoded_series_ids ) ) {
+				$preview_series_ids = array_values( array_unique( array_filter( array_map( 'absint', $decoded_series_ids ) ) ) );
+			}
+		}
+
 		$preview_title = '';
 		if ( isset( $_GET['preview_title'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -221,6 +232,25 @@ class FrontendRenderer {
 			unset( $this->rendered_posts[ $current_post_id ] );
 		}
 
+		$has_explicit_series = ! empty( $attributes['seriesId'] ) || ! empty( $attributes['series_id'] );
+		if ( $current_post_id > 0 && ! $has_explicit_series && null !== $preview_series_ids ) {
+			$preview_series = $this->repository->getSeriesForPost( $current_post_id, $preview_series_ids );
+			if ( ! empty( $preview_series ) ) {
+				return $this->render_for_post( $current_post_id, $preview_series, $preview_title, $preview_image );
+			}
+
+			return '<div class="sc-series-block sc-series-empty-preview">' .
+				esc_html( __( 'Series block: add a series in the sidebar to see it rendered here.', 'series-craft' ) ) .
+				'</div>';
+		}
+
+		if ( $current_post_id > 0 && $preview_series_id > 0 && ! $has_explicit_series ) {
+			$assigned_series = $this->repository->getSeriesForPost( $current_post_id );
+			if ( count( $assigned_series ) > 1 ) {
+				return $this->render_for_post( $current_post_id, $assigned_series, $preview_title, $preview_image );
+			}
+		}
+
 		// Context 1: Explicit series term ID provided.
 		if ( $series_id > 0 ) {
 			return $this->render_for_series( $series_id, $current_post_id, $layout_override, $preview_title, $preview_image );
@@ -231,11 +261,11 @@ class FrontendRenderer {
 			$series_list = $this->repository->getSeriesForPost( $current_post_id );
 			if ( ! empty( $series_list ) ) {
 				// Context 1: Post assigned to a series.
-				return $this->render_for_post( $current_post_id, $series_list );
+				return $this->render_for_post( $current_post_id, $series_list, $preview_title, $preview_image );
 			}
 
 			// Context 3: Editor canvas with no series assigned yet.
-			$is_editor_preview = isset( $_GET['preview_key'] ) || isset( $_GET['post_id'] ) || ( function_exists( 'is_admin' ) && is_admin() ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$is_editor_preview = isset( $_GET['preview_key'] ) || isset( $_GET['post_id'] ) || (function_exists( 'is_admin' ) && is_admin()); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			if ( $is_editor_preview ) {
 				return '<div class="sc-series-block sc-series-empty-preview">' .
 					esc_html( __( 'Series block: add a series in the sidebar to see it rendered here.', 'series-craft' ) ) .
@@ -244,10 +274,10 @@ class FrontendRenderer {
 		}
 
 		// Context 2: Standalone / Archive listing.
-		$mode           = sanitize_text_field( (string) ( $attributes['mode'] ?? 'all' ) );
-		$limit          = (int) ( $attributes['limit'] ?? 5 );
-		$selected_user  = (int) ( $attributes['selectedUser'] ?? ( $attributes['userId'] ?? 0 ) );
-		$selected_topic = sanitize_text_field( (string) ( $attributes['selectedTopic'] ?? '' ) );
+		$mode           = sanitize_text_field( (string) ($attributes['mode'] ?? 'all') );
+		$limit          = (int) ($attributes['limit'] ?? 5);
+		$selected_user  = (int) ($attributes['selectedUser'] ?? ($attributes['userId'] ?? 0));
+		$selected_topic = sanitize_text_field( (string) ($attributes['selectedTopic'] ?? '') );
 
 		return $this->render_series_listing( $mode, $limit, $selected_user, $selected_topic );
 	}
@@ -266,7 +296,7 @@ class FrontendRenderer {
 
 		$args = array(
 			'taxonomy'   => 'series',
-			'hide_empty' => ( 'top' === $mode ),
+			'hide_empty' => ('top' === $mode),
 		);
 
 		if ( 'top' === $mode ) {
@@ -276,7 +306,7 @@ class FrontendRenderer {
 		} else {
 			$args['orderby'] = 'name';
 			$args['order']   = 'ASC';
-			if ( $limit > 0 && ( 'user' === $mode || 'topics' === $mode || 'topic' === $mode ) ) {
+			if ( $limit > 0 && ('user' === $mode || 'topics' === $mode || 'topic' === $mode) ) {
 				$args['number'] = $limit;
 			}
 		}
@@ -300,7 +330,7 @@ class FrontendRenderer {
 				$term_link = '#';
 			}
 
-			$count      = (int) ( $term->count ?? 0 );
+			$count      = (int) ($term->count ?? 0);
 			$part_label = sprintf(
 				/* translators: %d: number of parts in the series */
 				_n( '%d Part', '%d Parts', $count, 'series-craft' ),
@@ -338,7 +368,7 @@ class FrontendRenderer {
 		}
 
 		$term        = function_exists( 'get_term' ) ? get_term( $series_id, 'series' ) : null;
-		$series_name = ( $term && isset( $term->name ) ) ? (string) $term->name : '';
+		$series_name = ($term && isset( $term->name )) ? (string) $term->name : '';
 		if ( empty( $series_name ) ) {
 			$series_name = function_exists( '__' ) ? __( 'Series Navigation', 'series-craft' ) : 'Series Navigation';
 		}
@@ -360,9 +390,9 @@ class FrontendRenderer {
 				? (string) $meta_settings['layout']
 				: ( ! empty( $meta_settings['content_variant'] )
 					? (string) $meta_settings['content_variant']
-					: (string) $default_layout ) );
+					: (string) $default_layout));
 
-		$raw_styles = (array) ( $meta_settings['custom_styles'] ?? ( $meta_settings['style'] ?? array() ) );
+		$raw_styles = (array) ($meta_settings['custom_styles'] ?? ($meta_settings['style'] ?? array()));
 
 		$ordered_posts = $this->repository->get_series_posts( $series_id );
 		$posts_data    = array();
@@ -378,7 +408,7 @@ class FrontendRenderer {
 				$thumbnail_url = $preview_image;
 			}
 
-			$post_title = function_exists( 'get_the_title' ) ? get_the_title( $post_obj->ID ) : ( $post_obj->post_title ?? '' );
+			$post_title = function_exists( 'get_the_title' ) ? get_the_title( $post_obj->ID ) : ($post_obj->post_title ?? '');
 			if ( $current_post_id > 0 && (int) $post_obj->ID === $current_post_id && ! empty( $preview_title ) ) {
 				$post_title = $preview_title;
 			}
@@ -392,7 +422,7 @@ class FrontendRenderer {
 			);
 		}
 
-		$effective_post_id = $current_post_id > 0 ? $current_post_id : ( ( ! empty( $preview_title ) || ! empty( $preview_image ) || isset( $_GET['preview_series_id'] ) ) ? -1 : 0 ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$effective_post_id = $current_post_id > 0 ? $current_post_id : (( ! empty( $preview_title ) || ! empty( $preview_image ) || isset( $_GET['preview_series_id'] )) ? -1 : 0); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 		if ( 0 !== $effective_post_id ) {
 			$exists = false;
@@ -430,7 +460,7 @@ class FrontendRenderer {
 				$posts_data[] = array(
 					'id'         => $effective_post_id,
 					'title'      => $current_title,
-					'url'        => ( $current_post_id > 0 && function_exists( 'get_permalink' ) ) ? (string) get_permalink( $current_post_id ) : '#',
+					'url'        => ($current_post_id > 0 && function_exists( 'get_permalink' )) ? (string) get_permalink( $current_post_id ) : '#',
 					'part_order' => count( $posts_data ) + 1,
 					'thumbnail'  => $current_thumb,
 				);
@@ -450,10 +480,12 @@ class FrontendRenderer {
 	 * Renders series navigation HTML and styles for a post.
 	 *
 	 * @param int        $post_id     Post ID.
-	 * @param array|null $series_list Optional pre-fetched series list.
+	 * @param array|null $series_list  Optional pre-fetched series list.
+	 * @param string     $preview_title Optional live preview post title.
+	 * @param string     $preview_image Optional live preview post image URL.
 	 * @return string Rendered series markup.
 	 */
-	public function render_for_post( int $post_id, ?array $series_list = null ): string {
+	public function render_for_post( int $post_id, ?array $series_list = null, string $preview_title = '', string $preview_image = '' ): string {
 		if ( $post_id <= 0 ) {
 			return '';
 		}
@@ -477,9 +509,46 @@ class FrontendRenderer {
 		foreach ( $series_list as $series ) {
 			$series_id      = (int) $series['id'];
 			$series_name    = (string) $series['name'];
-			$layout_variant = (string) ( $series['layout'] ?? 'link-list' );
-			$raw_styles     = (array) ( $series['styles'] ?? array() );
-			$posts          = (array) ( $series['posts'] ?? array() );
+			$layout_variant = (string) ($series['layout'] ?? 'link-list');
+			$raw_styles     = (array) ($series['styles'] ?? array());
+			$posts          = (array) ($series['posts'] ?? array());
+
+			$current_post_found = false;
+			foreach ( $posts as &$post ) {
+				if ( (int) ($post['id'] ?? 0) !== $post_id ) {
+					continue;
+				}
+				$current_post_found = true;
+				if ( '' !== $preview_title ) {
+					$post['title'] = $preview_title;
+				}
+				if ( '' !== $preview_image ) {
+					$post['thumbnail'] = $preview_image;
+				}
+			}
+			unset( $post );
+
+			if ( ! $current_post_found ) {
+				$current_title = '' !== $preview_title
+					? $preview_title
+					: (function_exists( 'get_the_title' ) ? (string) get_the_title( $post_id ) : '');
+				if ( '' === $current_title || 'Auto Draft' === $current_title ) {
+					$current_title = __( '(Untitled)', 'series-craft' );
+				}
+
+				$current_thumbnail = $preview_image;
+				if ( '' === $current_thumbnail ) {
+					$current_thumbnail = ThumbnailResolver::resolve_post_image( $post_id );
+				}
+
+				$posts[] = array(
+					'id'         => $post_id,
+					'title'      => $current_title,
+					'url'        => function_exists( 'get_permalink' ) ? (string) get_permalink( $post_id ) : '#',
+					'part_order' => count( $posts ) + 1,
+					'thumbnail'  => ! empty( $current_thumbnail ) ? $current_thumbnail : null,
+				);
+			}
 
 			$nav_context = $this->navigation_service->get_navigation_context( $post_id, $posts );
 			$inline_css  = $this->style_sanitizer->generate_inline_css( $series_id, $raw_styles );
@@ -531,8 +600,8 @@ class FrontendRenderer {
 	): string {
 		$header_view = new HeaderView(
 			$series_name,
-			(int) ( $nav_context['current_part'] ?? 0 ),
-			(int) ( $nav_context['total_parts'] ?? 0 ),
+			(int) ($nav_context['current_part'] ?? 0),
+			(int) ($nav_context['total_parts'] ?? 0),
 			$styles
 		);
 

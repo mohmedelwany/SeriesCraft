@@ -8,26 +8,31 @@
  * @package SeriesCraft\Blocks
  */
 
-import { useState, useEffect, useRef, useMemo } from '@wordpress/element';
-import { useSelect } from '@wordpress/data';
-import { InspectorControls, BlockControls, useBlockProps } from '@wordpress/block-editor';
+import { useState, useEffect, useRef, useMemo } from "@wordpress/element";
+import { useSelect } from "@wordpress/data";
 import {
-	PanelBody,
-	RangeControl,
-	Spinner,
-	ToolbarGroup,
-	ToolbarButton,
-	Modal,
-} from '@wordpress/components';
-import ServerSideRender from '@wordpress/server-side-render';
-import { __ } from '@wordpress/i18n';
-import ModeSelector from './components/ModeSelector';
-import UserSelector from './components/UserSelector';
-import TopicSelector from './components/TopicSelector';
-import SeriesPreviewCard from './components/SeriesPreviewCard';
-import { applyStylePreview } from '../../editor/settings-sidebar/constants';
-import SeriesSettingsSidebar from '../../editor/settings-sidebar/SeriesSettingsSidebar';
-import { useSeries, useSeriesPosts } from '../../hooks';
+  InspectorControls,
+  BlockControls,
+  useBlockProps,
+} from "@wordpress/block-editor";
+import {
+  PanelBody,
+  RangeControl,
+  Spinner,
+  ToolbarGroup,
+  ToolbarButton,
+  Modal,
+} from "@wordpress/components";
+import ServerSideRender from "@wordpress/server-side-render";
+import { __ } from "@wordpress/i18n";
+import ModeSelector from "./components/ModeSelector";
+import UserSelector from "./components/UserSelector";
+import TopicSelector from "./components/TopicSelector";
+import SeriesPreviewCard from "./components/SeriesPreviewCard";
+import { applyStylePreview } from "../../editor/settings-sidebar/constants";
+import { SeriesSettingsSidebar } from "../../editor/settings-sidebar/SeriesSettingsSidebar";
+import { useSeries, useSeriesPosts } from "../../hooks";
+import { STORE_NAME } from "../../store/constants";
 
 /**
  * Empty response placeholder component.
@@ -35,14 +40,17 @@ import { useSeries, useSeriesPosts } from '../../hooks';
  * @return {JSX.Element} Empty preview markup.
  */
 function EmptyPlaceholder() {
-	return (
-		<div className="sc-series-block sc-series-empty-preview" data-testid="series-block-empty">
-			{__(
-				'Series block: add a series in the sidebar to see it rendered here.',
-				'series-craft'
-			)}
-		</div>
-	);
+  return (
+    <div
+      className="sc-series-block sc-series-empty-preview"
+      data-testid="series-block-empty"
+    >
+      {__(
+        "Series block: add a series in the sidebar to see it rendered here.",
+        "series-craft",
+      )}
+    </div>
+  );
 }
 
 /**
@@ -54,45 +62,90 @@ function EmptyPlaceholder() {
  * @return {JSX.Element} Loading indicator markup.
  */
 function LoadingPlaceholder({ lastMarkup }) {
-	if (lastMarkup) {
-		return (
-			<div
-				className="sc-series-block sc-series-loading is-loading"
-				data-testid="series-block-loading"
-				style={{ position: 'relative', minHeight: '120px' }}
-			>
-				<div
-					className="sc-series-loading-backdrop"
-					style={{ opacity: 0.6, transition: 'opacity 0.2s ease-in-out' }}
-					dangerouslySetInnerHTML={{ __html: lastMarkup }}
-				/>
-				<div
-					className="sc-series-loading-overlay"
-					style={{
-						position: 'absolute',
-						top: 0,
-						left: 0,
-						right: 0,
-						bottom: 0,
-						display: 'flex',
-						alignItems: 'center',
-						justifyContent: 'center',
-						background: 'rgba(255, 255, 255, 0.4)',
-						zIndex: 5,
-					}}
-				>
-					<Spinner />
-				</div>
-			</div>
-		);
-	}
+  if (lastMarkup) {
+    return (
+      <div
+        className="sc-series-block sc-series-loading is-loading"
+        data-testid="series-block-loading"
+        style={{ position: "relative", minHeight: "120px" }}
+      >
+        <div
+          className="sc-series-loading-backdrop"
+          style={{ opacity: 0.6, transition: "opacity 0.2s ease-in-out" }}
+          dangerouslySetInnerHTML={{ __html: lastMarkup }}
+        />
+        <div
+          className="sc-series-loading-overlay"
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(255, 255, 255, 0.4)",
+            zIndex: 5,
+          }}
+        >
+          <Spinner />
+        </div>
+      </div>
+    );
+  }
 
-	return (
-		<div className="sc-series-block sc-series-loading" data-testid="series-block-loading">
-			<Spinner />
-			<span>{__('Loading series block...', 'series-craft')}</span>
-		</div>
-	);
+  return (
+    <div
+      className="sc-series-block sc-series-loading"
+      data-testid="series-block-loading"
+    >
+      <Spinner />
+      <span>{__("Loading series block...", "series-craft")}</span>
+    </div>
+  );
+}
+
+/**
+ * Opens the accordion item for the selected series and closes the others.
+ *
+ * @param {Element|null} root Preview root element.
+ * @param {number|string} selectedSeriesId Active series term ID.
+ * @return {boolean} Whether the selected series item was found.
+ */
+export function syncAccordionToSeries(root, selectedSeriesId) {
+  if (!root || typeof root.querySelectorAll !== "function") {
+    return false;
+  }
+
+  const items = Array.from(
+    root.querySelectorAll(".seriescraft-accordion-item"),
+  );
+  if (items.length === 0) {
+    return false;
+  }
+
+  const numericSeriesId = Number(selectedSeriesId);
+  let selectedItemFound = false;
+
+  items.forEach((item) => {
+    const seriesElements = [
+      ...(item.matches("[data-sm-series-term-id]") ? [item] : []),
+      ...item.querySelectorAll("[data-sm-series-term-id]"),
+    ];
+    const isSelected =
+      numericSeriesId > 0 &&
+      seriesElements.some(
+        (element) =>
+          Number(element.getAttribute("data-sm-series-term-id")) ===
+          numericSeriesId,
+      );
+
+    item.open = isSelected;
+    selectedItemFound = selectedItemFound || isSelected;
+  });
+
+  return selectedItemFound;
 }
 
 /**
@@ -102,39 +155,41 @@ function LoadingPlaceholder({ lastMarkup }) {
  * @return {string} First found image URL or empty string.
  */
 export function findFirstImageInBlocks(blocks) {
-	if (!Array.isArray(blocks) || blocks.length === 0) {
-		return '';
-	}
+  if (!Array.isArray(blocks) || blocks.length === 0) {
+    return "";
+  }
 
-	for (const block of blocks) {
-		if (!block) {
-			continue;
-		}
+  for (const block of blocks) {
+    if (!block) {
+      continue;
+    }
 
-		if (block.name === 'core/image' || block.name === 'core/cover') {
-			if (block.attributes?.url) {
-				return block.attributes.url;
-			}
-		} else if (block.name === 'core/media-text') {
-			if (block.attributes?.mediaUrl) {
-				return block.attributes.mediaUrl;
-			}
-		} else if (block.name === 'core/html' && block.attributes?.content) {
-			const match = /<img[^>]+src=["']([^"']+)["']/i.exec(block.attributes.content);
-			if (match && match[1]) {
-				return match[1];
-			}
-		}
+    if (block.name === "core/image" || block.name === "core/cover") {
+      if (block.attributes?.url) {
+        return block.attributes.url;
+      }
+    } else if (block.name === "core/media-text") {
+      if (block.attributes?.mediaUrl) {
+        return block.attributes.mediaUrl;
+      }
+    } else if (block.name === "core/html" && block.attributes?.content) {
+      const match = /<img[^>]+src=["']([^"']+)["']/i.exec(
+        block.attributes.content,
+      );
+      if (match && match[1]) {
+        return match[1];
+      }
+    }
 
-		if (Array.isArray(block.innerBlocks) && block.innerBlocks.length > 0) {
-			const nestedUrl = findFirstImageInBlocks(block.innerBlocks);
-			if (nestedUrl) {
-				return nestedUrl;
-			}
-		}
-	}
+    if (Array.isArray(block.innerBlocks) && block.innerBlocks.length > 0) {
+      const nestedUrl = findFirstImageInBlocks(block.innerBlocks);
+      if (nestedUrl) {
+        return nestedUrl;
+      }
+    }
+  }
 
-	return '';
+  return "";
 }
 
 /**
@@ -146,267 +201,304 @@ export function findFirstImageInBlocks(blocks) {
  * @return {JSX.Element} Rendered block edit UI.
  */
 export default function Edit({ attributes = {}, setAttributes }) {
-	const {
-		mode = 'all',
-		limit = 5,
-		selectedUser = 0,
-		selectedTopic = '',
-		align = 'wide',
-	} = attributes;
+  const {
+    mode = "all",
+    limit = 5,
+    selectedUser = 0,
+    selectedTopic = "",
+    align = "wide",
+  } = attributes;
 
-	const [previewRefreshKey, setPreviewRefreshKey] = useState(0);
-	const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-	const containerRef = useRef(null);
-	const lastMarkupRef = useRef('');
-	const [lastMarkup, setLastMarkup] = useState('');
+  const [previewRefreshKey, setPreviewRefreshKey] = useState(0);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const containerRef = useRef(null);
+  const selectedSeriesIdRef = useRef(0);
+  const lastMarkupRef = useRef("");
+  const [lastMarkup, setLastMarkup] = useState("");
 
-	const blockProps = useBlockProps({
-		ref: containerRef,
-		className: 'sc-series-editor-root wp-block-seriescraft-series-list',
-	});
+  const blockProps = useBlockProps({
+    ref: containerRef,
+    className: "sc-series-editor-root wp-block-seriescraft-series-list",
+  });
 
-	// Preserve rendered markup to prevent collapsing / blanking during ServerSideRender fetching
-	useEffect(() => {
-		const node = containerRef.current;
-		if (!node) {
-			return;
-		}
+  // Preserve rendered markup to prevent collapsing / blanking during ServerSideRender fetching
+  useEffect(() => {
+    const node = containerRef.current;
+    if (!node) {
+      return;
+    }
 
-		const observer = new MutationObserver(() => {
-			const renderedHtml = node.querySelector(
-				'.sc-series-box, .seriescraft-wrapper, .sm-series-layout, .wp-block-seriescraft-series-list'
-			);
-			if (renderedHtml && renderedHtml.outerHTML) {
-				lastMarkupRef.current = renderedHtml.outerHTML;
-				setLastMarkup(renderedHtml.outerHTML);
-			}
-		});
+    const observer = new MutationObserver(() => {
+      const renderedHtml = node.querySelector(
+        ".sc-series-box, .seriescraft-wrapper, .sm-series-layout, .wp-block-seriescraft-series-list",
+      );
+      if (renderedHtml && renderedHtml.outerHTML) {
+        lastMarkupRef.current = renderedHtml.outerHTML;
+        setLastMarkup(renderedHtml.outerHTML);
+      }
+      syncAccordionToSeries(node, selectedSeriesIdRef.current);
+    });
 
-		observer.observe(node, {
-			childList: true,
-			subtree: true,
-		});
+    observer.observe(node, {
+      childList: true,
+      subtree: true,
+    });
 
-		return () => {
-			observer.disconnect();
-		};
-	}, []);
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
 
-	// Use centralized custom hooks for series assignment and posts sequence
-	const { currentPostId, assignedSeriesId } = useSeries();
-	const activeSeriesId = assignedSeriesId;
-	const { rawPosts } = useSeriesPosts(activeSeriesId);
+  // Use centralized custom hooks for series assignment and posts sequence
+  const { currentPostId, assignedSeriesId, assignedSeriesIds } = useSeries();
+  const activeSeriesId = useSelect(
+    (select) => {
+      const selectedSeriesId = Number(
+        select(STORE_NAME)?.getActiveSeriesId?.(),
+      );
+      return assignedSeriesIds.includes(selectedSeriesId)
+        ? selectedSeriesId
+        : assignedSeriesId;
+    },
+    [assignedSeriesIds, assignedSeriesId],
+  );
+  selectedSeriesIdRef.current = activeSeriesId;
 
-	const storeOrderHash = useMemo(() => {
-		if (!activeSeriesId || !Array.isArray(rawPosts) || rawPosts.length === 0) {
-			return '';
-		}
-		return rawPosts.map((p) => (typeof p === 'object' && p !== null ? p.id : p)).join('-');
-	}, [activeSeriesId, rawPosts]);
+  useEffect(() => {
+    syncAccordionToSeries(containerRef.current, activeSeriesId);
+  }, [activeSeriesId, previewRefreshKey]);
 
-	// Retrieve post title, featured image, and authors from core stores
-	const { currentPostTitle, currentPostImage, users } = useSelect((select) => {
-		const core = select('core');
-		const editor = select('core/editor');
-		const blockEditor = select('core/block-editor');
+  const { rawPosts } = useSeriesPosts(activeSeriesId);
 
-		const postTitle = editor?.getEditedPostAttribute?.('title') || '';
-		const authors = core?.getUsers?.({ per_page: -1 }) || [];
+  const storeOrderHash = useMemo(() => {
+    if (!activeSeriesId || !Array.isArray(rawPosts) || rawPosts.length === 0) {
+      return "";
+    }
+    return rawPosts
+      .map((p) => (typeof p === "object" && p !== null ? p.id : p))
+      .join("-");
+  }, [activeSeriesId, rawPosts]);
 
-		const featuredMediaId = editor?.getEditedPostAttribute?.('featured_media');
-		let featuredImageUrl = '';
-		if (featuredMediaId && Number(featuredMediaId) > 0) {
-			const media = core?.getMedia?.(Number(featuredMediaId));
-			featuredImageUrl =
-				media?.media_details?.sizes?.medium?.source_url ||
-				media?.source_url ||
-				'';
-		}
+  // Retrieve post title, featured image, and authors from core stores
+  const { currentPostTitle, currentPostImage, users } = useSelect((select) => {
+    const core = select("core");
+    const editor = select("core/editor");
+    const blockEditor = select("core/block-editor");
 
-		const editorBlocks = blockEditor?.getBlocks?.() || [];
-		const blockImageUrl = findFirstImageInBlocks(editorBlocks);
-		const resolvedImage = featuredImageUrl || blockImageUrl || '';
+    const postTitle = editor?.getEditedPostAttribute?.("title") || "";
+    const authors = core?.getUsers?.({ per_page: -1 }) || [];
 
-		return {
-			currentPostTitle: postTitle,
-			currentPostImage: resolvedImage,
-			users: authors,
-		};
-	}, []);
+    const featuredMediaId = editor?.getEditedPostAttribute?.("featured_media");
+    let featuredImageUrl = "";
+    if (featuredMediaId && Number(featuredMediaId) > 0) {
+      const media = core?.getMedia?.(Number(featuredMediaId));
+      featuredImageUrl =
+        media?.media_details?.sizes?.medium?.source_url ||
+        media?.source_url ||
+        "";
+    }
 
-	// Listen to preview refresh events triggered from Settings Sidebar / Toolbar Gear Modal / Order Reorder UI
-	useEffect(() => {
-		if (typeof window === 'undefined') {
-			return;
-		}
+    const editorBlocks = blockEditor?.getBlocks?.() || [];
+    const blockImageUrl = findFirstImageInBlocks(editorBlocks);
+    const resolvedImage = featuredImageUrl || blockImageUrl || "";
 
-		let lastRefreshTimestamp = 0;
+    return {
+      currentPostTitle: postTitle,
+      currentPostImage: resolvedImage,
+      users: authors,
+    };
+  }, []);
 
-		// Instant visual style resolution via CSS custom properties on container without triggering full server re-render
-		const handleLivePreview = (event) => {
-			const detail = event?.detail || {};
-			const termId = detail.termId || detail.seriesId || activeSeriesId;
-			const style = detail.style || detail.layoutStyles?.[termId];
-			if (style) {
-				applyStylePreview({ termId, style });
-			}
-			// NOTE: We intentionally do NOT increment previewRefreshKey on style updates.
-			// Styling reflects instantly via CSS custom properties with zero unmounting or flicker.
-		};
+  // Listen to preview refresh events triggered from Settings Sidebar / Toolbar Gear Modal / Order Reorder UI
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
 
-		// Full ServerSideRender refresh when layout variant, taxonomy, or post ordering changes
-		const handleServerRefresh = (event) => {
-			const detail = event?.detail || {};
-			const termId = detail.termId || detail.seriesId || activeSeriesId;
-			if (termId && activeSeriesId && Number(termId) !== Number(activeSeriesId)) {
-				return;
-			}
-			// Deduplicate if multiple events fire in the same cycle with the exact same timestamp
-			if (detail.timestamp && detail.timestamp === lastRefreshTimestamp) {
-				return;
-			}
-			if (detail.timestamp) {
-				lastRefreshTimestamp = detail.timestamp;
-			}
-			const style = detail.style || detail.layoutStyles?.[termId];
-			if (style) {
-				applyStylePreview({ termId, style });
-			}
-			setPreviewRefreshKey((prev) => prev + 1);
-		};
+    let lastRefreshTimestamp = 0;
 
-		window.addEventListener('seriescraft:order-updated', handleServerRefresh);
-		window.addEventListener('sc-series-preview-refresh', handleServerRefresh);
-		window.addEventListener('sm-series-preview-refresh', handleServerRefresh);
-		window.addEventListener('sm-series-live-preview', handleLivePreview);
+    // Instant visual style resolution via CSS custom properties on container without triggering full server re-render
+    const handleLivePreview = (event) => {
+      const detail = event?.detail || {};
+      const termId = detail.termId || detail.seriesId || activeSeriesId;
+      const style = detail.style || detail.layoutStyles?.[termId];
+      if (style) {
+        applyStylePreview({ termId, style });
+      }
+      // NOTE: We intentionally do NOT increment previewRefreshKey on style updates.
+      // Styling reflects instantly via CSS custom properties with zero unmounting or flicker.
+    };
 
-		return () => {
-			window.removeEventListener('seriescraft:order-updated', handleServerRefresh);
-			window.removeEventListener('sc-series-preview-refresh', handleServerRefresh);
-			window.removeEventListener('sm-series-preview-refresh', handleServerRefresh);
-			window.removeEventListener('sm-series-live-preview', handleLivePreview);
-		};
-	}, [activeSeriesId]);
+    // Full ServerSideRender refresh when layout variant, taxonomy, or post ordering changes
+    const handleServerRefresh = (event) => {
+      const detail = event?.detail || {};
+      const termId = detail.termId || detail.seriesId || activeSeriesId;
+      if (
+        termId &&
+        activeSeriesId &&
+        Number(termId) !== Number(activeSeriesId)
+      ) {
+        return;
+      }
+      // Deduplicate if multiple events fire in the same cycle with the exact same timestamp
+      if (detail.timestamp && detail.timestamp === lastRefreshTimestamp) {
+        return;
+      }
+      if (detail.timestamp) {
+        lastRefreshTimestamp = detail.timestamp;
+      }
+      const style = detail.style || detail.layoutStyles?.[termId];
+      if (style) {
+        applyStylePreview({ termId, style });
+      }
+      setPreviewRefreshKey((prev) => prev + 1);
+    };
 
-	const handlePreviewClick = (event) => {
-		const link = event.target.closest('a, button.sc-nav__btn');
-		if (link) {
-			event.preventDefault();
-			event.stopPropagation();
-		}
-	};
+    window.addEventListener("seriescraft:order-updated", handleServerRefresh);
+    window.addEventListener("sc-series-preview-refresh", handleServerRefresh);
+    window.addEventListener("sm-series-preview-refresh", handleServerRefresh);
+    window.addEventListener("sm-series-live-preview", handleLivePreview);
 
-	return (
-		<>
-			{ /* Block Toolbar Gear Icon for per-series appearance settings modal/popover */}
-			<BlockControls>
-				<ToolbarGroup>
-					<ToolbarButton
-						icon="admin-generic"
-						label={__('Series Settings', 'series-craft')}
-						title={__('Series Settings', 'series-craft')}
-						onClick={() => setIsSettingsModalOpen(true)}
-						isActive={isSettingsModalOpen}
-					/>
-				</ToolbarGroup>
-			</BlockControls>
+    return () => {
+      window.removeEventListener(
+        "seriescraft:order-updated",
+        handleServerRefresh,
+      );
+      window.removeEventListener(
+        "sc-series-preview-refresh",
+        handleServerRefresh,
+      );
+      window.removeEventListener(
+        "sm-series-preview-refresh",
+        handleServerRefresh,
+      );
+      window.removeEventListener("sm-series-live-preview", handleLivePreview);
+    };
+  }, [activeSeriesId]);
 
-			{ /* Toolbar Settings Modal */}
-			{isSettingsModalOpen && (
-				<Modal
-					title={__('Series Appearance & Settings', 'series-craft')}
-					onRequestClose={() => setIsSettingsModalOpen(false)}
-					className="sc-series-settings-modal"
-					isDismissible={true}
-				>
-					<SeriesSettingsSidebar
-						initialSeriesId={activeSeriesId}
-						inModal={true}
-					/>
-				</Modal>
-			)}
+  const handlePreviewClick = (event) => {
+    const link = event.target.closest("a, button.sc-nav__btn");
+    if (link) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  };
 
-			{ /* Block Inspector Controls Sidebar (strictly for variant / display mode selection) */}
-			<InspectorControls>
-				<PanelBody
-					title={__('Series Display Mode', 'series-craft')}
-					initialOpen={true}
-				>
-					<ModeSelector
-						mode={mode}
-						onChange={(newMode) => setAttributes({ mode: newMode })}
-					/>
+  return (
+    <>
+      {/* Block Toolbar Gear Icon for per-series appearance settings modal/popover */}
+      <BlockControls>
+        <ToolbarGroup>
+          <ToolbarButton
+            icon="admin-generic"
+            label={__("Series Settings", "series-craft")}
+            title={__("Series Settings", "series-craft")}
+            onClick={() => setIsSettingsModalOpen(true)}
+            isActive={isSettingsModalOpen}
+          />
+        </ToolbarGroup>
+      </BlockControls>
 
-					{mode === 'top' && (
-						<RangeControl
-							label={__('Limit', 'series-craft')}
-							value={limit || 5}
-							onChange={(newLimit) =>
-								setAttributes({ limit: Number(newLimit) || 5 })
-							}
-							min={1}
-							max={50}
-							__nextHasNoMarginBottom={true}
-						/>
-					)}
+      {/* Toolbar Settings Modal */}
+      {isSettingsModalOpen && (
+        <Modal
+          title={__("Series Appearance & Settings", "series-craft")}
+          onRequestClose={() => setIsSettingsModalOpen(false)}
+          className="sc-series-settings-modal"
+          isDismissible={true}
+        >
+          <SeriesSettingsSidebar
+            initialSeriesId={activeSeriesId}
+            inModal={true}
+          />
+        </Modal>
+      )}
 
-					{mode === 'user' && (
-						<UserSelector
-							selectedUser={selectedUser}
-							users={users}
-							onChange={(newUser) =>
-								setAttributes({ selectedUser: Number(newUser) || 0 })
-							}
-						/>
-					)}
+      {/* Block Inspector Controls Sidebar (strictly for variant / display mode selection) */}
+      <InspectorControls>
+        <PanelBody
+          title={__("Series Display Mode", "series-craft")}
+          initialOpen={true}
+        >
+          <ModeSelector
+            mode={mode}
+            onChange={(newMode) => setAttributes({ mode: newMode })}
+          />
 
-					{mode === 'topics' && (
-						<TopicSelector
-							selectedTopic={selectedTopic}
-							onChange={(newTopic) =>
-								setAttributes({ selectedTopic: newTopic || '' })
-							}
-						/>
-					)}
+          {mode === "top" && (
+            <RangeControl
+              label={__("Limit", "series-craft")}
+              value={limit || 5}
+              onChange={(newLimit) =>
+                setAttributes({ limit: Number(newLimit) || 5 })
+              }
+              min={1}
+              max={50}
+              __nextHasNoMarginBottom={true}
+            />
+          )}
 
-					{ /* Stable Preview Card Container */}
-					<SeriesPreviewCard
-						mode={mode}
-						limit={limit}
-						selectedUser={selectedUser}
-						selectedTopic={selectedTopic}
-					/>
-				</PanelBody>
-			</InspectorControls>
+          {mode === "user" && (
+            <UserSelector
+              selectedUser={selectedUser}
+              users={users}
+              onChange={(newUser) =>
+                setAttributes({ selectedUser: Number(newUser) || 0 })
+              }
+            />
+          )}
 
-			<div {...blockProps} onClickCapture={handlePreviewClick}>
-				<ServerSideRender
-					key={`seriescraft-ssr-${activeSeriesId || 'all'}`}
-					block="seriescraft/series-list"
-					attributes={{
-						mode,
-						limit,
-						selectedUser,
-						selectedTopic,
-						align,
-					}}
-					urlQueryArgs={{
-						post_id: currentPostId,
-						preview_series_id: activeSeriesId,
-						preview_title: currentPostTitle,
-						preview_image: currentPostImage,
-						preview_key: currentPostImage
-							? `${activeSeriesId}-${currentPostTitle}-${currentPostImage}-${previewRefreshKey}`
-							: `${activeSeriesId}-${currentPostTitle}-${previewRefreshKey}`,
-						_order_revision: previewRefreshKey,
-						_order: storeOrderHash || undefined,
-						_t: previewRefreshKey > 0 ? previewRefreshKey : undefined,
-					}}
-					EmptyResponsePlaceholder={EmptyPlaceholder}
-					LoadingResponsePlaceholder={() => <LoadingPlaceholder lastMarkup={lastMarkup} />}
-					ErrorResponsePlaceholder={EmptyPlaceholder}
-				/>
-			</div>
-		</>
-	);
+          {mode === "topics" && (
+            <TopicSelector
+              selectedTopic={selectedTopic}
+              onChange={(newTopic) =>
+                setAttributes({ selectedTopic: newTopic || "" })
+              }
+            />
+          )}
+
+          {/* Stable Preview Card Container */}
+          <SeriesPreviewCard
+            mode={mode}
+            limit={limit}
+            selectedUser={selectedUser}
+            selectedTopic={selectedTopic}
+          />
+        </PanelBody>
+      </InspectorControls>
+
+      <div {...blockProps} onClickCapture={handlePreviewClick}>
+        <ServerSideRender
+          key={`seriescraft-ssr-${activeSeriesId || "all"}-${assignedSeriesIds.join("-") || "none"}`}
+          block="seriescraft/series-list"
+          attributes={{
+            mode,
+            limit,
+            selectedUser,
+            selectedTopic,
+            align,
+          }}
+          urlQueryArgs={{
+            post_id: currentPostId,
+            preview_series_ids: JSON.stringify(assignedSeriesIds),
+            preview_series_id:
+              assignedSeriesIds.length > 1 ? undefined : activeSeriesId,
+            preview_title: currentPostTitle,
+            preview_image: currentPostImage,
+            preview_key: currentPostImage
+              ? `${activeSeriesId}-${currentPostTitle}-${currentPostImage}-${previewRefreshKey}`
+              : `${activeSeriesId}-${currentPostTitle}-${previewRefreshKey}`,
+            _order_revision: previewRefreshKey,
+            _order: storeOrderHash || undefined,
+            _t: previewRefreshKey > 0 ? previewRefreshKey : undefined,
+          }}
+          EmptyResponsePlaceholder={EmptyPlaceholder}
+          LoadingResponsePlaceholder={() => (
+            <LoadingPlaceholder lastMarkup={lastMarkup} />
+          )}
+          ErrorResponsePlaceholder={EmptyPlaceholder}
+        />
+      </div>
+    </>
+  );
 }
