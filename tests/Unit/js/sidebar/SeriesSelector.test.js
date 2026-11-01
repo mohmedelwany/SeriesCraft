@@ -92,8 +92,10 @@ describe('Sidebar SeriesSelector Component', () => {
 		);
 
 		expect( screen.getByLabelText( 'Assign Series' ) ).toBeDefined();
-		expect( screen.getByText( 'Machine Learning Basics (3)' ) ).toBeDefined();
-		expect( screen.getByText( 'Neural Networks (5)' ) ).toBeDefined();
+		expect( screen.getByText( 'Machine Learning Basics' ) ).toBeDefined();
+		expect( screen.getByText( 'Neural Networks' ) ).toBeDefined();
+		expect( screen.queryByText( 'Machine Learning Basics (3)' ) ).toBeNull();
+		expect( screen.queryByText( 'Neural Networks (5)' ) ).toBeNull();
 	} );
 
 	/**
@@ -124,12 +126,23 @@ describe('Sidebar SeriesSelector Component', () => {
 			/>
 		);
 
-		const toggleBtn = screen.getByText( '+ Add New Series' );
+		const toggleBtn = screen.getByRole( 'button', { name: '+ Add New Series' } );
+		expect( toggleBtn.className ).toContain( 'seriescraft-add-series-toggle' );
+		expect( toggleBtn.className ).toContain( 'sc-order-item__badge' );
+		expect( toggleBtn.className ).toContain( 'seriescraft-badge' );
+		expect( toggleBtn.className ).toContain( 'seriescraft-badge-current' );
+		expect( toggleBtn.className ).toContain( 'bg-primary' );
 		fireEvent.click( toggleBtn );
 
 		expect( screen.getByPlaceholderText( 'Series name...' ) ).toBeDefined();
-		expect( screen.getByRole( 'button', { name: 'Add' } ) ).toBeDefined();
-		expect( screen.getByRole( 'button', { name: 'Cancel' } ) ).toBeDefined();
+		const addBtn = screen.getByRole( 'button', { name: 'Add' } );
+		const cancelBtn = screen.getByRole( 'button', { name: 'Cancel' } );
+		expect( addBtn ).toBeDefined();
+		expect( cancelBtn ).toBeDefined();
+		expect( addBtn.getAttribute( 'data-variant' ) ).toBe( 'secondary' );
+		expect( cancelBtn.getAttribute( 'data-variant' ) ).toBe( 'secondary' );
+		expect( addBtn.parentElement ).toBe( cancelBtn.parentElement );
+		expect( addBtn.parentElement.className ).toContain( 'seriescraft-inline-actions' );
 	} );
 
 	/**

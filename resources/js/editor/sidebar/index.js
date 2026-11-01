@@ -43,7 +43,8 @@ export function SeriesDocumentSettingsPanel() {
     assignedSeriesId,
     handleSelectSeries,
   } = usePostSavingSync();
-  const { assignedSeriesIds, assignedSeriesList } = useSeries();
+  const { assignedSeriesIds, assignedSeriesList, setActiveSeriesId } =
+    useSeries();
 
   // Handler for jumping to settings sidebar for a series
   const jumpToSettingsSidebar = (seriesId) => {
@@ -91,13 +92,17 @@ export function SeriesDocumentSettingsPanel() {
                 <Button
 					icon="no-alt"
 					label={__("Remove the current post from this series", "series-craft")}
-					onClick={() =>
-						handleSelectSeries(
-						assignedSeriesIds.filter(
+					onClick={() => {
+						const nextSeriesIds = assignedSeriesIds.filter(
 							(id) => Number(id) !== Number(series.id),
-						),
-						)
-					}
+						);
+						handleSelectSeries(nextSeriesIds);
+						if (typeof setActiveSeriesId === "function") {
+							setActiveSeriesId(
+								nextSeriesIds.length > 0 ? Number(nextSeriesIds[0]) : 0,
+							);
+						}
+					}}
 					className="seriescraft-remove-series-btn"
 					/>
               </div>
@@ -109,15 +114,6 @@ export function SeriesDocumentSettingsPanel() {
             </div>
           ))}
         </div>
-      )}
-
-      {assignedSeriesList.length === 0 && (
-        <p className="seriescraft-empty-sidebar-notice">
-          {__(
-            "Select or create a series to manage sequential post ordering and table of contents display.",
-            "series-craft",
-          )}
-        </p>
       )}
     </PluginDocumentSettingPanel>
   );

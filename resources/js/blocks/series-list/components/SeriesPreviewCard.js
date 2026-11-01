@@ -1,7 +1,7 @@
 /**
  * SeriesPreviewCard Component for Series List Inspector Controls.
  *
- * Displays series count pill badge, callout notice, loading state,
+ * Displays series count pill badge, loading state,
  * and dynamically queried series items via core getEntityRecords.
  *
  * @package SeriesCraft\Blocks
@@ -77,15 +77,6 @@ export default function SeriesPreviewCard( {
 				>
 					{ totalCount } { __( 'series', 'series-craft' ) }
 				</span>
-			</div>
-
-			<div className="sc-series-preview-card__notice">
-				<p>
-					{ __(
-						'Preview shows sample series. Actual results depend on selected user.',
-						'series-craft'
-					) }
-				</p>
 			</div>
 
 			{ totalCount === 0 ? (

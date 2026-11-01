@@ -142,7 +142,7 @@ describe("SeriesSettingsSidebar Component", () => {
     expect(screen.getByText("series: React Mastery")).toBeDefined();
   });
 
-  it("Test 2: displays message when no series is available", () => {
+  it("Test 2: displays empty-state message and hides controls when no series is selected", () => {
     wpData.useSelect.mockImplementation((callback) =>
       callback((storeName) => {
         if (storeName === "core/editor") {
@@ -152,7 +152,7 @@ describe("SeriesSettingsSidebar Component", () => {
           };
         }
         return {
-          getSeries: () => [],
+          getSeries: () => mockAvailableSeries,
           getSeriesMeta: () => null,
         };
       }),
@@ -162,9 +162,49 @@ describe("SeriesSettingsSidebar Component", () => {
 
     expect(
       screen.getByText(
-        "No series found. Create a series first in Document Settings.",
+        "No series selected. Please assign this post to a series to customize its settings.",
       ),
     ).toBeDefined();
+    expect(screen.queryByTestId("sm-series-layout-setting")).toBeNull();
+    expect(screen.queryByLabelText("Target Series")).toBeNull();
+    expect(mockSetActiveSeriesId).toHaveBeenCalledWith(0);
+  });
+
+  it("Test 2b: clears active series and hides controls immediately when assigned series is removed", () => {
+    let currentAssigned = [10];
+    wpData.useSelect.mockImplementation((callback) =>
+      callback((storeName) => {
+        if (storeName === "core/editor") {
+          return {
+            getCurrentPostId: () => 101,
+            getEditedPostAttribute: (attr) =>
+              attr === "series" ? currentAssigned : null,
+          };
+        }
+        return {
+          getSeries: () => mockAvailableSeries,
+          getSeriesMeta: () => ({ layout: "link-list", style: DEFAULT_STYLE }),
+        };
+      }),
+    );
+
+    const { rerender } = render(<SeriesSettingsSidebar initialSeriesId={10} />);
+
+    expect(screen.getByText("series: Architecture 101")).toBeDefined();
+    expect(screen.getByTestId("sm-series-layout-setting")).toBeDefined();
+
+    // Simulate series removal via the "X" icon in the post sidebar
+    currentAssigned = [];
+    rerender(<SeriesSettingsSidebar initialSeriesId={0} />);
+
+    expect(screen.queryByText("series: Architecture 101")).toBeNull();
+    expect(screen.queryByTestId("sm-series-layout-setting")).toBeNull();
+    expect(
+      screen.getByText(
+        "No series selected. Please assign this post to a series to customize its settings.",
+      ),
+    ).toBeDefined();
+    expect(mockSetActiveSeriesId).toHaveBeenLastCalledWith(0);
   });
 
   it("Test 3: switches between assigned series from dropdown switcher", () => {

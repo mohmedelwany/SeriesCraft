@@ -139,44 +139,6 @@ describe("Sidebar Integration - SeriesDocumentSettingsPanel", () => {
   });
 
   /**
-   * Test 2: Renders empty notice when post has no series assigned.
-   */
-  it("Test 2: displays empty series help notice when no series is assigned to current post", () => {
-    wpData.useSelect.mockImplementation((callback) => {
-      return callback((storeName) => {
-        if (storeName === "core/editor") {
-          return {
-            getCurrentPostId: () => 100,
-            getEditedPostAttribute: (attr) => (attr === "series" ? [] : null),
-            getBlocks: () => [],
-          };
-        }
-        if (storeName === "core/block-editor") {
-          return {
-            getBlocks: () => [],
-          };
-        }
-        return {
-          getSeries: () => [{ id: 5, name: "Series 5", count: 1 }],
-          getSeriesPosts: () => [],
-          isSavingOrder: () => false,
-          getOrderNotice: () => null,
-        };
-      });
-    });
-
-    render(<SeriesDocumentSettingsPanel />);
-
-    expect(screen.getByText("Series")).toBeDefined();
-    expect(
-      screen.getByText(
-        /Select or create a series to manage sequential post ordering/i,
-      ),
-    ).toBeDefined();
-    expect(screen.queryByTestId("seriescraft-part-order-container")).toBeNull();
-  });
-
-  /**
    * Test 3: Renders PartOrderList when post is assigned to a series.
    */
   it("Test 3: displays PartOrderList when post is assigned to a series", () => {

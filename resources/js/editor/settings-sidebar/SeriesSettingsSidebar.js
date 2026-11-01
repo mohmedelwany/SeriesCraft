@@ -34,16 +34,35 @@ export function SeriesSettingsSidebar({
   inModal = false,
 } = {}) {
   const [targetSeriesId, setTargetSeriesId] = useState(initialSeriesId || 0);
+  const { assignedSeriesIds: currentAssignedSeriesIds } = useSeries();
+
+  const validTargetSeriesId =
+    currentAssignedSeriesIds.length > 0 &&
+    currentAssignedSeriesIds.includes(Number(targetSeriesId))
+      ? Number(targetSeriesId)
+      : 0;
+
   const {
     currentPostId,
     assignedSeriesIds,
     assignedSeriesList,
-    seriesList: availableSeries,
     activeSeriesId,
     activeSeries,
     updateSeriesMeta,
     setActiveSeriesId,
-  } = useSeries(targetSeriesId);
+  } = useSeries(validTargetSeriesId);
+
+  useEffect(() => {
+    if (assignedSeriesIds.length === 0 && targetSeriesId !== 0) {
+      setTargetSeriesId(0);
+    } else if (
+      assignedSeriesIds.length > 0 &&
+      targetSeriesId > 0 &&
+      !assignedSeriesIds.includes(Number(targetSeriesId))
+    ) {
+      setTargetSeriesId(Number(assignedSeriesIds[0]) || 0);
+    }
+  }, [assignedSeriesIds, targetSeriesId]);
 
   useEffect(() => {
     if (typeof setActiveSeriesId === "function") {
@@ -70,9 +89,7 @@ export function SeriesSettingsSidebar({
   }, []);
 
   useEffect(() => {
-    if (initialSeriesId > 0) {
-      setTargetSeriesId(initialSeriesId);
-    }
+    setTargetSeriesId(initialSeriesId > 0 ? initialSeriesId : 0);
   }, [initialSeriesId]);
 
   const {
@@ -89,10 +106,8 @@ export function SeriesSettingsSidebar({
     updateSeriesMeta,
   });
 
-  const switcherSeries =
-    assignedSeriesIds.length > 1 ? assignedSeriesList : availableSeries;
-  const seriesOptions = switcherSeries.map((series) => ({
-    label: `${series.name} `,
+  const seriesOptions = assignedSeriesList.map((series) => ({
+    label: series.name,
     value: String(series.id),
   }));
 
@@ -105,7 +120,7 @@ export function SeriesSettingsSidebar({
         title={__("Series Settings", "series-craft")}
         initialOpen={true}
       >
-        {assignedSeriesIds.length !== 1 && (
+        {assignedSeriesIds.length > 1 && (
           <div className="sc-series-switcher seriescraft-series-switcher">
             <SelectControl
               __next40pxDefaultSize={true}
@@ -134,15 +149,10 @@ export function SeriesSettingsSidebar({
 
         {!activeSeries ? (
           <p className="seriescraft-no-series-notice">
-            {availableSeries.length === 0
-              ? __(
-                  "No series found. Create a series first in Document Settings.",
-                  "series-craft",
-                )
-              : __(
-                  "Select one or more series for this post first.",
-                  "series-craft",
-                )}
+            {__(
+              "No series selected. Please assign this post to a series to customize its settings.",
+              "series-craft",
+            )}
           </p>
         ) : (
           <div

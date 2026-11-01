@@ -114,7 +114,7 @@ export function useSeries(targetSeriesId = 0) {
     if (assignedSeriesId > 0) {
       return assignedSeriesId;
     }
-    return seriesList.length > 0 ? Number(seriesList[0].id) : 0;
+    return 0;
   }, [targetSeriesId, assignedSeriesId, seriesList]);
 
   const activeSeries = useMemo(() => {

@@ -137,5 +137,36 @@ describe("useSeries Hook & Helpers", () => {
       expect(result.current.activeSeriesId).toBe(2);
       expect(result.current.activeSeries).toEqual(mockSeriesList[1]);
     });
+
+    it("returns activeSeriesId as 0 and activeSeries as null when post has no assigned series", () => {
+      const mockSeriesList = [
+        { id: 1, name: "One" },
+        { id: 2, name: "Two" },
+      ];
+
+      useSelect.mockImplementation((selector) => {
+        return selector((storeName) => {
+          if (storeName === "core/editor") {
+            return {
+              getCurrentPostId: () => 5,
+              getEditedPostAttribute: () => [],
+            };
+          }
+          if (storeName === "series-craft/store") {
+            return {
+              getSeries: () => mockSeriesList,
+            };
+          }
+          return {};
+        });
+      });
+
+      useDispatch.mockReturnValue({});
+
+      const { result } = renderHook(() => useSeries());
+      expect(result.current.assignedSeriesId).toBe(0);
+      expect(result.current.activeSeriesId).toBe(0);
+      expect(result.current.activeSeries).toBeNull();
+    });
   });
 });

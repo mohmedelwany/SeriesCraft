@@ -46,7 +46,7 @@ export default function SeriesSelector({
   const options = [
     { label: __("— Select a Series —", "series-craft"), value: "" },
     ...unassignedSeries.map((item) => ({
-      label: `${item.name} (${item.count || 0})`,
+      label: item.name,
       value: String(item.id),
     })),
   ];
@@ -116,13 +116,12 @@ export default function SeriesSelector({
       {!isCreating ? (
         <div className="seriescraft-create-toggle-wrap">
           <Button
-            variant="link"
             size="small"
             onClick={() => {
               setIsCreating(true);
               setErrorMessage("");
             }}
-            className="seriescraft-add-series-toggle"
+            className="seriescraft-add-series-toggle sc-order-item__badge seriescraft-badge seriescraft-badge-current bg-primary"
           >
             {__("+ Add New Series", "series-craft")}
           </Button>
@@ -157,6 +156,9 @@ export default function SeriesSelector({
               disabled={isSubmitting}
               className="seriescraft-inline-input"
             />
+          </div>
+
+          <div className="seriescraft-inline-actions">
             <Button
               variant="secondary"
               isBusy={isSubmitting}
@@ -166,12 +168,8 @@ export default function SeriesSelector({
             >
               {__("Add", "series-craft")}
             </Button>
-          </div>
-
-          <div className="seriescraft-inline-actions">
             <Button
-              variant="link"
-              size="small"
+              variant="secondary"
               disabled={isSubmitting}
               onClick={() => {
                 setIsCreating(false);
