@@ -18,7 +18,6 @@ import { __ } from '@wordpress/i18n';
  * @param {string} [props.mode='all'] Series display mode.
  * @param {number} [props.limit=5] Maximum series limit in 'top' mode.
  * @param {number} [props.selectedUser=0] Author ID filter in 'user' mode.
- * @param {string} [props.selectedTopic=''] Topic slug filter in 'topics' mode.
  * @param {Array}  [props.series] Optional explicit series list (used in tests/overrides).
  * @return {JSX.Element} Rendered card UI.
  */
@@ -26,7 +25,6 @@ export default function SeriesPreviewCard( {
 	mode = 'all',
 	limit = 5,
 	selectedUser = 0,
-	selectedTopic = '',
 	series,
 } ) {
 	const { seriesList, isLoading } = useSelect(
@@ -43,10 +41,6 @@ export default function SeriesPreviewCard( {
 				query.author = selectedUser;
 			}
 
-			if ( mode === 'topics' && selectedTopic ) {
-				query.topic = selectedTopic;
-			}
-
 			const records = core?.getEntityRecords?.( 'taxonomy', 'series', query );
 			const isResolving = coreData?.isResolving
 				? coreData.isResolving( 'core', 'getEntityRecords', [ 'taxonomy', 'series', query ] )
@@ -57,7 +51,7 @@ export default function SeriesPreviewCard( {
 				isLoading: Boolean( isResolving ),
 			};
 		},
-		[ mode, limit, selectedUser, selectedTopic ]
+		[ mode, limit, selectedUser ]
 	);
 
 	if ( isLoading ) {

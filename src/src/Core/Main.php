@@ -1,6 +1,10 @@
 <?php
 /**
- * Main plugin class file.
+ * Main plugin class file (Composition Root & Bootstrap Orchestrator).
+ *
+ * Implements the Subscriber Pattern via `init()`, delegating hook registration
+ * to dedicated domain subscribers while enforcing strict separation between
+ * REST Controllers and Database Repositories.
  *
  * @package SeriesCraft\Core
  */
@@ -65,7 +69,7 @@ class Main {
 	private ?LifecycleSubscriber $lifecycle_subscriber = null;
 
 	/**
-	 * Constructor.
+	 * Constructor: Initializes core services and injects dependencies.
 	 *
 	 * @param EnqueueManager|null      $enqueue_manager      Optional injected asset manager.
 	 * @param SeriesTaxonomy|null      $taxonomy             Optional injected taxonomy manager.
@@ -97,12 +101,22 @@ class Main {
 	}
 
 	/**
-	 * Initialize the plugin.
+	 * Initialize the plugin using the Subscriber Pattern.
+	 * Each domain class registers its own WordPress hooks via `register()`.
+	 *
+	 * Registration Order:
+	 *  LifecycleSubscriber : Cleans up orphan records in `wp_series_craft_posts` on post/series deletion.
+	 *  SeriesTaxonomy      : Registers the custom series taxonomy in WordPress.
+	 *  SavePostSubscriber  : Hooks into `save_post` to sync post-series relations in the junction table.
+	 *  EnqueueManager      : Loads isolated CSS & JS bundles for Admin, Editor, and Frontend.
+	 *  Frontend & Block    : Hooks `the_content` filter and binds the `series-list` dynamic block to `FrontendRenderer`.
+	 *  REST API Routes     : Registers REST endpoints (`SeriesRestController` & `SettingsRestController`).
+	 *  Admin Dashboard     : Initializes `SeriesTaxonomyAdmin` and `AdminPage` settings tabs when inside WP Admin.
 	 *
 	 * @return void
 	 */
 	public function init(): void {
-		// Initialize database lifecycle subscriber to maintain data integrity.
+		// Database Lifecycle Subscriber: Maintain data integrity & clean up orphan records on delete.
 		if ( null === $this->lifecycle_subscriber && class_exists( LifecycleSubscriber::class ) ) {
 			$this->lifecycle_subscriber = new LifecycleSubscriber();
 		}
@@ -111,29 +125,23 @@ class Main {
 			$this->lifecycle_subscriber->register();
 		}
 
+		// Custom Taxonomy Registration: Register the Series taxonomy on 'init'.
 		if ( function_exists( 'did_action' ) && did_action( 'init' ) ) {
 			$this->taxonomy->register();
 		} else {
 			add_action( 'init', array( $this->taxonomy, 'register' ) );
 		}
 
-		// Register post save hook subscriber for series association & junction table persistence.
+		// Post Save Subscriber: Sync post-series relationship & sort order in `wp_series_craft_posts`.
 		$this->save_post_subscriber->register();
 
-		// Register asset loader for editor and frontend.
+		// 4. Asset Loader: Enqueue isolated Admin, Editor, and Frontend CSS/JS bundles.
 		$this->enqueue_manager->register();
 
-		// Register frontend series display injection on the_content.
+		// Frontend Content Filter: Automatically inject series navigation/box into `the_content`.
 		add_filter( 'the_content', array( $this->frontend_renderer, 'filter_content' ) );
 
-		// Register REST API endpoints.
-		if ( function_exists( 'did_action' ) && did_action( 'rest_api_init' ) ) {
-			$this->register_rest_routes();
-		} else {
-			add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
-		}
-
-		// Register Gutenberg block metadata if available.
+		// Gutenberg Dynamic Block: Register `series-list` block and bind `FrontendRenderer::render_series_block`.
 		if ( function_exists( 'register_block_type' ) ) {
 			$plugin_dir = defined( 'SCFT_PLUGIN_DIR' ) ? rtrim( (string) SCFT_PLUGIN_DIR, '/\\' ) : dirname( __DIR__, 2 );
 
@@ -151,6 +159,14 @@ class Main {
 			}
 		}
 
+				// REST API Endpoints: Register custom `/wp-json/series-craft/v1/` routes.
+		if ( function_exists( 'did_action' ) && did_action( 'rest_api_init' ) ) {
+			$this->register_rest_routes();
+		} else {
+			add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
+		}
+
+		// Admin Dashboard & Taxonomy UI: Initialize only within the WordPress Admin context.
 		if ( function_exists( 'is_admin' ) && is_admin() ) {
 			$repository = new SeriesRepository();
 			( new SeriesTaxonomyAdmin( $repository ) )->register();
@@ -171,14 +187,22 @@ class Main {
 	}
 
 	/**
-	 * Registers REST API endpoints.
+	 * Registers REST API endpoints with Dependency Injection.
+	 *
+	 * Architectural Rule (Strict Layer Separation):
+	 * - Controllers ONLY handle auth/nonce checks, input sanitization, and HTTP responses.
+	 * - Direct SQL / `$wpdb` calls are strictly forbidden outside `Database/Repositories/`.
+	 * - `SeriesRepository` exclusively manages `wp_series_craft_posts` (junction table & sort order).
+	 * - `SettingsRepository` exclusively manages `sm_series_settings` in `wp_termmeta`.
 	 *
 	 * @return void
 	 */
 	public function register_rest_routes(): void {
+		// Instantiate isolated Data Access Repositories.
 		$series_repo   = new SeriesRepository();
 		$settings_repo = new SettingsRepository();
 
+		// Inject repositories into REST Controllers and register routes.
 		( new SeriesRestController( $series_repo ) )->register_routes();
 		( new SettingsRestController( $settings_repo ) )->register_routes();
 	}

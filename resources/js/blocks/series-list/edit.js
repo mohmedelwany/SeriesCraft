@@ -27,7 +27,6 @@ import ServerSideRender from "@wordpress/server-side-render";
 import { __ } from "@wordpress/i18n";
 import ModeSelector from "./components/ModeSelector";
 import UserSelector from "./components/UserSelector";
-import TopicSelector from "./components/TopicSelector";
 import SeriesPreviewCard from "./components/SeriesPreviewCard";
 import { applyStylePreview } from "../../editor/settings-sidebar/constants";
 import { SeriesSettingsSidebar } from "../../editor/settings-sidebar/SeriesSettingsSidebar";
@@ -205,7 +204,6 @@ export default function Edit({ attributes = {}, setAttributes }) {
     mode = "all",
     limit = 5,
     selectedUser = 0,
-    selectedTopic = "",
     align = "wide",
   } = attributes;
 
@@ -448,21 +446,11 @@ export default function Edit({ attributes = {}, setAttributes }) {
             />
           )}
 
-          {mode === "topics" && (
-            <TopicSelector
-              selectedTopic={selectedTopic}
-              onChange={(newTopic) =>
-                setAttributes({ selectedTopic: newTopic || "" })
-              }
-            />
-          )}
-
           {/* Stable Preview Card Container */}
           <SeriesPreviewCard
             mode={mode}
             limit={limit}
             selectedUser={selectedUser}
-            selectedTopic={selectedTopic}
           />
         </PanelBody>
       </InspectorControls>
@@ -475,7 +463,6 @@ export default function Edit({ attributes = {}, setAttributes }) {
             mode,
             limit,
             selectedUser,
-            selectedTopic,
             align,
           }}
           urlQueryArgs={{

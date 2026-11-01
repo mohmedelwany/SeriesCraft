@@ -31,7 +31,7 @@ describe("SeriesPreviewCard Component", () => {
     mockIsResolving = jest.fn(() => false);
     mockGetEntityRecords = jest.fn((kind, name, query) => {
       if (name === "series") {
-        if (query?.author === 999 || query?.topic === "nonexistent") {
+        if (query?.author === 999) {
           return [];
         }
         return sampleSeries;
@@ -97,27 +97,14 @@ describe("SeriesPreviewCard Component", () => {
     expect(screen.queryByText("Series Gamma")).toBeNull();
   });
 
-  test('Test 5: queries getEntityRecords with author filter in "user" mode and topic filter in "topics" mode', () => {
-    const { rerender } = render(
-      <SeriesPreviewCard mode="user" selectedUser={7} />,
-    );
+  test('Test 5: queries getEntityRecords with author filter in "user" mode', () => {
+    render(<SeriesPreviewCard mode="user" selectedUser={7} />);
 
     expect(mockGetEntityRecords).toHaveBeenCalledWith(
       "taxonomy",
       "series",
       expect.objectContaining({
         author: 7,
-        hide_empty: false,
-      }),
-    );
-
-    rerender(<SeriesPreviewCard mode="topics" selectedTopic="tech" />);
-
-    expect(mockGetEntityRecords).toHaveBeenCalledWith(
-      "taxonomy",
-      "series",
-      expect.objectContaining({
-        topic: "tech",
         hide_empty: false,
       }),
     );

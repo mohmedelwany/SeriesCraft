@@ -159,7 +159,7 @@ class FrontendRenderer {
 	 * Unified render callback for 'seriescraft/series-list' block.
 	 *
 	 * Context 1: Single post assigned to a series -> Renders active variant layout with Reading Now badge & nav.
-	 * Context 2: Standalone / Archive listing -> Renders series card grid based on mode, limit, user, topic.
+	 * Context 2: Standalone / Archive listing -> Renders series card grid based on mode, limit, user.
 	 * Context 3: Editor canvas with no series assigned -> Renders empty preview prompt.
 	 *
 	 * @param array<string, mixed> $attributes Block attributes.
@@ -274,25 +274,23 @@ class FrontendRenderer {
 		}
 
 		// Context 2: Standalone / Archive listing.
-		$mode           = sanitize_text_field( (string) ($attributes['mode'] ?? 'all') );
-		$limit          = (int) ($attributes['limit'] ?? 5);
-		$selected_user  = (int) ($attributes['selectedUser'] ?? ($attributes['userId'] ?? 0));
-		$selected_topic = sanitize_text_field( (string) ($attributes['selectedTopic'] ?? '') );
+		$mode          = sanitize_text_field( (string) ($attributes['mode'] ?? 'all') );
+		$limit         = (int) ($attributes['limit'] ?? 5);
+		$selected_user = (int) ($attributes['selectedUser'] ?? ($attributes['userId'] ?? 0));
 
-		return $this->render_series_listing( $mode, $limit, $selected_user, $selected_topic );
+		return $this->render_series_listing( $mode, $limit, $selected_user );
 	}
 
 	/**
 	 * Renders standalone series archive cards / grid listing.
 	 *
-	 * @param string $mode           Display mode (all, top, user, topics).
-	 * @param int    $limit          Maximum count of items.
-	 * @param int    $selected_user  Filter by author ID.
-	 * @param string $selected_topic Filter by taxonomy/topic.
+	 * @param string $mode          Display mode (all, top, user).
+	 * @param int    $limit         Maximum count of items.
+	 * @param int    $selected_user Filter by author ID.
 	 * @return string Rendered series listing HTML.
 	 */
-	public function render_series_listing( string $mode = 'all', int $limit = 5, int $selected_user = 0, string $selected_topic = '' ): string {
-		unset( $selected_user, $selected_topic );
+	public function render_series_listing( string $mode = 'all', int $limit = 5, int $selected_user = 0 ): string {
+		unset( $selected_user );
 
 		$args = array(
 			'taxonomy'   => 'series',
@@ -306,7 +304,7 @@ class FrontendRenderer {
 		} else {
 			$args['orderby'] = 'name';
 			$args['order']   = 'ASC';
-			if ( $limit > 0 && ('user' === $mode || 'topics' === $mode || 'topic' === $mode) ) {
+			if ( $limit > 0 && 'user' === $mode ) {
 				$args['number'] = $limit;
 			}
 		}

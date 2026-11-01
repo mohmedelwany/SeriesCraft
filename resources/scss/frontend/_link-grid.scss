@@ -10,15 +10,11 @@
   text-decoration: none;
 }
 
-.sc-layout-link-grid,
-.sm-link-grid,
-.seriescraft-layout-link-grid {
+:is(.sc-layout-link-grid, .sm-link-grid, .seriescraft-layout-link-grid) {
   width: 100%;
   box-sizing: border-box;
 
-  .sc-link-grid__grid,
-  .sm-link-grid__grid,
-  .grid {
+  :is(.sc-link-grid__grid, .sm-link-grid__grid, .grid) {
     display: grid;
     grid-template-columns: 1fr;
     gap: 1rem;
@@ -41,9 +37,7 @@
     }
   }
 
-  .sc-link-grid__card,
-  .sm-link-grid__card,
-  .seriescraft-card {
+  :is(.sc-link-grid__card, .sm-link-grid__card, .seriescraft-card) {
     position: relative;
     display: flex;
     flex-direction: column;
@@ -64,8 +58,7 @@
       padding: 20px 16px 18px;
     }
 
-    .sc-link-grid__icon,
-    .sm-link-grid__icon {
+    :is(.sc-link-grid__icon, .sm-link-grid__icon) {
       width: 3rem;
       height: 3rem;
       border-radius: 0.75rem;
@@ -98,9 +91,7 @@
       padding: 0;
     }
 
-    .sc-link-grid__title,
-    .sm-link-grid__title,
-    .seriescraft-title {
+    :is(.sc-link-grid__title, .sm-link-grid__title, .seriescraft-title) {
       margin: 0;
       width: 100%;
       text-align: center;
@@ -130,8 +121,7 @@
       }
     }
 
-    .sc-link-grid__part-num,
-    .seriescraft-part-num {
+    :is(.sc-link-grid__part-num, .seriescraft-part-num) {
       display: block;
       font-size: 0.875rem;
       font-weight: 600;
@@ -149,16 +139,14 @@
       background-color: var(--sm-hover-color, var(--sc-button-color, #0066d9));
     }
 
-    .sc-link-grid__badge-wrap,
-    .reading-now {
+    :is(.sc-link-grid__badge-wrap, .reading-now) {
       position: absolute;
       top: 8px;
       right: 8px;
       z-index: 20;
     }
 
-    .sc-link-grid__badge,
-    .seriescraft-badge {
+    :is(.sc-link-grid__badge, .seriescraft-badge) {
       display: inline-flex;
       align-items: center;
       padding: 0.25rem 0.625rem;
@@ -169,13 +157,12 @@
       font-weight: 600;
     }
 
-    &--current,
-    &.is-current {
+    &:is(.sc-link-grid__card--current, .sm-link-grid__card--current, .is-current) {
       background-color: #f8fafc;
       box-shadow: 0 6px 28px rgba(0, 102, 217, 0.16);
     }
 
-    &--default {
+    &:is(.sc-link-grid__card--default, .sm-link-grid__card--default) {
       background-color: #ffffff;
     }
 
@@ -184,9 +171,7 @@
       box-shadow: 0 12px 36px rgba(0, 102, 217, 0.2);
       border-color: var(--sm-hover-color, var(--sc-button-color, #0066d9));
 
-      .sc-link-grid__title,
-      .sm-link-grid__title,
-      .seriescraft-title {
+      :is(.sc-link-grid__title, .sm-link-grid__title, .seriescraft-title) {
         color: var(--sm-hover-color, var(--sc-button-color, #0066d9));
       }
     }

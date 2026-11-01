@@ -24,7 +24,6 @@ export default function ModeSelector( { mode = 'all', onChange } ) {
 				{ label: __( 'All Series', 'series-craft' ), value: 'all' },
 				{ label: __( 'Top Series', 'series-craft' ), value: 'top' },
 				{ label: __( 'User Series', 'series-craft' ), value: 'user' },
-				{ label: __( 'Topics / Taxonomy', 'series-craft' ), value: 'topics' },
 			] }
 			onChange={ onChange }
 			__next40pxDefaultSize={ true }

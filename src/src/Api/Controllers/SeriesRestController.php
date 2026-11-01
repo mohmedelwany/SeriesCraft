@@ -55,7 +55,7 @@ class SeriesRestController extends WP_REST_Controller {
 				'permission_callback' => array( $this, 'check_read_series_permission' ),
 				'args'                => array(
 					'mode'   => array(
-						'description' => 'Display mode (all, top, user, topics).',
+						'description' => 'Display mode (all, top, user).',
 						'type'        => 'string',
 						'default'     => 'all',
 					),
@@ -207,7 +207,7 @@ class SeriesRestController extends WP_REST_Controller {
 		} else {
 			$args['orderby'] = 'name';
 			$args['order']   = 'ASC';
-			if ( $limit > 0 && ( 'user' === $mode || 'topics' === $mode ) ) {
+			if ( $limit > 0 && 'user' === $mode ) {
 				$args['number'] = $limit;
 			}
 		}

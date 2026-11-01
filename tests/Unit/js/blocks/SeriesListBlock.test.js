@@ -37,7 +37,6 @@ jest.mock("@wordpress/server-side-render", () => {
         data-mode={props.attributes?.mode}
         data-limit={props.attributes?.limit}
         data-user={props.attributes?.selectedUser}
-        data-topic={props.attributes?.selectedTopic}
         data-post-id={props.urlQueryArgs?.post_id}
         data-preview-series-ids={props.urlQueryArgs?.preview_series_ids}
         data-preview-series-id={props.urlQueryArgs?.preview_series_id}
@@ -152,7 +151,6 @@ import Edit, {
 } from "../../../../resources/js/blocks/series-list/edit";
 import ModeSelector from "../../../../resources/js/blocks/series-list/components/ModeSelector";
 import UserSelector from "../../../../resources/js/blocks/series-list/components/UserSelector";
-import TopicSelector from "../../../../resources/js/blocks/series-list/components/TopicSelector";
 import SeriesPreviewCard from "../../../../resources/js/blocks/series-list/components/SeriesPreviewCard";
 
 describe("Series List Block (seriescraft/series-list)", () => {
@@ -170,18 +168,12 @@ describe("Series List Block (seriescraft/series-list)", () => {
     mockIsResolving = jest.fn(() => false);
     mockGetEntityRecords = jest.fn((kind, name, query) => {
       if (name === "series") {
-        if (query?.author === 999 || query?.topic === "empty-topic") {
+        if (query?.author === 999) {
           return [];
         }
         return [
           { id: 10, name: "JavaScript Deep Dive", count: 5 },
           { id: 11, name: "CSS Architecture", count: 3 },
-        ];
-      }
-      if (name === "category") {
-        return [
-          { id: 1, name: "Web Dev", slug: "web-dev" },
-          { id: 2, name: "DevOps", slug: "devops" },
         ];
       }
       return [];
@@ -227,7 +219,7 @@ describe("Series List Block (seriescraft/series-list)", () => {
       expect(metadata.icon).toBe("list-view");
     });
 
-    test("Test 2: attributes declare mode, limit, selectedUser, selectedTopic, and align with correct defaults", () => {
+    test("Test 2: attributes declare mode, limit, selectedUser, and align with correct defaults", () => {
       expect(metadata.attributes.mode).toEqual({
         type: "string",
         default: "all",
@@ -239,10 +231,6 @@ describe("Series List Block (seriescraft/series-list)", () => {
       expect(metadata.attributes.selectedUser).toEqual({
         type: "number",
         default: 0,
-      });
-      expect(metadata.attributes.selectedTopic).toEqual({
-        type: "string",
-        default: "",
       });
       expect(metadata.attributes.align).toEqual({
         type: "string",
@@ -278,7 +266,7 @@ describe("Series List Block (seriescraft/series-list)", () => {
   });
 
   describe("ModeSelector Component", () => {
-    test("Test 6: renders MODE dropdown with all 4 modes and handles change", () => {
+    test("Test 6: renders MODE dropdown with all 3 modes and handles change", () => {
       const onChange = jest.fn();
       render(<ModeSelector mode="all" onChange={onChange} />);
 
@@ -310,47 +298,15 @@ describe("Series List Block (seriescraft/series-list)", () => {
     });
   });
 
-  describe("TopicSelector Component", () => {
-    test("Test 8: renders SELECT TOPIC dropdown with categories/topics and calls onChange", () => {
-      const onChange = jest.fn();
-      const topics = [
-        { id: 1, name: "Web Dev", slug: "web-dev" },
-        { id: 2, name: "DevOps", slug: "devops" },
-      ];
-      render(
-        <TopicSelector selectedTopic="" topics={topics} onChange={onChange} />,
-      );
-
-      const select = screen.getByTestId("select-SELECT TOPIC");
-      expect(select).toBeDefined();
-
-      fireEvent.change(select, { target: { value: "web-dev" } });
-      expect(onChange).toHaveBeenCalledWith("web-dev");
-    });
-  });
-
   describe("SeriesPreviewCard Component", () => {
-    test("Test 9: passes author filter when in user mode and topic filter when in topics mode", () => {
-      const { rerender } = render(
-        <SeriesPreviewCard mode="user" selectedUser={5} />,
-      );
+    test("Test 9: passes author filter when in user mode", () => {
+      render(<SeriesPreviewCard mode="user" selectedUser={5} />);
 
       expect(mockGetEntityRecords).toHaveBeenCalledWith(
         "taxonomy",
         "series",
         expect.objectContaining({
           author: 5,
-          hide_empty: false,
-        }),
-      );
-
-      rerender(<SeriesPreviewCard mode="topics" selectedTopic="web-dev" />);
-
-      expect(mockGetEntityRecords).toHaveBeenCalledWith(
-        "taxonomy",
-        "series",
-        expect.objectContaining({
-          topic: "web-dev",
           hide_empty: false,
         }),
       );
@@ -452,34 +408,6 @@ describe("Series List Block (seriescraft/series-list)", () => {
       const userSelect = screen.getByTestId("select-SELECT USER");
       fireEvent.change(userSelect, { target: { value: "1" } });
       expect(setAttributes).toHaveBeenCalledWith({ selectedUser: 1 });
-
-      // SeriesPreviewCard remains firmly mounted
-      expect(screen.getByTestId("series-preview-card")).toBeDefined();
-    });
-
-    test('Test 15: InspectorControls shows TopicSelector when mode is "topics"', () => {
-      const setAttributes = jest.fn();
-      const { rerender } = render(
-        <Edit
-          attributes={{ mode: "all", selectedTopic: "" }}
-          setAttributes={setAttributes}
-        />,
-      );
-
-      expect(screen.queryByTestId("select-SELECT TOPIC")).toBeNull();
-
-      rerender(
-        <Edit
-          attributes={{ mode: "topics", selectedTopic: "" }}
-          setAttributes={setAttributes}
-        />,
-      );
-
-      expect(screen.getByTestId("select-SELECT TOPIC")).toBeDefined();
-
-      const topicSelect = screen.getByTestId("select-SELECT TOPIC");
-      fireEvent.change(topicSelect, { target: { value: "devops" } });
-      expect(setAttributes).toHaveBeenCalledWith({ selectedTopic: "devops" });
 
       // SeriesPreviewCard remains firmly mounted
       expect(screen.getByTestId("series-preview-card")).toBeDefined();
