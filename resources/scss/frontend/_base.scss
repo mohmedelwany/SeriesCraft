@@ -1,0 +1,126 @@
+// =============================================================================
+// SeriesCraft - Frontend Base & Utility Rules
+// =============================================================================
+
+@use "../abstracts/variables" as *;
+@use "../abstracts/mixins" as *;
+
+:root {
+  --nm-raised: 6px 6px 12px #d1d9e6, -6px -6px 12px #ffffff;
+  --nm-pressed: inset 4px 4px 8px #d1d9e6, inset -4px -4px 8px #ffffff;
+  --nm-pressed-accent: inset 4px 4px 8px rgba(0, 74, 124, 0.2), inset -4px -4px 8px #ffffff;
+}
+
+.sm-series-block,
+.sm-series-layout,
+.seriescraft-wrapper,
+.sm-series-accordion {
+  box-sizing: border-box;
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+}
+
+.seriescraft-wrapper,
+.sm-series-layout {
+  width: 100%;
+  max-width: 100%;
+  padding-top: var(--sc-padding-top, 1.5rem);
+  padding-right: var(--sc-padding-right, 1.5rem);
+  padding-bottom: var(--sc-padding-bottom, 1.5rem);
+  padding-left: var(--sc-padding-left, 1.5rem);
+  margin-top: var(--sc-margin-top, 2rem);
+  margin-bottom: var(--sc-margin-bottom, 2rem);
+  margin-left: var(--sc-margin-left, auto);
+  margin-right: var(--sc-margin-right, auto);
+  border-width: var(--sc-border-width, 1px);
+  border-style: var(--sc-border-style, solid);
+  border-color: var(--sc-border-color, #e2e8f0);
+  background-color: #ffffff;
+  border-radius: var(--sc-border-radius-xl, 1rem);
+  clear: both;
+}
+
+.sm-series-layout.space-y-8> :not([hidden])~ :not([hidden]),
+.seriescraft-wrapper.space-y-8> :not([hidden])~ :not([hidden]),
+.space-y-8> :not([hidden])~ :not([hidden]) {
+  margin-top: 2rem;
+  margin-bottom: 0;
+}
+
+.sm-link-list__item {
+  display: flex;
+  align-items: center;
+  transition: all var(--sc-transition-fast, 150ms ease);
+}
+
+/* Material Symbols icon settings */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined', sans-serif;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 48;
+}
+
+.sm-setting-panal-icon .material-symbols-outlined {
+  font-size: 24px !important;
+}
+
+/* Scrollbar Utility */
+.series-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 999px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+/* Neumorphic utilities */
+.neumorphic-raised {
+  box-shadow: var(--nm-raised);
+}
+
+.neumorphic-pressed {
+  box-shadow: var(--nm-pressed);
+}
+
+.neumorphic-pressed-accent {
+  box-shadow: var(--nm-pressed-accent);
+}
+
+/* Reading now badge positioning */
+.reading-now {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+}

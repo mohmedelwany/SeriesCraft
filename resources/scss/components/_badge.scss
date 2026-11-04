@@ -1,0 +1,130 @@
+// =============================================================================
+// SeriesCraft Component: Badge / Pill
+// 1:1 Port from legacy series-manager: .series-craft-badge / .sc-badge / .seriescraft-badge
+// =============================================================================
+
+@use "../abstracts/variables" as *;
+@use "../abstracts/mixins" as *;
+
+.series-craft-badge,
+.seriescraft-badge,
+.sc-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sc-spacing-xs, 0.25rem);
+  padding: 0.25rem 0.625rem;
+  font-family: var(--sc-font-family-body, inherit);
+  font-size: var(--sc-font-size-xs, 0.75rem);
+  font-weight: var(--sc-font-weight-semibold, 600);
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  vertical-align: middle;
+  border-radius: var(--sc-border-radius-full, 9999px);
+  border: 1px solid transparent;
+  transition: all var(--sc-transition-fast, 150ms ease);
+  box-sizing: border-box;
+
+  // ---------------------------------------------------------------------------
+  // Variants
+  // ---------------------------------------------------------------------------
+  &--primary,
+  &.bg-primary {
+    background-color: var(--sm-hover-color, var(--sc-button-color, #0066d9));
+    color: var(--sc-color-on-primary, #ffffff);
+    box-shadow: var(--sc-shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+  }
+
+  &--subtle {
+    background-color: var(--sc-header-bg, var(--sc-theme-accent-tint, var(--sc-color-primary-light, #e8f0fe)));
+    color: var(--sc-button-color, var(--sc-theme-accent, var(--sc-color-primary, #0066d9)));
+  }
+
+  &--neutral {
+    background-color: var(--sc-surface-container, #f1f5f9);
+    color: var(--sc-color-text-secondary, #64748b);
+  }
+
+  &--outline {
+    background-color: transparent;
+    border-color: var(--sc-color-border-hover, #cbd5e1);
+    color: var(--sc-color-text-secondary, #64748b);
+  }
+
+  // Active / "Reading Now" status badge
+  &--reading-now,
+  &--active {
+    background-color: var(--sc-button-color, var(--sc-theme-accent, var(--sc-color-primary, #0066d9)));
+    color: var(--sc-color-on-primary, #ffffff);
+    box-shadow: var(--sc-shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
+    letter-spacing: 0.02em;
+
+    &::before {
+      content: "";
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: var(--sc-border-radius-full, 9999px);
+      background-color: var(--sc-color-on-primary, #ffffff);
+      animation: sc-badge-pulse 2s infinite ease-in-out;
+    }
+  }
+
+  // Counter variant: "Part 1 of 5"
+  &--counter {
+    font-size: var(--sc-font-size-xs, 0.75rem);
+    font-weight: var(--sc-font-weight-medium, 500);
+    padding: 0.35rem 0.75rem;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Sizes
+  // ---------------------------------------------------------------------------
+  &--sm {
+    padding: 0.15rem 0.5rem;
+    font-size: 0.6875rem; // 11px
+  }
+
+  &--md {
+    padding: 0.375rem 0.875rem;
+    font-size: var(--sc-font-size-xs, 0.75rem);
+  }
+
+  &--lg {
+    padding: 0.5rem 1rem;
+    font-size: var(--sc-font-size-sm, 0.875rem);
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Legacy Reading Now Pill Container
+// -----------------------------------------------------------------------------
+.reading-now {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 20;
+
+  span,
+  div {
+    border-radius: 9999px;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Pulse Keyframe for Live/Active Indicator
+// -----------------------------------------------------------------------------
+@keyframes sc-badge-pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
+}

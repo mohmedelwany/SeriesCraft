@@ -14,6 +14,14 @@ namespace SeriesCraft\Tests\Integration;
 class SmokeTest extends IntegrationTestCase
 {
     /**
+     * Set up fixture before each test.
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+    }
+
+    /**
      * Verify that WordPress core is loaded correctly in the test environment.
      */
     public function test_wordpress_is_loaded(): void
@@ -47,5 +55,6 @@ class SmokeTest extends IntegrationTestCase
         $post = get_post($post_id);
         $this->assertEquals('Test Series Post', $post->post_title);
 
+        wp_delete_post($post_id, true);
     }
 }

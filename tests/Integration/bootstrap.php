@@ -34,7 +34,10 @@ if (file_exists($plugin_autoloader)) {
 // ---------------------------------------------------------------------------
 // 2. Live WordPress install
 // ---------------------------------------------------------------------------
-$wp_core_dir = rtrim(getenv('WP_CORE_DIR') ?: '/tmp/wordpress', '/');
+$default_core_dir = file_exists(dirname($repo_root, 3) . '/wp-load.php')
+    ? dirname($repo_root, 3)
+    : '/tmp/wordpress';
+$wp_core_dir = rtrim(getenv('WP_CORE_DIR') ?: $default_core_dir, '/');
 
 if (! file_exists($wp_core_dir . '/wp-load.php')) {
     echo "\n";

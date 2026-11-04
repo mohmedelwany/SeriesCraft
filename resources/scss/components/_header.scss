@@ -1,0 +1,67 @@
+// =============================================================================
+// SeriesCraft Component: Series Header Box
+// 1:1 Port from legacy series-manager: .seriescraft-header / .sm-header / .series-craft-header
+// =============================================================================
+
+@use "../abstracts/variables" as *;
+@use "../abstracts/mixins" as *;
+
+.sc-header,
+.series-craft-header,
+.seriescraft-header,
+.sm-header {
+  @include flex-between;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sc-spacing-md, 1rem);
+  padding: var(--sc-spacing-lg, 1.5rem);
+  border-radius: var(--sc-border-radius-xl, 1rem);
+  background-color: var(--sc-header-bg, var(--sc-color-primary-light, #e8f0fe));
+  border-width: var(--sc-border-width, 1px);
+  border-style: var(--sc-border-style, solid);
+  border-color: var(--sc-border-color, var(--sc-button-color, var(--sc-color-primary, #0066d9)));
+  box-shadow: var(--sc-shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+  margin-bottom: var(--sc-spacing-lg, 1.5rem);
+  box-sizing: border-box;
+
+  @include mobile {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sc-spacing-sm, 0.5rem);
+    padding: var(--sc-spacing-md, 1rem);
+  }
+
+  &__title-wrap {
+    flex: 1 1 auto;
+  }
+
+  &__title,
+  .seriescraft-series-title,
+  .text-headline-sm,
+  h2,
+  h3 {
+    margin: 0;
+    font-family: var(--sc-font-family-display, inherit);
+    font-size: var(--sc-font-size-2xl, 1.25rem);
+    font-weight: var(--sc-font-weight-bold, 700);
+    color: var(--sc-title-color, var(--sc-color-text, #111827));
+    line-height: var(--sc-line-height-tight, 1.25);
+  }
+
+  &__badge,
+  &__badge-wrap,
+  .seriescraft-position-badge,
+  .bg-primary {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    border-radius: var(--sc-border-radius-full, 9999px);
+    background-color: var(--sc-button-color, var(--sc-color-primary, #0066d9));
+    color: #ffffff;
+    font-size: var(--sc-font-size-sm, 0.875rem);
+    font-weight: var(--sc-font-weight-medium, 500);
+    box-shadow: var(--sc-shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+  }
+}
