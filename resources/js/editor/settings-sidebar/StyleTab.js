@@ -70,6 +70,7 @@ export function DimensionSettings( { style, onChangeStyle, onChangeSpacing } ) {
 					__next40pxDefaultSize={ true }
 					colors={ colors }
 					label={ __( 'Border', 'series-craft' ) }
+					hideLabelFromVision={ true }
 					onChange={ ( next ) => onChangeStyle( { border: next } ) }
 					value={ style?.border }
 					withSlider={ true }

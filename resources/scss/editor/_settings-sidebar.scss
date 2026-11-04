@@ -107,6 +107,25 @@
 .sm-tab-content-style {
   box-sizing: border-box;
 }
+.sm-tab-content-style {
+    .components-border-control {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+        margin-top: 8px;
+    }
+}
+
+.sm-tab-content-style {
+  .components-base-control,
+  .components-panel__body {
+    margin-bottom: 12px;
+  }
+  .sm-series-dimensions-spacing {
+    margin-bottom: 8px;
+  }
+}
 
 // Layout selector rules are modularized in _layout-selector.scss
 
