@@ -297,3 +297,29 @@ series-craft/
      }
      ```
    - This ensures that subsequent test suites running in the same test process find the database schema intact.
+
+## 8 E2E Test File Documentation Rule (`tests/E2E/**/*.spec.js`)
+
+Every Playwright E2E test file (`*.spec.js`) and helper file inside `tests/E2E/` MUST begin with a structured top-level JSDoc header comment block before any `import` statements.
+
+### Required Header Structure:
+1. **Test Suite Title & Summary:** A brief description of the user workflow or feature area covered by the file.
+2. **Covered Source Files (`@covers`):** An explicit list of the exact backend PHP classes/views (`src/...`) and frontend JS/React components (`resources/js/...`) being tested.
+3. **Test Scenarios:** A bulleted summary of the specific test cases and behaviors verified in the file.
+
+### Mandatory Template:
+```javascript
+/**
+ * E2E Test Suite: [Feature / Workflow Name]
+ *
+ * [Brief 1-2 sentence description of the workflow being tested.]
+ *
+ * @covers
+ * - Backend (PHP): [e.g., src/Admin/AdminPage.php, src/Admin/SeriesSettingsPage.php]
+ * - Frontend (JS/React): [e.g., resources/js/sidebar/SeriesSettingsSidebar.js]
+ *
+ * Test Scenarios:
+ * 1. [Scenario 1: e.g., Verify top-level admin menu visibility and asset loading]
+ * 2. [Scenario 2: e.g., Toggle eligible Custom Post Types and verify persistence]
+ * 3. [Scenario 3: e.g., Switch default layout variants and verify saved state]
+ */   

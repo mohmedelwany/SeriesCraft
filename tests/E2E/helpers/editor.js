@@ -1,9 +1,24 @@
 // @ts-check
-import { expect } from '@playwright/test';
-
 /**
- * Gutenberg Block Editor E2E Helper Utilities for SeriesCraft.
+ * E2E Helper Module: Gutenberg Block Editor Utilities
+ *
+ * Provides reusable Playwright helpers for opening posts in the Gutenberg Block Editor,
+ * dismissing the welcome guide modal, resolving the editor canvas (iframe vs direct DOM),
+ * and opening the SeriesCraft Document Settings Panel and Appearance Sidebar.
+ *
+ * @covers
+ * - Backend (PHP): src/src/Assets/EnqueueManager.php, src/src/Core/Main.php
+ * - Frontend (JS/React): resources/js/editor/sidebar/index.js, resources/js/editor/settings-sidebar/index.js, resources/js/editor/settings-sidebar/SeriesSettingsSidebar.js
+ *
+ * Test Scenarios:
+ * 1. Dismiss Gutenberg welcome guide modal and disable fullscreen mode via `@wordpress/data`.
+ * 2. Resolve the block editor canvas across iframed (`iframe[name="editor-canvas"]`) and non-iframed editors.
+ * 3. Open new or existing posts in `/wp-admin/post-new.php` and `/wp-admin/post.php`.
+ * 4. Open and expand the SeriesCraft Document Settings Panel (`.seriescraft-document-settings-panel`).
+ * 5. Open the dedicated SeriesCraft Appearance Sidebar (`series-craft-settings`).
  */
+
+import { expect } from '@playwright/test';
 
 /**
  * Dismiss the Gutenberg "Welcome to the block editor" modal if visible,

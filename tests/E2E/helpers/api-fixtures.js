@@ -1,10 +1,21 @@
 // @ts-check
-
 /**
- * WordPress & SeriesCraft REST API Fixture Helpers for Playwright E2E Tests.
+ * E2E Helper Module: WordPress & SeriesCraft REST API Fixtures
  *
- * Uses `/?rest_route=` query routing so fixture creation and cleanup work
- * reliably regardless of WordPress permalink configuration in `wp-env`.
+ * Provides deterministic REST API data seeding and teardown utilities for creating
+ * and cleaning up series taxonomy terms, posts, post ordering, and series settings
+ * using `/?rest_route=` query routing across Playwright E2E test suites.
+ *
+ * @covers
+ * - Backend (PHP): src/src/Taxonomy/SeriesTaxonomy.php, src/src/Api/Controllers/SeriesRestController.php, src/src/Api/Controllers/SettingsRestController.php
+ * - Frontend (JS/React): resources/js/api/seriesClient.js
+ *
+ * Test Scenarios:
+ * 1. Retrieve authenticated `wp_rest` nonce via AJAX or `window.wpApiSettings`.
+ * 2. Create and delete `series` terms and `post` entities via `/wp/v2/` REST routes.
+ * 3. Configure per-series layout/custom styles via `/series-craft/v1/series/<id>/settings`.
+ * 4. Persist explicit series post ordering via `/series-craft/v1/series/<id>/order`.
+ * 5. Track and automatically clean up seeded posts and series terms in reverse order (`FixtureTracker`).
  */
 
 /**
