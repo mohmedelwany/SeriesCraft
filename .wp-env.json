@@ -1,6 +1,9 @@
 {
     "core": null,
     "plugins": [ "./src" ],
+    "mappings": {
+        "wp-content/plugins/src/resources": "./resources"
+    },
     "themes": [],
     "phpVersion": "8.2",
     "config": {

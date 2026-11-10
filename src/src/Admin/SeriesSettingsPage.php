@@ -133,8 +133,10 @@ class SeriesSettingsPage {
 			$version
 		);
 
-		// Use content_url to point directly to the physical plugin folder where assets live.
-		$css_url = content_url( 'plugins/SeriesCraft/assets/css/admin.css' );
+		// Use SCFT_PLUGIN_URL when available, falling back to content_url.
+		$css_url = defined( 'SCFT_PLUGIN_URL' )
+			? SCFT_PLUGIN_URL . 'assets/css/admin.css'
+			: content_url( 'plugins/SeriesCraft/assets/css/admin.css' );
 
 		wp_enqueue_style(
 			'seriescraft-admin-settings',
