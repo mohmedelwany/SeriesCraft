@@ -108,10 +108,14 @@ series-craft/
 │               └── MediaListView.php       # Thumbnail media list variation
 └── tests/                                  # Automated testing suite organized by test tier
 │   ├── E2E/                                # Playwright end-to-end browser tests
-│   │   ├── helpers/                        # Playwright test utility helpers and page object models
 │   │   ├── auth.setup.js                   # Authentication setup for WordPress admin session reuse
-│   │   ├── homepage.spec.js                # Frontend end-to-end test suite
-│   │   └── plugin-activation.spec.js       # Plugin activation & admin workflow end-to-end test suite
+│   │   ├── helpers/                        # Infrastructure & REST API seeding utilities (wordpress.js, api-fixtures.js, editor.js)
+│   │   ├── pages/                          # Page Object Models encapsulating CSS selectors & UI actions (*Page.js)
+│   │   └── specs/                          # Test specs grouped by WordPress screen context
+│   │       ├── 01-smoke/                   # Site reachability & plugin activation lifecycle specs
+│   │       ├── 02-admin/                   # WP Admin settings & classic taxonomy reordering specs
+│   │       ├── 03-editor/                  # Gutenberg editor panels, sidebars & dynamic block specs
+│   │       └── 04-frontend/                # Reader-facing layout variants, navigation & accordion specs
 │   ├── Integration/                        # PHPUnit integration tests running against active WordPress database
 │   │   ├── bootstrap.php                   # Test bootstrap file configuring WP test environment
 │   │   ├── IntegrationTestCase.php         # Base integration test case class extending WP_UnitTestCase
@@ -298,28 +302,41 @@ series-craft/
      ```
    - This ensures that subsequent test suites running in the same test process find the database schema intact.
 
-## 8 E2E Test File Documentation Rule (`tests/E2E/**/*.spec.js`)
+## 8. E2E Testing Architecture, Page Object Model & Documentation Rule (`tests/E2E/`)
 
-Every Playwright E2E test file (`*.spec.js`) and helper file inside `tests/E2E/` MUST begin with a structured top-level JSDoc header comment block before any `import` statements.
+### 8.1. Screen-Context Directory Grouping (`tests/E2E/specs/`)
+All Playwright spec files (`*.spec.js`) MUST be placed inside the appropriate WordPress screen-context folder under `tests/E2E/specs/`:
+- `tests/E2E/specs/01-smoke/`: Environment reachability and plugin activation/deactivation lifecycle.
+- `tests/E2E/specs/02-admin/`: WP Admin screens (`SeriesCraft Settings` tabs and Classic Series Taxonomy management/reordering).
+- `tests/E2E/specs/03-editor/`: Gutenberg Block Editor (`SeriesDocumentSettingsPanel`, `SeriesSettingsSidebar`, and `seriescraft/series-list` block).
+- `tests/E2E/specs/04-frontend/`: Reader-facing single post rendering, layout variants, Prev/Next navigation, and multi-series accordion layout.
 
-### Required Header Structure:
-1. **Test Suite Title & Summary:** A brief description of the user workflow or feature area covered by the file.
-2. **Covered Source Files (`@covers`):** An explicit list of the exact backend PHP classes/views (`src/...`) and frontend JS/React components (`resources/js/...`) being tested.
-3. **Test Scenarios:** A bulleted summary of the specific test cases and behaviors verified in the file.
+### 8.2. Strict Page Object Model (POM) Separation (`tests/E2E/pages/`)
+- Raw CSS selectors, DOM locators, and multi-step UI interactions MUST live inside dedicated Page Object classes in `tests/E2E/pages/*Page.js` (e.g., `AdminSettingsPage.js`, `TaxonomyTermPage.js`).
+- Spec files in `tests/E2E/specs/**/*.spec.js` must remain clean, declarative, and scenario-focused by delegating UI interactions to Page Objects and data seeding to `tests/E2E/helpers/api-fixtures.js`.
+
+### 8.3. Mandatory Top-Level JSDoc Header
+Every file inside `tests/E2E/specs/`, `tests/E2E/pages/`, and `tests/E2E/helpers/` MUST begin with a structured top-level JSDoc header comment block before any `import` statements:
+1. **Title & Summary:** A brief description of the user workflow, Page Object, or helper module covered by the file.
+2. **Covered Source Files (`@covers`):** An explicit list of the exact backend PHP classes/views (`src/...`), frontend JS/React/SCSS files (`resources/...`), and Page Objects (`tests/E2E/pages/...`) being tested.
+3. **Test Scenarios:** A numbered summary of the specific test cases or responsibilities verified in the file.
 
 ### Mandatory Template:
 ```javascript
+// @ts-check
 /**
  * E2E Test Suite: [Feature / Workflow Name]
  *
  * [Brief 1-2 sentence description of the workflow being tested.]
  *
  * @covers
- * - Backend (PHP): [e.g., src/Admin/AdminPage.php, src/Admin/SeriesSettingsPage.php]
- * - Frontend (JS/React): [e.g., resources/js/sidebar/SeriesSettingsSidebar.js]
+ * - Backend (PHP): [e.g., src/src/Admin/AdminPage.php, src/src/Admin/SeriesSettingsPage.php]
+ * - Frontend (JS/React): [e.g., resources/js/editor/settings-sidebar/SeriesSettingsSidebar.js]
+ * - Page Object: [e.g., tests/E2E/pages/AdminSettingsPage.js]
  *
  * Test Scenarios:
  * 1. [Scenario 1: e.g., Verify top-level admin menu visibility and asset loading]
  * 2. [Scenario 2: e.g., Toggle eligible Custom Post Types and verify persistence]
  * 3. [Scenario 3: e.g., Switch default layout variants and verify saved state]
- */   
+ */
+```
