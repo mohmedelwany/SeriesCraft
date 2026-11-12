@@ -12,9 +12,14 @@
  * - Frontend (JS/React): resources/js/blocks/series-list/index.js, resources/js/blocks/series-list/edit.js, resources/js/blocks/series-list/save.js, resources/js/blocks/series-list/block.json, resources/js/blocks/series-list/components/ModeSelector.js, resources/js/blocks/series-list/components/UserSelector.js, resources/js/blocks/series-list/components/SeriesPreviewCard.js
  * - Helpers: tests/E2E/helpers/editor.js
  *
- * Test Scenarios:
- * 1. Insert the standalone `seriescraft/series-list` block on an unassigned post/page and inspect the editor canvas empty preview (`.sc-series-empty-preview`) and Block Inspector `SeriesPreviewCard` states.
- * 2. Configure Block Inspector controls (`ModeSelector` for `all`, `top`, and `user` modes, `Limit` range control, and `UserSelector`), save the post, and inspect the published `.sc-series-card-grid` archive output (cards, part count badges, ordering, and archive links) on the frontend.
+ * @usedBy
+ * - tests/E2E/specs/03-editor/series-list-block.spec.js
+ *
+ * UI Elements & Actions Provided:
+ * 1. Block insertion and Block Inspector sidebar activation (`insertAndSelectSeriesListBlock`, `openBlockInspectorSidebar`, `savePostInEditor`).
+ * 2. Editor canvas unassigned empty state locator (`getCanvasEmptyPreview`) and Inspector `SeriesPreviewCard` inspection (`inspectorPreviewCard`, `inspectorCountBadge`, `getInspectorPreviewTitles`).
+ * 3. Display mode configuration actions (`selectDisplayMode`, `setTopSeriesLimit`, `selectUserFilter`).
+ * 4. Published frontend `.sc-series-card-grid` archive card, badge, and link inspection (`getFrontendCardByTitle`, `getFrontendCardTitles`, `getFrontendCardBadgeText`, `getFrontendCardLinkHref`).
  */
 
 import { expect } from '@playwright/test';

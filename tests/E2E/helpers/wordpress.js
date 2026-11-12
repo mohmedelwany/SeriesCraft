@@ -9,11 +9,17 @@
  * - Backend (PHP): src/series-craft.php
  * - Frontend (JS/React): N/A (WP Admin login & plugins table)
  *
- * Test Scenarios:
- * 1. Log in to WordPress Admin via `/wp-login.php` (`loginToWordPress`).
- * 2. Navigate to `/wp-admin/plugins.php` and locate plugin rows (`goToPluginsPage`, `getPluginRow`).
- * 3. Activate and deactivate plugins via the browser UI (`activatePluginViaBrowser`, `deactivatePluginViaBrowser`).
- * 4. Create isolated guest browser contexts bypassing `storageState` (`createGuestPage`).
+ * @usedBy
+ * - tests/E2E/auth.setup.js
+ * - tests/E2E/specs/01-smoke/homepage.spec.js
+ * - tests/E2E/specs/01-smoke/plugin-activation.spec.js
+ * - tests/E2E/specs/04-frontend/frontend-rendering.spec.js
+ *
+ * Exported Utilities:
+ * 1. `loginToWordPress(page, username, password)` — Logs into `/wp-login.php` and waits for `/wp-admin/`.
+ * 2. `goToPluginsPage(page)` & `getPluginRow(page, pluginName)` — Navigates to `/wp-admin/plugins.php` and locates plugin rows.
+ * 3. `activatePluginViaBrowser(page, pluginName)` & `deactivatePluginViaBrowser(page, pluginName)` — Toggles plugin state via UI.
+ * 4. `createGuestPage(browser)` — Creates an isolated browser context with empty `storageState` for unauthenticated reader assertions.
  */
 
 import { expect } from '@playwright/test';

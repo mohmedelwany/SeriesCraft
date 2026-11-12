@@ -10,12 +10,20 @@
  * - Backend (PHP): src/src/Taxonomy/SeriesTaxonomy.php, src/src/Api/Controllers/SeriesRestController.php, src/src/Api/Controllers/SettingsRestController.php
  * - Frontend (JS/React): resources/js/api/seriesClient.js
  *
- * Test Scenarios:
- * 1. Retrieve authenticated `wp_rest` nonce via AJAX or `window.wpApiSettings`.
- * 2. Create and delete `series` terms and `post` entities via `/wp/v2/` REST routes.
- * 3. Configure per-series layout/custom styles via `/series-craft/v1/series/<id>/settings`.
- * 4. Persist explicit series post ordering via `/series-craft/v1/series/<id>/order`.
- * 5. Track and automatically clean up seeded posts and series terms in reverse order (`FixtureTracker`).
+ * @usedBy
+ * - tests/E2E/specs/02-admin/taxonomy-reordering.spec.js
+ * - tests/E2E/specs/03-editor/series-panel.spec.js
+ * - tests/E2E/specs/03-editor/appearance-sidebar.spec.js
+ * - tests/E2E/specs/03-editor/series-list-block.spec.js
+ * - tests/E2E/specs/04-frontend/frontend-rendering.spec.js
+ *
+ * Exported Utilities:
+ * 1. `getRestNonce(page)` & `buildRestUrl(route, params)` — Retrieves authenticated `wp_rest` nonce and constructs `/?rest_route=` URLs.
+ * 2. `createSeries(page, options, tracker)` & `deleteSeries(page, seriesId)` — Creates and force-deletes `series` taxonomy terms via `/wp/v2/series`.
+ * 3. `updateSeriesSettings(page, seriesId, settings)` — Configures per-series layout and custom styles via `/series-craft/v1/series/<id>/settings`.
+ * 4. `createPost(page, options, tracker)` & `deletePost(page, postId)` — Creates and force-deletes posts via `/wp/v2/posts`.
+ * 5. `setSeriesOrder(page, seriesId, postIds)` — Persists explicit series post ordering via `/series-craft/v1/series/<id>/order`.
+ * 6. `FixtureTracker` — Tracks seeded post and series IDs during a test and cleans them up in reverse order (`cleanup(page)`).
  */
 
 /**

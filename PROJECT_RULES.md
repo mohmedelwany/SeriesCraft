@@ -316,12 +316,22 @@ All Playwright spec files (`*.spec.js`) MUST be placed inside the appropriate Wo
 - Spec files in `tests/E2E/specs/**/*.spec.js` must remain clean, declarative, and scenario-focused by delegating UI interactions to Page Objects and data seeding to `tests/E2E/helpers/api-fixtures.js`.
 
 ### 8.3. Mandatory Top-Level JSDoc Header
-Every file inside `tests/E2E/specs/`, `tests/E2E/pages/`, and `tests/E2E/helpers/` MUST begin with a structured top-level JSDoc header comment block before any `import` statements:
-1. **Title & Summary:** A brief description of the user workflow, Page Object, or helper module covered by the file.
-2. **Covered Source Files (`@covers`):** An explicit list of the exact backend PHP classes/views (`src/...`), frontend JS/React/SCSS files (`resources/...`), and Page Objects (`tests/E2E/pages/...`) being tested.
-3. **Test Scenarios:** A numbered summary of the specific test cases or responsibilities verified in the file.
+Every file inside `tests/E2E/specs/`, `tests/E2E/pages/`, and `tests/E2E/helpers/` MUST begin with a structured top-level JSDoc header comment block before any `import` statements, tailored to the file's architectural role:
 
-### Mandatory Template:
+1. **Test Spec Files (`tests/E2E/specs/**/*.spec.js`):**
+   - **Title & Summary:** A brief description of the user workflow being tested.
+   - **Covered Source Files (`@covers`):** An explicit list of the exact backend PHP classes/views (`src/...`), frontend JS/React/SCSS files (`resources/...`), Page Objects (`tests/E2E/pages/...`), and helpers (`tests/E2E/helpers/...`).
+   - **`Test Scenarios:`** A numbered summary of the specific test cases verified in the spec file.
+2. **Page Object Models (`tests/E2E/pages/*Page.js`):**
+   - **Title & Summary:** A brief description of the WordPress screen/component encapsulated by the Page Object.
+   - **Covered Source Files (`@covers`) & Consumers (`@usedBy`):** The PHP/JS source files rendered on that screen, plus `@usedBy` pointing to the spec files (`tests/E2E/specs/...`) that consume this Page Object.
+   - **`UI Elements & Actions Provided:`** A numbered summary of the key locators and reusable action methods exposed by the Page Object.
+3. **Helper Modules (`tests/E2E/helpers/*.js`):**
+   - **Title & Summary:** A brief description of the infrastructure or seeding utility module.
+   - **Covered Source Files (`@covers`) & Consumers (`@usedBy`):** The underlying PHP/JS endpoints or subsystems interacted with, plus `@usedBy` pointing to the specs/pages that consume the helper.
+   - **`Exported Utilities:`** A numbered summary of the exported helper functions/classes.
+
+#### Mandatory Template for Spec Files (`tests/E2E/specs/**/*.spec.js`):
 ```javascript
 // @ts-check
 /**
@@ -338,5 +348,48 @@ Every file inside `tests/E2E/specs/`, `tests/E2E/pages/`, and `tests/E2E/helpers
  * 1. [Scenario 1: e.g., Verify top-level admin menu visibility and asset loading]
  * 2. [Scenario 2: e.g., Toggle eligible Custom Post Types and verify persistence]
  * 3. [Scenario 3: e.g., Switch default layout variants and verify saved state]
+ */
+```
+
+#### Mandatory Template for Page Objects (`tests/E2E/pages/*Page.js`):
+```javascript
+// @ts-check
+/**
+ * E2E Page Object Model: [PageObjectName]
+ *
+ * [Brief 1-2 sentence description of the screen or component encapsulated.]
+ *
+ * @covers
+ * - Backend (PHP): [e.g., src/src/Admin/AdminPage.php, src/src/Admin/SeriesSettingsPage.php]
+ * - Frontend (JS/React): [e.g., resources/scss/admin.scss]
+ *
+ * @usedBy
+ * - tests/E2E/specs/02-admin/settings.spec.js
+ *
+ * UI Elements & Actions Provided:
+ * 1. [e.g., Locators and navigation helpers for the SeriesCraft Admin Settings tabs]
+ * 2. [e.g., Checkbox state inspection and form submission for Custom Post Types]
+ * 3. [e.g., Radio card selection and form submission for default Layout variants]
+ */
+```
+
+#### Mandatory Template for Helper Modules (`tests/E2E/helpers/*.js`):
+```javascript
+// @ts-check
+/**
+ * E2E Helper Module: [Helper Module Name]
+ *
+ * [Brief 1-2 sentence description of the utilities provided.]
+ *
+ * @covers
+ * - Backend (PHP): [e.g., src/src/Api/Controllers/SeriesRestController.php]
+ * - Frontend (JS/React): [e.g., resources/js/api/seriesClient.js]
+ *
+ * @usedBy
+ * - tests/E2E/specs/**/*.spec.js
+ *
+ * Exported Utilities:
+ * 1. [e.g., getRestNonce(page) — Retrieves a valid wp_rest nonce]
+ * 2. [e.g., createSeries(page, options, tracker) — Seeds a series taxonomy term via REST]
  */
 ```

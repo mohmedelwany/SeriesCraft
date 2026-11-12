@@ -10,10 +10,13 @@
  * - Backend (PHP): src/src/Admin/AdminPage.php, src/src/Admin/SeriesSettingsPage.php, src/src/Admin/SettingsSanitizer.php, src/src/Admin/Views/settings-page.php, src/src/Admin/Views/tab-custom-post-types.php, src/src/Admin/Views/tab-layouts.php
  * - Frontend (JS/React): resources/scss/admin.scss
  *
- * Test Scenarios:
- * 1. Navigate to the SeriesCraft Settings page via the top-level WP Admin menu or direct URL.
- * 2. Inspect and toggle eligible Custom Post Type checkboxes and submit the CPT form.
- * 3. Switch to the Layouts tab, inspect layout variant radio cards, and submit layout selections.
+ * @usedBy
+ * - tests/E2E/specs/02-admin/settings.spec.js
+ *
+ * UI Elements & Actions Provided:
+ * 1. Navigation helpers (`gotoViaAdminMenu`, `openCptTab`, `openLayoutsTab`) and admin stylesheet/notice locators.
+ * 2. Checkbox locators and form submission actions (`getPostTypeCheckbox`, `setPostTypeEnabled`, `saveCptSettings`) for the Custom Post Types tab.
+ * 3. Layout variant radio card locators and form submission actions (`getLayoutRadio`, `getLayoutCard`, `selectAndSaveLayout`) for the Layouts tab.
  */
 
 import { expect } from '@playwright/test';

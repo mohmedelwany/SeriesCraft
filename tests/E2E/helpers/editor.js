@@ -10,12 +10,17 @@
  * - Backend (PHP): src/src/Assets/EnqueueManager.php, src/src/Core/Main.php
  * - Frontend (JS/React): resources/js/editor/sidebar/index.js, resources/js/editor/settings-sidebar/index.js, resources/js/editor/settings-sidebar/SeriesSettingsSidebar.js
  *
- * Test Scenarios:
- * 1. Dismiss Gutenberg welcome guide modal and disable fullscreen mode via `@wordpress/data`.
- * 2. Resolve the block editor canvas across iframed (`iframe[name="editor-canvas"]`) and non-iframed editors.
- * 3. Open new or existing posts in `/wp-admin/post-new.php` and `/wp-admin/post.php`.
- * 4. Open and expand the SeriesCraft Document Settings Panel (`.seriescraft-document-settings-panel`).
- * 5. Open the dedicated SeriesCraft Appearance Sidebar (`series-craft-settings`).
+ * @usedBy
+ * - tests/E2E/pages/EditorSeriesPanelPage.js
+ * - tests/E2E/pages/EditorAppearanceSidebarPage.js
+ * - tests/E2E/pages/SeriesListBlockPage.js
+ *
+ * Exported Utilities:
+ * 1. `dismissWelcomeGuide(page)` — Dismisses the Gutenberg welcome guide modal and disables `welcomeGuide` and `fullscreenMode` preferences.
+ * 2. `getEditorCanvas(page)` — Resolves the block editor canvas across iframed (`iframe[name="editor-canvas"]`) and non-iframed editors.
+ * 3. `openNewPostInEditor(page, postType)` & `openPostInEditor(page, postId)` — Opens new or existing posts in the Block Editor.
+ * 4. `openSeriesDocumentPanel(page)` — Opens and expands the SeriesCraft Document Settings Panel (`.seriescraft-document-settings-panel`).
+ * 5. `openSeriesSettingsSidebar(page)` — Opens and expands the dedicated SeriesCraft Appearance Sidebar (`series-craft-settings`).
  */
 
 import { expect } from '@playwright/test';

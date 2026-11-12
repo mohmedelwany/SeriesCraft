@@ -12,12 +12,14 @@
  * - Frontend (JS/React): resources/js/editor/sidebar/index.js, resources/js/editor/sidebar/SeriesSelector.js, resources/js/editor/sidebar/PartOrderList.js, resources/js/editor/sidebar/DraggableItem.js, resources/js/hooks/usePostSavingSync.js, resources/js/hooks/useSeries.js, resources/js/hooks/useSeriesOrder.js, resources/js/blocks/series-list/edit.js
  * - Helpers: tests/E2E/helpers/editor.js
  *
- * Test Scenarios:
- * 1. Open posts in the Block Editor, open the Document Settings "Series" panel, and verify removal of the core taxonomy panel.
- * 2. Assign an existing series via the `SeriesSelector` dropdown and inspect `.seriescraft-series-card`.
- * 3. Create a new series inline via the `+ Add New Series` form and retrieve its assigned term ID.
- * 4. Reorder parts in `PartOrderList` via HTML5 drag-and-drop and inspect both sidebar order and live canvas block preview.
- * 5. Remove a post from a series via `.seriescraft-remove-series-btn` and verify canvas block auto-removal.
+ * @usedBy
+ * - tests/E2E/specs/03-editor/series-panel.spec.js
+ *
+ * UI Elements & Actions Provided:
+ * 1. Editor bootstrap and Document Settings "Series" panel openers (`openNewPostAndSeriesPanel`, `openPostAndSeriesPanel`, `isCoreTaxonomyPanelRemoved`).
+ * 2. Series assignment dropdown and inline series creation helpers (`assignSeriesById`, `createSeriesInline`, `getSeriesCardByName`).
+ * 3. `PartOrderList` inspection and HTML5 drag-and-drop reordering (`getDraggableItems`, `getSidebarOrderedTitles`, `reorderPartInSidebar`).
+ * 4. Series unassignment action (`removeSeriesFromPost`) and editor canvas block/preview inspection (`getEditorBlockNames`, `getCanvasSeriesBlock`, `getCanvasPositionBadge`, `getCanvasPreviewItemTitlesLocator`).
  */
 
 import { expect } from '@playwright/test';

@@ -10,11 +10,14 @@
  * - Backend (PHP): src/src/Taxonomy/SeriesTaxonomy.php, src/src/Taxonomy/SeriesTaxonomyAdmin.php, src/src/Api/Controllers/SeriesRestController.php
  * - Frontend (JS/React): resources/scss/admin/_taxonomy-order.scss
  *
- * Test Scenarios:
- * 1. Navigate to the Series taxonomy list screen and create a new series term via the classic form.
- * 2. Open the Edit Series screen for a specific term ID and inspect empty/populated post order lists.
- * 3. Retrieve ordered post IDs and titles from `#series-order-sortable` and `#series_post_order`.
- * 4. Reorder posts via jQuery UI Sortable and submit the Edit Series form.
+ * @usedBy
+ * - tests/E2E/specs/02-admin/taxonomy-reordering.spec.js
+ *
+ * UI Elements & Actions Provided:
+ * 1. Series taxonomy list navigation (`gotoSeriesTaxonomy`) and term creation/lookup helpers (`createSeriesTerm`, `getTermRow`, `extractTermIdFromRow`).
+ * 2. Edit Series screen navigation (`openEditSeries`) and empty/populated sortable list locators (`emptySortableNotice`, `sortableItems`, `hiddenOrderInput`).
+ * 3. Ordered post ID and title inspection helpers (`getOrderedPostIds`, `getOrderedPostTitles`, `getHiddenOrderValue`).
+ * 4. Post reordering via jQuery UI Sortable (`reorderPosts`) and classic term form submission (`submitEditSeriesForm`).
  */
 
 import { expect } from '@playwright/test';

@@ -11,10 +11,14 @@
  * - Frontend (JS/React): resources/js/editor/settings-sidebar/index.js, resources/js/editor/settings-sidebar/SeriesSettingsSidebar.js, resources/js/editor/settings-sidebar/LayoutTab.js, resources/js/editor/settings-sidebar/LayoutVariantSelector.js, resources/js/editor/settings-sidebar/StyleTab.js, resources/js/editor/settings-sidebar/constants.js, resources/js/hooks/useSeriesSettings.js, resources/js/blocks/series-list/edit.js
  * - Helpers: tests/E2E/helpers/editor.js
  *
- * Test Scenarios:
- * 1. Open the "Series Settings" plugin sidebar (`series-craft-settings`) and verify empty state and "Layout"/"Style" tabs.
- * 2. Switch per-series layout variants (`link-list`, `link-grid`, `media-list`, `media-grid`) in `LayoutTab`, verify REST persistence, and confirm live DOM structure updates in the editor canvas preview.
- * 3. Customize per-series colors, borders, and reset presets in `StyleTab`, verify inline `--sc-*` CSS custom properties update on the canvas preview wrapper, and confirm persistence across editor reloads.
+ * @usedBy
+ * - tests/E2E/specs/03-editor/appearance-sidebar.spec.js
+ *
+ * UI Elements & Actions Provided:
+ * 1. "Series Settings" plugin sidebar openers (`openNewPostAndAppearanceSidebar`, `openPostAndAppearanceSidebar`) and tab switchers (`openLayoutTab`, `openStyleTab`).
+ * 2. Layout variant card locators and REST-synchronized selection (`getLayoutCard`, `selectLayoutVariant`, `waitForSettingsSave`).
+ * 3. Style customization helpers (`setCustomColor`, `expandStylePanel`, `setBorderWidth`, `resetStylesToDefault`) in `StyleTab`.
+ * 4. Editor canvas preview wrapper, layout variant DOM container, and inline `--sc-*` CSS custom property inspectors (`getCanvasSeriesWrapper`, `getCanvasVariantContainer`, `getCanvasCssVariable`).
  */
 
 import { expect } from '@playwright/test';
