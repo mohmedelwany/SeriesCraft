@@ -64,7 +64,7 @@ export async function dismissWelcomeGuide( page ) {
  */
 export async function getEditorCanvas( page ) {
 	const iframeLocator = page.locator( 'iframe[name="editor-canvas"]' );
-	if ( ( await iframeLocator.count() ) > 0 ) {
+	if ( ( await iframeLocator.count() ) > 0 && ( await iframeLocator.first().isVisible() ) ) {
 		return page.frameLocator( 'iframe[name="editor-canvas"]' );
 	}
 	return page;
@@ -106,12 +106,35 @@ export async function openPostInEditor( page, postId ) {
  * @returns {Promise<import('@playwright/test').Locator>} Locator for `.seriescraft-document-settings-panel`.
  */
 export async function openSeriesDocumentPanel( page ) {
+	await dismissWelcomeGuide( page );
+
 	await page.evaluate( () => {
 		// @ts-ignore
 		window.wp?.data?.dispatch?.( 'core/edit-post' )?.openGeneralSidebar?.( 'edit-post/document' );
+		// @ts-ignore
+		window.wp?.data?.dispatch?.( 'core/interface' )?.enableComplementaryArea?.( 'core/edit-post', 'edit-post/document' );
 	} );
 
 	const panel = page.locator( '.seriescraft-document-settings-panel' );
+
+	// Fallback if sidebar is closed or on the "Block" tab instead of "Post" tab
+	if ( ! ( await panel.isVisible() ) ) {
+		const postTab = page.locator(
+			'button[data-tab-id="edit-post/document"], .interface-complementary-area-header button[role="tab"]:has-text("Post")'
+		);
+		if ( ( await postTab.count() ) > 0 && ( await postTab.first().isVisible() ) ) {
+			await postTab.first().click();
+		} else {
+			const settingsToggle = page.locator( 'button[aria-label="Settings"]' );
+			if ( ( await settingsToggle.count() ) > 0 && ( await settingsToggle.first().isVisible() ) ) {
+				await settingsToggle.first().click();
+				if ( ( await postTab.count() ) > 0 && ( await postTab.first().isVisible() ) ) {
+					await postTab.first().click();
+				}
+			}
+		}
+	}
+
 	await expect( panel ).toBeVisible();
 
 	// Expand the panel if it is collapsed
