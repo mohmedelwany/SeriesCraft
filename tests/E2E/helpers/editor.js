@@ -153,25 +153,40 @@ export async function openSeriesDocumentPanel( page ) {
  * Open the dedicated SeriesCraft Appearance Sidebar (`series-craft-settings`).
  *
  * @param {import('@playwright/test').Page} page
+ * @returns {Promise<import('@playwright/test').Locator>} Locator for `.seriescraft-settings-sidebar`.
  */
 export async function openSeriesSettingsSidebar( page ) {
+	await dismissWelcomeGuide( page );
+
 	await page.evaluate( () => {
 		// @ts-ignore
 		window.wp?.data?.dispatch?.( 'core/edit-post' )?.openGeneralSidebar?.( 'series-craft-settings/series-craft-settings' );
 		// @ts-ignore
-		window.wp?.data?.dispatch?.( 'core/edit-post' )?.openGeneralSidebar?.( 'series-craft-settings' );
+		window.wp?.data?.dispatch?.( 'core/interface' )?.enableComplementaryArea?.(
+			'core/edit-post',
+			'series-craft-settings/series-craft-settings'
+		);
 	} );
 
-	// Fallback: click the pinned sidebar button if not already open
-	const sidebarContent = page.locator( '.seriescraft-settings-sidebar' );
+	const sidebarContent = page.locator( '.seriescraft-settings-sidebar:not(.is-in-modal)' );
 	if ( ! ( await sidebarContent.isVisible() ) ) {
-		const pinnedButton = page.locator( 'button[aria-label="Series Settings"]' );
-		if ( ( await pinnedButton.count() ) > 0 ) {
+		const pinnedButton = page.locator( '.interface-pinned-items button[aria-label="Series Settings"]' );
+		if ( ( await pinnedButton.count() ) > 0 && ( await pinnedButton.first().isVisible() ) ) {
 			await pinnedButton.first().click();
 		}
 	}
 
 	await expect( sidebarContent ).toBeVisible();
+
+	// Ensure the top-level "Series Settings" PanelBody is expanded
+	const toggleButton = sidebarContent.locator( '.components-panel__body-toggle' ).first();
+	if ( ( await toggleButton.count() ) > 0 ) {
+		const isExpanded = await toggleButton.getAttribute( 'aria-expanded' );
+		if ( isExpanded === 'false' ) {
+			await toggleButton.click();
+		}
+	}
+
 	return sidebarContent;
 }
 
