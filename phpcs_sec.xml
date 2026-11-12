@@ -5,6 +5,7 @@
     <file>src</file>
     <exclude-pattern>*/vendor/*</exclude-pattern>
     <exclude-pattern>*/node_modules/*</exclude-pattern>
+    <exclude-pattern>*/assets/*</exclude-pattern>
 
     <rule ref="WordPress-VIP-Go"/>
     <rule ref="WordPress.Security.EscapeOutput"/>

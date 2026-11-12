@@ -14,7 +14,8 @@
         "slevomat/coding-standard": "^8.0",
         "phpcompatibility/php-compatibility": "^10.0-dev",
         "automattic/vipwpcs": "^3.0",
-        "dealerdirect/phpcodesniffer-composer-installer": "^1.0"
+        "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+        "brain/monkey": "^2.7"
     },
     "autoload": {
         "psr-4": {

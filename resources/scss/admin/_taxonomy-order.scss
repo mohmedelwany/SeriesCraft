@@ -1,0 +1,118 @@
+// =============================================================================
+// SeriesCraft Admin - Taxonomy Term Reordering View
+// =============================================================================
+
+@use "../abstracts/variables" as *;
+@use "../abstracts/mixins" as *;
+
+.series-order-wrap {
+  .sc-sortable-post-list {
+    max-width: 520px;
+    margin: var(--sc-spacing-xs, 8px) 0;
+    padding: 0;
+    list-style: none;
+
+    .sc-sortable-empty {
+      padding: var(--sc-spacing-sm, 10px) var(--sc-spacing-md, 14px);
+      background: var(--sc-surface-muted, #f8fafc);
+      border: 1px dashed var(--sc-color-border, #cbd5e1);
+      border-radius: var(--sc-border-radius-md, 6px);
+      color: var(--sc-color-text-secondary, #64748b);
+      font-size: var(--sc-font-size-sm, 13px);
+    }
+
+    .sc-sortable-post-item {
+      display: flex;
+      align-items: center;
+      gap: var(--sc-spacing-sm, 12px);
+      padding: var(--sc-spacing-sm, 10px) var(--sc-spacing-md, 14px);
+      margin-bottom: var(--sc-spacing-xs, 6px);
+      background: var(--sc-surface-bg, #ffffff);
+      border: 1px solid var(--sc-color-border, #cbd5e1);
+      border-radius: var(--sc-border-radius-md, 6px);
+      font-size: var(--sc-font-size-sm, 13px);
+      font-weight: var(--sc-font-weight-medium, 500);
+      color: var(--sc-color-text, #1e293b);
+      cursor: grab;
+      user-select: none;
+      transition: background-color var(--sc-transition-fast, 0.15s ease),
+                  border-color var(--sc-transition-fast, 0.15s ease),
+                  box-shadow var(--sc-transition-fast, 0.15s ease);
+
+      &:hover {
+        background: var(--sc-surface-muted, #f8fafc);
+        border-color: var(--sc-color-border-hover, #94a3b8);
+      }
+
+      &:active {
+        cursor: grabbing;
+      }
+
+      &.ui-sortable-helper {
+        background: #ffffff;
+        border-color: var(--sc-color-primary, #0073aa);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        cursor: grabbing;
+      }
+
+      &.ui-sortable-placeholder {
+        background: var(--sc-color-primary-light, #f0f7fc);
+        border: 2px dashed var(--sc-color-primary, #0073aa);
+        visibility: visible !important;
+        height: 38px;
+        box-sizing: border-box;
+      }
+
+      .sc-sortable-handle {
+        color: var(--sc-color-text-muted, #94a3b8);
+        cursor: grab;
+        font-size: 18px;
+        line-height: 1;
+
+        &:hover {
+          color: var(--sc-color-primary, #0073aa);
+        }
+      }
+
+      .sc-sortable-title {
+        flex: 1 1 auto;
+        @include truncate;
+      }
+
+      .sc-sortable-id {
+        font-size: var(--sc-font-size-xs, 11px);
+        color: var(--sc-color-text-muted, #94a3b8);
+        font-family: var(--sc-font-family-mono, monospace);
+      }
+    }
+  }
+
+  .sc-order-status {
+    min-height: 24px;
+    margin: var(--sc-spacing-xs, 6px) 0;
+    font-size: var(--sc-font-size-xs, 12px);
+
+    .sc-status-saving {
+      color: var(--sc-color-text-secondary, #64748b);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+
+      .spinner {
+        float: none;
+        margin: 0;
+        visibility: visible;
+      }
+    }
+
+    .sc-status-success {
+      color: var(--sc-color-success, #16a34a);
+      font-weight: var(--sc-font-weight-medium, 500);
+    }
+
+    .sc-status-error {
+      color: var(--sc-color-error, #dc2626);
+      font-weight: var(--sc-font-weight-medium, 500);
+    }
+  }
+}

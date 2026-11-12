@@ -131,6 +131,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          coverage: none
+
+      - name: Install plugin Composer autoloader (src/)
+        run: composer install --working-dir=src --no-interaction --prefer-dist --no-progress
+
       - name: Setup Node 20
         uses: actions/setup-node@v4
         with:
@@ -139,6 +148,9 @@ jobs:
 
       - name: Install Node dependencies
         run: npm ci
+
+      - name: Build frontend & editor assets
+        run: npm run build
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium

@@ -1,0 +1,366 @@
+/**
+ * @jest-environment jsdom
+ */
+
+import React from "react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import * as wpData from "@wordpress/data";
+import {
+  SPACING_PREVIEW_EVENT,
+  LIVE_PREVIEW_EVENT,
+  PREVIEW_REFRESH_EVENT,
+  DEFAULT_STYLE,
+} from "../../../../resources/js/editor/settings-sidebar/constants";
+
+// Mock components
+jest.mock("@wordpress/components", () => {
+  const mockReact = require("react");
+  return {
+    PanelBody: ({ children, title }) => (
+      <div data-testid="mock-panel-body" data-title={title}>
+        <h3>{title}</h3>
+        {children}
+      </div>
+    ),
+    SelectControl: ({ label, value, options, onChange }) => (
+      <div className="components-select-control">
+        <label htmlFor="target-series-select">{label}</label>
+        <select
+          id="target-series-select"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        >
+          {options.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      </div>
+    ),
+    TabPanel: ({ tabs, children }) => {
+      const [activeTab, setActiveTab] = mockReact.useState(tabs[0].name);
+      const current = tabs.find((t) => t.name === activeTab) || tabs[0];
+      return (
+        <div data-testid="mock-tab-panel">
+          <div role="tablist">
+            {tabs.map((t) => (
+              <button
+                key={t.name}
+                type="button"
+                onClick={() => setActiveTab(t.name)}
+              >
+                {t.title}
+              </button>
+            ))}
+          </div>
+          {children(current)}
+        </div>
+      );
+    },
+    Spinner: () => <span data-testid="mock-spinner">Saving...</span>,
+    Notice: ({ children, status }) => (
+      <div data-testid="mock-notice" data-status={status}>
+        {children}
+      </div>
+    ),
+    Button: ({ children, onClick, disabled, className }) => (
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        className={className}
+      >
+        {children}
+      </button>
+    ),
+    __experimentalBorderControl: () => <div data-testid="mock-border-ctrl" />,
+  };
+});
+
+jest.mock("../../../../resources/js/editor/settings-sidebar/StyleTab", () => ({
+  __esModule: true,
+  default: ({ onReset, onChangeStyle, onChangeSpacing, style }) => (
+    <div data-testid="mock-style-tab">
+      <button onClick={() => onChangeStyle({ buttonColor: "#123456" })}>
+        Change Color
+      </button>
+      <button onClick={() => onChangeSpacing("padding", { top: "3rem" })}>
+        Change Spacing
+      </button>
+      <button onClick={onReset}>Reset to default styles</button>
+    </div>
+  ),
+}));
+
+jest.mock("@wordpress/data", () => ({
+  useSelect: jest.fn(),
+  useDispatch: jest.fn(),
+}));
+
+import { SeriesSettingsSidebar } from "../../../../resources/js/editor/settings-sidebar/SeriesSettingsSidebar";
+
+describe("SeriesSettingsSidebar Component", () => {
+  const mockUpdateSeriesMeta = jest.fn();
+  const mockSetActiveSeriesId = jest.fn();
+  const mockAvailableSeries = [
+    { id: 10, name: "Architecture 101", count: 3 },
+    { id: 20, name: "React Mastery", count: 5 },
+  ];
+
+  beforeEach(() => {
+    mockUpdateSeriesMeta.mockClear();
+    mockSetActiveSeriesId.mockClear();
+    mockUpdateSeriesMeta.mockResolvedValue({ success: true });
+
+    wpData.useDispatch.mockReturnValue({
+      updateSeriesMeta: mockUpdateSeriesMeta,
+      setActiveSeriesId: mockSetActiveSeriesId,
+    });
+  });
+
+  it("Test 1: defaults to assigned series from current post", () => {
+    wpData.useSelect.mockImplementation((callback) =>
+      callback((storeName) => {
+        if (storeName === "core/editor") {
+          return {
+            getCurrentPostId: () => 101,
+            getEditedPostAttribute: (attr) => (attr === "series" ? [20] : null),
+          };
+        }
+        return {
+          getSeries: () => mockAvailableSeries,
+          getSeriesMeta: (id) =>
+            id === 20 ? { layout: "link-grid", style: DEFAULT_STYLE } : null,
+        };
+      }),
+    );
+
+    render(<SeriesSettingsSidebar />);
+
+    expect(screen.queryByLabelText("Target Series")).toBeNull();
+    expect(screen.getByText("series: React Mastery")).toBeDefined();
+  });
+
+  it("Test 2: displays empty-state message and hides controls when no series is selected", () => {
+    wpData.useSelect.mockImplementation((callback) =>
+      callback((storeName) => {
+        if (storeName === "core/editor") {
+          return {
+            getCurrentPostId: () => 101,
+            getEditedPostAttribute: () => [],
+          };
+        }
+        return {
+          getSeries: () => mockAvailableSeries,
+          getSeriesMeta: () => null,
+        };
+      }),
+    );
+
+    render(<SeriesSettingsSidebar />);
+
+    expect(
+      screen.getByText(
+        "No series selected. Please assign this post to a series to customize its settings.",
+      ),
+    ).toBeDefined();
+    expect(screen.queryByTestId("sm-series-layout-setting")).toBeNull();
+    expect(screen.queryByLabelText("Target Series")).toBeNull();
+    expect(mockSetActiveSeriesId).toHaveBeenCalledWith(0);
+  });
+
+  it("Test 2b: clears active series and hides controls immediately when assigned series is removed", () => {
+    let currentAssigned = [10];
+    wpData.useSelect.mockImplementation((callback) =>
+      callback((storeName) => {
+        if (storeName === "core/editor") {
+          return {
+            getCurrentPostId: () => 101,
+            getEditedPostAttribute: (attr) =>
+              attr === "series" ? currentAssigned : null,
+          };
+        }
+        return {
+          getSeries: () => mockAvailableSeries,
+          getSeriesMeta: () => ({ layout: "link-list", style: DEFAULT_STYLE }),
+        };
+      }),
+    );
+
+    const { rerender } = render(<SeriesSettingsSidebar initialSeriesId={10} />);
+
+    expect(screen.getByText("series: Architecture 101")).toBeDefined();
+    expect(screen.getByTestId("sm-series-layout-setting")).toBeDefined();
+
+    // Simulate series removal via the "X" icon in the post sidebar
+    currentAssigned = [];
+    rerender(<SeriesSettingsSidebar initialSeriesId={0} />);
+
+    expect(screen.queryByText("series: Architecture 101")).toBeNull();
+    expect(screen.queryByTestId("sm-series-layout-setting")).toBeNull();
+    expect(
+      screen.getByText(
+        "No series selected. Please assign this post to a series to customize its settings.",
+      ),
+    ).toBeDefined();
+    expect(mockSetActiveSeriesId).toHaveBeenLastCalledWith(0);
+  });
+
+  it("Test 3: switches between assigned series from dropdown switcher", () => {
+    wpData.useSelect.mockImplementation((callback) =>
+      callback((storeName) => {
+        if (storeName === "core/editor") {
+          return {
+            getCurrentPostId: () => 101,
+            getEditedPostAttribute: () => [10, 20],
+          };
+        }
+        return {
+          getSeries: () => mockAvailableSeries,
+          getSeriesMeta: () => null,
+        };
+      }),
+    );
+
+    render(<SeriesSettingsSidebar />);
+
+    const select = screen.getByLabelText("Target Series");
+    expect(select.value).toBe("10");
+    expect(screen.getByText("series: Architecture 101")).toBeDefined();
+
+    fireEvent.change(select, { target: { value: "20" } });
+    expect(screen.getByText("series: React Mastery")).toBeDefined();
+    expect(mockSetActiveSeriesId).toHaveBeenLastCalledWith(20);
+  });
+
+  it("Test 4: dispatches updateSeriesMeta and live preview events on layout change", async () => {
+    const previewRefreshListener = jest.fn();
+    const livePreviewListener = jest.fn();
+    window.addEventListener(PREVIEW_REFRESH_EVENT, previewRefreshListener);
+    window.addEventListener(LIVE_PREVIEW_EVENT, livePreviewListener);
+
+    wpData.useSelect.mockImplementation((callback) =>
+      callback((storeName) => {
+        if (storeName === "core/editor") {
+          return {
+            getCurrentPostId: () => 101,
+            getEditedPostAttribute: () => [10],
+          };
+        }
+        return {
+          getSeries: () => mockAvailableSeries,
+          getSeriesMeta: () => ({ layout: "link-list", style: DEFAULT_STYLE }),
+        };
+      }),
+    );
+
+    render(<SeriesSettingsSidebar />);
+
+    const mediaGridCard = screen.getByTestId("layout-card-media-grid");
+    fireEvent.click(mediaGridCard);
+
+    await waitFor(() => {
+      expect(mockUpdateSeriesMeta).toHaveBeenCalledWith(
+        10,
+        expect.objectContaining({
+          layout: "media-grid",
+          style: DEFAULT_STYLE,
+          custom_styles: DEFAULT_STYLE,
+        }),
+      );
+    });
+
+    expect(previewRefreshListener).toHaveBeenCalled();
+    expect(livePreviewListener).toHaveBeenCalled();
+
+    window.removeEventListener(PREVIEW_REFRESH_EVENT, previewRefreshListener);
+    window.removeEventListener(LIVE_PREVIEW_EVENT, livePreviewListener);
+  });
+
+  it("Test 5: dispatches sm-series-spacing-preview on spacing change and resets styles", async () => {
+    const spacingListener = jest.fn();
+    window.addEventListener(SPACING_PREVIEW_EVENT, spacingListener);
+
+    wpData.useSelect.mockImplementation((callback) =>
+      callback((storeName) => {
+        if (storeName === "core/editor") {
+          return {
+            getCurrentPostId: () => 101,
+            getEditedPostAttribute: () => [10],
+          };
+        }
+        return {
+          getSeries: () => mockAvailableSeries,
+          getSeriesMeta: () => ({ layout: "link-list", style: DEFAULT_STYLE }),
+        };
+      }),
+    );
+
+    render(<SeriesSettingsSidebar />);
+
+    // Switch to Style tab
+    const styleTabBtn = screen.getByText("Style");
+    fireEvent.click(styleTabBtn);
+
+    // Trigger spacing update
+    const spacingBtn = screen.getByText("Change Spacing");
+    fireEvent.click(spacingBtn);
+
+    expect(spacingListener).toHaveBeenCalledWith(
+      expect.objectContaining({
+        detail: expect.objectContaining({
+          termId: 10,
+          changedKeys: ["padding"],
+        }),
+      }),
+    );
+
+    // Trigger reset to default styles
+    const resetBtn = screen.getByText("Reset to default styles");
+    fireEvent.click(resetBtn);
+
+    await waitFor(() => {
+      expect(mockUpdateSeriesMeta).toHaveBeenCalledWith(
+        10,
+        expect.objectContaining({
+          style: DEFAULT_STYLE,
+          custom_styles: DEFAULT_STYLE,
+        }),
+      );
+    });
+
+    window.removeEventListener(SPACING_PREVIEW_EVENT, spacingListener);
+  });
+
+  it("Test 6: displays Notice error when updateSeriesMeta fails", async () => {
+    mockUpdateSeriesMeta.mockRejectedValueOnce(
+      new Error("Network error saving settings"),
+    );
+
+    wpData.useSelect.mockImplementation((callback) =>
+      callback((storeName) => {
+        if (storeName === "core/editor") {
+          return {
+            getCurrentPostId: () => 101,
+            getEditedPostAttribute: () => [10],
+          };
+        }
+        return {
+          getSeries: () => mockAvailableSeries,
+          getSeriesMeta: () => ({ layout: "link-list", style: DEFAULT_STYLE }),
+        };
+      }),
+    );
+
+    render(<SeriesSettingsSidebar />);
+
+    const mediaGridCard = screen.getByTestId("layout-card-media-grid");
+    fireEvent.click(mediaGridCard);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("mock-notice")).toBeDefined();
+      expect(screen.getByText("Network error saving settings")).toBeDefined();
+    });
+  });
+});

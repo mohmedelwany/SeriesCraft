@@ -1,8 +1,28 @@
-import { expect } from '@playwright/test';
-
+// @ts-check
 /**
- * WordPress Playwright E2E Helper Utilities.
+ * E2E Helper Module: WordPress Authentication, Plugin Lifecycle & Guest Context
+ *
+ * Provides core browser utilities for logging into WordPress Admin, activating/deactivating
+ * plugins on `/wp-admin/plugins.php`, and creating isolated unauthenticated guest pages.
+ *
+ * @covers
+ * - Backend (PHP): src/series-craft.php
+ * - Frontend (JS/React): N/A (WP Admin login & plugins table)
+ *
+ * @usedBy
+ * - tests/E2E/auth.setup.js
+ * - tests/E2E/specs/01-smoke/homepage.spec.js
+ * - tests/E2E/specs/01-smoke/plugin-activation.spec.js
+ * - tests/E2E/specs/04-frontend/frontend-rendering.spec.js
+ *
+ * Exported Utilities:
+ * 1. `loginToWordPress(page, username, password)` — Logs into `/wp-login.php` and waits for `/wp-admin/`.
+ * 2. `goToPluginsPage(page)` & `getPluginRow(page, pluginName)` — Navigates to `/wp-admin/plugins.php` and locates plugin rows.
+ * 3. `activatePluginViaBrowser(page, pluginName)` & `deactivatePluginViaBrowser(page, pluginName)` — Toggles plugin state via UI.
+ * 4. `createGuestPage(browser)` — Creates an isolated browser context with empty `storageState` for unauthenticated reader assertions.
  */
+
+import { expect } from '@playwright/test';
 
 /**
  * Log in to WordPress Admin dashboard via browser.

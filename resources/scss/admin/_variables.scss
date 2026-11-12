@@ -1,0 +1,94 @@
+// =============================================================================
+// SeriesCraft Admin - Design Tokens, CSS Variables & Breakpoint Mixins
+// =============================================================================
+
+:root {
+  /* Spacing Tokens */
+  --sm-spacing-xs: 0.5rem;
+  --sm-spacing-sm: 0.75rem;
+  --sm-spacing-md: 1rem;
+  --sm-spacing-lg: 1.5rem;
+  --sm-spacing-xl: 2rem;
+  --sm-spacing-2xl: 3rem;
+
+  /* Color Palette */
+  --sm-color-primary: #0073aa;
+  --sm-color-primary-hover: #0096dd;
+  --sm-color-surface: #ffffff;
+  --sm-color-surface-variant: #f1f1f1;
+  --sm-color-text: #1a1a1a;
+  --sm-color-text-secondary: #666666;
+  --sm-color-border: #ccc;
+  --sm-color-border-light: #e0e0e0;
+
+  /* Neumorphic Shadows */
+  --nm-raised: 6px 6px 12px #d1d9e6, -6px -6px 12px #ffffff;
+  --nm-pressed: inset 4px 4px 8px #d1d9e6, inset -4px -4px 8px #ffffff;
+  --nm-pressed-accent: inset 4px 4px 8px rgba(0, 74, 124, 0.2), inset -4px -4px 8px #ffffff;
+
+  /* Border Radii */
+  --sm-radius-sm: 6px;
+  --sm-radius-md: 8px;
+  --sm-radius-lg: 12px;
+  --sm-radius-xl: 16px;
+
+  /* Elevation Shadows */
+  --sm-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --sm-shadow-md: 0 4px 8px rgba(0, 0, 0, 0.12);
+  --sm-shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.15);
+
+  /* Hover color fallback */
+  --sm-hover-color: #0066d9;
+}
+
+/* Dark Mode Color Overrides */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --sm-color-surface: #2a2a2a;
+    --sm-color-surface-variant: #1a1a1a;
+    --sm-color-text: #f0f0f0;
+    --sm-color-text-secondary: #a0a0a0;
+    --sm-color-border: #444;
+    --sm-color-border-light: #333;
+  }
+}
+
+/* Responsive Mixins */
+@mixin sm-breakpoint-mobile {
+  @media (max-width: 767px) {
+    @content;
+  }
+}
+
+@mixin sm-breakpoint-tablet {
+  @media (min-width: 768px) and (max-width: 1023px) {
+    @content;
+  }
+}
+
+@mixin sm-breakpoint-desktop {
+  @media (min-width: 1024px) {
+    @content;
+  }
+}
+
+@mixin sm-breakpoint-large {
+  @media (min-width: 1440px) {
+    @content;
+  }
+}
+
+@mixin sm-custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #d1d5db;
+    border-radius: 9999px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
